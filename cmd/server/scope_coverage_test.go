@@ -96,8 +96,9 @@ func TestGetNodesWithPosition(t *testing.T) {
 		}
 	}
 	insert("pk-good", "Good Node", 37.4, -122.0, 0)
-	insert("pk-nogeo", "No GPS", nil, nil, 0)    // no GPS: excluded
-	insert("pk-foreign", "Foreign", 1.0, 1.0, 1) // foreign_advert=1: excluded
+	insert("pk-nogeo", "No GPS", nil, nil, 0)     // no GPS: excluded
+	insert("pk-foreign", "Foreign", 1.0, 1.0, 1)  // foreign_advert=1: excluded
+	insert("pk-zero", "Never Fixed", 0.0, 0.0, 0) // (0,0) sentinel, NOT NULL: excluded
 
 	got, err := db.GetNodesWithPosition()
 	if err != nil {
@@ -235,12 +236,13 @@ func TestHandleScopeCoverage(t *testing.T) {
 		pk, name string
 		lat, lon float64
 	}{
-		{"pk-1", "N1", 0, 0},
+		{"pk-1", "N1", 1, 1}, // not (0,0) — that's the "no real GPS fix" sentinel, excluded by GetNodesWithPosition
 		{"pk-2", "N2", 0, 10},
 		{"pk-3", "N3", 10, 0},
 		{"pk-4", "N4", 40, -100},
 		{"pk-blacklisted", "Blacklisted", 5, 5},
 		{"pk-advert-only", "AdvertOnly", 20, 20}, // own ADVERT carries a scope, but never relays — must NOT count
+		{"pk-never-fixed", "NeverFixed", 0, 0},   // relays #eu but has no real GPS fix (0,0) — must NOT distort the hull
 	}
 	for _, n := range nodes {
 		if _, err := conn.Exec(
@@ -277,6 +279,10 @@ func TestHandleScopeCoverage(t *testing.T) {
 	// must NOT count as relay evidence (self-declaration, not relaying).
 	insertTx(4, payloadTypeAdvert, "#japan")
 	insertObs(4, `["pk-advert-only"]`)
+	// pk-never-fixed also relayed #eu traffic, but its (0,0) position must
+	// not stretch the hull out to Null Island.
+	insertTx(5, 1, "#eu")
+	insertObs(5, `["pk-never-fixed"]`)
 
 	cfg := &Config{}
 	cfg.SetNodeBlacklist([]string{"pk-blacklisted"})
@@ -317,7 +323,7 @@ func TestHandleScopeCoverage(t *testing.T) {
 	if eu.NodeCount != 3 {
 		t.Errorf("#eu NodeCount = %d, want 3 (blacklisted relay excluded)", eu.NodeCount)
 	}
-	wantHull := []ScopeCoveragePoint{{0, 0}, {0, 10}, {10, 0}}
+	wantHull := []ScopeCoveragePoint{{1, 1}, {0, 10}, {10, 0}}
 	if !reflect.DeepEqual(sortedPoints(eu.Hull), sortedPoints(wantHull)) {
 		t.Errorf("#eu Hull = %v, want point set %v", eu.Hull, wantHull)
 	}
@@ -381,8 +387,8 @@ func TestHandleScopeCoverageNodes(t *testing.T) {
 		pk, name string
 		lat, lon float64
 	}{
-		{"pk-boundary", "Boundary", 0, 0},   // relays for BOTH #eu and #usa
-		{"pk-eu-only", "EuOnly", 0, 10},     // relays for #eu only
+		{"pk-boundary", "Boundary", 1, 1}, // relays for BOTH #eu and #usa (not (0,0) — the "no fix" sentinel)
+		{"pk-eu-only", "EuOnly", 0, 10},   // relays for #eu only
 		{"pk-blacklisted", "Blacklisted", 5, 5},
 		{"pk-advert-only", "AdvertOnly", 20, 20}, // own ADVERT only — must NOT count
 	}
