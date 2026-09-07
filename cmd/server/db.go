@@ -2994,13 +2994,19 @@ type NodeWithPosition struct {
 // flagged foreign_advert. Foreign-flagged nodes have GPS positions the
 // operator's own geo_filter says shouldn't be trusted (see
 // NodePassesGeoFilter in cmd/ingestor) — including one would badly
-// distort a coverage hull with an implausible position. Read-only — safe
-// on the server's mode=ro handle.
+// distort a coverage hull with an implausible position. Also excludes the
+// literal (0,0) sentinel some firmware reports before a node has ever
+// gotten a real GPS fix — same convention as geofilter.PassesFilter and
+// GetGeoFilteredPubkeys above: (0,0) is NOT NULL, so it would otherwise
+// sail through the IS NOT NULL check and stretch a scope-coverage convex
+// hull out to Null Island. Read-only — safe on the server's mode=ro
+// handle.
 func (db *DB) GetNodesWithPosition() ([]NodeWithPosition, error) {
 	rows, err := db.conn.Query(`
 		SELECT public_key, name, lat, lon
 		FROM nodes
 		WHERE lat IS NOT NULL AND lon IS NOT NULL
+		  AND NOT (lat = 0 AND lon = 0)
 		  AND (foreign_advert IS NULL OR foreign_advert = 0)
 	`)
 	if err != nil {
