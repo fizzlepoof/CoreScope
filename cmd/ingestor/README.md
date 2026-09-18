@@ -1,21 +1,21 @@
 # MeshCore MQTT Ingestor (Go)
 
-Standalone MQTT ingestion service for CoreScope. Connects to MQTT brokers, decodes raw MeshCore packets, and writes to the same SQLite database used by the Node.js web server.
-
-This is the first step of a larger Go rewrite — separating MQTT ingestion from the web server.
+Standalone MQTT ingestion service for CoreScope. It connects to MQTT brokers,
+decodes raw MeshCore packets, and owns all writes to the SQLite database shared
+with the Go API server.
 
 ## Architecture
 
 ```
-MQTT Broker(s)  →  Go Ingestor  →  SQLite DB  ←  Node.js Web Server
-                    (this binary)     (shared)
+MQTT Broker(s)  →  Go Ingestor  →  SQLite DB  ←  Go Server
+                    (this binary)     (server is read-only)
 ```
 
 - **Single static binary** — no runtime dependencies, no CGO
 - **SQLite** via `modernc.org/sqlite` (pure Go)
 - **MQTT** via `github.com/eclipse/paho.mqtt.golang`
-- Runs **alongside** the Node.js server — they share the DB file
-- Does NOT serve HTTP/WebSocket — that stays in Node.js
+- Runs alongside the Go server; both processes share the DB file
+- Does not serve HTTP/WebSocket; the Go server owns those interfaces
 
 ## Build
 
@@ -38,7 +38,8 @@ GOOS=linux GOARCH=amd64 go build -o corescope-ingestor .
 ./corescope-ingestor -config /path/to/config.json
 ```
 
-The config file uses the same format as the Node.js `config.json`. The ingestor reads the `mqttSources` array (or legacy `mqtt` object) and `dbPath` fields.
+The config file uses CoreScope's `config.json` format. The ingestor reads the
+`mqttSources` array (or legacy `mqtt` object) and `dbPath` fields.
 
 ### Environment Variables
 
@@ -81,7 +82,7 @@ the corescope user can write to.
 }
 ```
 
-### Full Config (same as Node.js)
+### Full Config
 
 The ingestor reads these fields from the existing `config.json`:
 
@@ -114,24 +115,22 @@ go test -v ./...
 
 ## Schema Compatibility
 
-The Go ingestor creates the same v3 schema as the Node.js server:
+The Go ingestor creates and maintains the v3 schema:
 
 - `transmissions` — deduplicated by content hash
 - `observations` — per-observer sightings with `observer_idx` (rowid reference)
 - `nodes` — mesh nodes discovered from adverts
 - `observers` — MQTT feed sources
 
-Both processes can write to the same DB concurrently (SQLite WAL mode).
+All database writes are owned by the ingestor. The server opens SQLite read-only
+and polls it for packets to expose through REST and WebSocket APIs.
 
-## What's Not Ported (Yet)
+## Process Responsibilities
 
 - Companion bridge format (Format 2 — `meshcore/advertisement`, channel messages, etc.)
 - Channel key decryption (GRP_TXT encrypted payload decryption)
-- WebSocket broadcast to browsers
-- In-memory packet store
-- Cache invalidation
-
-These stay in the Node.js server for now.
+- WebSocket broadcast to browsers is handled by the Go server
+- The in-memory packet store and cache invalidation are handled by the Go server
 
 ## Files
 

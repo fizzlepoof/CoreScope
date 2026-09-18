@@ -2,10 +2,10 @@
 # image from GHCR.
 #
 # AUDIENCE: third-party operators running a self-hosted CoreScope on
-# ONE host. Ships with the built-in Mosquitto broker DISABLED by
-# default (DISABLE_MOSQUITTO defaults to `false` here, meaning
-# mosquitto RUNS in-container — the historical shape); flip to `true`
-# if you already have an external MQTT broker to point CoreScope at.
+# ONE host. Ships with the built-in anonymous plaintext Mosquitto broker
+# DISABLED by default. Configure an external broker in config.json (or
+# via MQTT_BROKER), or explicitly set DISABLE_MOSQUITTO=false to opt into
+# the historical bundled-broker behavior.
 #
 # For the CoreScope maintainers' internal staging deployment (with a
 # standalone `mqtt-broker` container on external network
@@ -23,7 +23,10 @@ services:
       - ${DATA_DIR:-./data}:/app/data
     environment:
       - DISABLE_CADDY=${DISABLE_CADDY:-true}
-      - DISABLE_MOSQUITTO=${DISABLE_MOSQUITTO:-false}
+      - DISABLE_MOSQUITTO=${DISABLE_MOSQUITTO:-true}
+      # Required when the bundled broker is disabled unless config.json
+      # already defines an external mqttSources entry.
+      - MQTT_BROKER=${MQTT_BROKER:-}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/stats"]

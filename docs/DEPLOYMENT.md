@@ -21,7 +21,7 @@ Get CoreScope running with automatic HTTPS on your own server.
 
 - CoreScope running at `https://your-domain.com`
 - Automatic HTTPS certificates (via Let's Encrypt + Caddy)
-- Built-in MQTT broker for receiving packets from observers
+- An authenticated external MQTT broker for receiving packets (recommended)
 - SQLite database for packet storage (auto-created)
 - Everything in a single Docker container
 
@@ -59,7 +59,7 @@ sudo ufw allow 443/tcp
 
 ## Installing Docker
 
-Docker packages an app and all its dependencies into a container — an isolated environment with everything it needs to run. You don't install Node.js, Mosquitto, or Caddy separately; they're all included in the container.
+Docker packages CoreScope and its runtime dependencies into an isolated container. The image includes the Go server, Go ingestor, and Caddy; configure an authenticated external MQTT broker separately.
 
 SSH into your server and run:
 
@@ -88,7 +88,11 @@ cd corescope
 ./manage.sh setup
 ```
 
-It walks you through everything: checks Docker, creates config, asks for your domain, checks DNS, builds, and starts.
+It checks Docker, creates or preserves config, selects MQTT, asks for your
+domain, checks DNS, builds, and starts. The bundled anonymous plaintext broker
+is disabled by default. Setup requires `MQTT_BROKER` unless an existing
+`config.json` defines an external source; set `DISABLE_MOSQUITTO=false` only to
+explicitly retain the legacy local broker, which is published on loopback only.
 
 After setup, manage with:
 ```bash
@@ -122,7 +126,9 @@ cp config.example.json config.json
 nano config.json
 ```
 
-Change the `apiKey` to any random string. The rest of the defaults work out of the box.
+Change the `apiKey` to any random string, then configure an external broker in
+`mqttSources` (or set `MQTT_BROKER`). The localhost MQTT example works only
+when bundled Mosquitto is explicitly enabled with `DISABLE_MOSQUITTO=false`.
 
 ```jsonc
 {
@@ -160,7 +166,8 @@ docker run -d \
   --restart unless-stopped \
   -p 80:80 \
   -p 443:443 \
-  -v $(pwd)/config.json:/app/config.json:ro \
+  -e MQTT_BROKER=mqtts://your-broker:8883 \
+  -v $(pwd)/config.json:/app/data/config.json:ro \
   -v $(pwd)/caddy-config/Caddyfile:/etc/caddy/Caddyfile:ro \
   -v meshcore-data:/app/data \
   -v caddy-data:/data/caddy \
@@ -190,11 +197,14 @@ docker logs corescope
 Expected output:
 ```
 CoreScope running on http://localhost:3000
-MQTT [local] connected to mqtt://localhost:1883
+MQTT [env] connected to ssl://your-broker:8883
 [pre-warm] 12 endpoints in XXXms
 ```
 
-The container runs its own MQTT broker (Mosquitto) internally — that `localhost:1883` connection is inside the container, not exposed to the internet.
+The example uses your external broker. For local development only, omit
+`MQTT_BROKER`, set `DISABLE_MOSQUITTO=false`, and publish
+`127.0.0.1:1883:1883`; never expose the bundled anonymous plaintext broker on
+an untrusted interface.
 
 ## Connecting an Observer
 
@@ -267,14 +277,14 @@ And Cloudflare handles HTTPS at the edge.
 
 ### Behind an existing reverse proxy (nginx, Traefik, etc.)
 
-If you already run a reverse proxy, skip Caddy entirely and proxy directly to the Node.js port:
+If you already run a reverse proxy, skip Caddy entirely and proxy directly to the Go server port:
 
 ```bash
 docker run -d \
   --name corescope \
   --restart unless-stopped \
   -p 3000:3000 \
-  -v $(pwd)/config.json:/app/config.json:ro \
+  -v $(pwd)/config.json:/app/data/config.json:ro \
   -v meshcore-data:/app/data \
   corescope
 ```
@@ -290,25 +300,30 @@ docker run -d \
   --name corescope \
   --restart unless-stopped \
   -p 80:80 \
-  -v $(pwd)/config.json:/app/config.json:ro \
+  -v $(pwd)/config.json:/app/data/config.json:ro \
   -v meshcore-data:/app/data \
   corescope
 ```
 
 ## MQTT Security
 
-The container runs Mosquitto on port 1883 with **anonymous access by default**. This is safe as long as the port isn't exposed outside the container.
+Bundled Mosquitto is disabled by default because its shipped configuration is
+anonymous and plaintext. Prefer an authenticated external broker configured by
+`MQTT_BROKER` or `config.json`.
 
-The Quick Start docker run command above does **not** expose port 1883. Only add `-p 1883:1883` if you need remote observers to connect directly.
+For local development only, explicitly set `DISABLE_MOSQUITTO=false` and
+publish `-p 127.0.0.1:1883:1883`. Do not use `-p 1883:1883`, which binds all
+host interfaces.
 
-### If you need to expose MQTT
+### If you must accept remote MQTT clients
 
-**Option 1: Firewall** — Only allow specific IPs:
+Replace the bundled broker configuration with authentication, ACLs, and TLS,
+then restrict ingress to expected clients. For example, firewall by source IP:
 ```bash
 sudo ufw allow from 203.0.113.10 to any port 1883   # Your observer's IP
 ```
 
-**Option 2: Add authentication** — Edit `docker/mosquitto.conf` before building:
+Add authentication before building:
 ```
 allow_anonymous false
 password_file /etc/mosquitto/passwd
@@ -318,7 +333,7 @@ After starting the container, create users:
 docker exec -it corescope mosquitto_passwd -c /etc/mosquitto/passwd myuser
 ```
 
-**Option 3: Use TLS** — For production, configure Mosquitto with TLS certificates. See the [Mosquitto docs](https://mosquitto.org/man/mosquitto-conf-5.html).
+Also configure TLS certificates and topic ACLs. See the [Mosquitto docs](https://mosquitto.org/man/mosquitto-conf-5.html).
 
 ### Recommended approach for remote observers
 
@@ -402,7 +417,7 @@ Center the map on your area in `config.json`:
 | HTTPS not working | Port 80 blocked | Open port 80 — Caddy needs it for ACME challenges |
 | "too many certificates" error | Let's Encrypt rate limit (5/domain/week) | Use a different subdomain, bring your own cert, or wait a week |
 | Certificate won't provision | DNS not pointed at server | `dig your-domain` must show your server IP before starting |
-| No packets appearing | No observer connected | `docker exec corescope mosquitto_sub -t 'meshcore/#' -C 1 -W 10` — if silent, no data is coming in |
+| No packets appearing | Observer, external broker, or ingestor connectivity problem | Check the external broker logs and CoreScope ingestor logs; confirm the configured `MQTT_BROKER` is reachable from the container |
 | Container crashes on startup | Bad JSON in config | `python3 -c "import json; json.load(open('config.json'))"` to validate |
 | "address already in use" | Another web server on 80/443 | Stop it: `sudo systemctl stop nginx apache2` |
 | Slow on Raspberry Pi | First build is slow | Normal — subsequent builds use cache. Runtime performance is fine. |
@@ -415,21 +430,23 @@ Center the map on your area in `config.json`:
 flowchart LR
     subgraph Internet
         U[Browser] -->|HTTPS :443| C
-        O1[Observer 1] -->|MQTT :1883| M
-        O2[Observer 2] -->|MQTT :1883| M
+        O1[Observer 1] -->|authenticated MQTT| M[External MQTT broker]
+        O2[Observer 2] -->|authenticated MQTT| M
         LE[Let's Encrypt] -->|HTTP :80| C
     end
 
     subgraph Docker Container
-        C[Caddy] -->|proxy :3000| N[Node.js]
-        M[Mosquitto] --> N
-        N --> DB[(SQLite)]
-        N -->|WebSocket| U
+        C[Caddy] -->|proxy :3000| S[Go server]
+        I[Go ingestor] --> DB[(SQLite)]
+        DB --> S
+        S -->|WebSocket| U
     end
+    M --> I
 
     style C fill:#22c55e,color:#000
     style M fill:#3b82f6,color:#fff
-    style N fill:#f59e0b,color:#000
+    style I fill:#f59e0b,color:#000
+    style S fill:#f59e0b,color:#000
     style DB fill:#8b5cf6,color:#fff
 ```
 
@@ -437,22 +454,23 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    S[supervisord] --> C[Caddy]
-    S --> M[Mosquitto]
-    S --> N[Node.js server]
+    E[entrypoint-go.sh] --> C[Caddy]
+    E --> I[Go ingestor]
+    E --> G[Go server]
 
-    C -->|reverse proxy + auto HTTPS| N
-    M -->|MQTT messages| N
+    C -->|reverse proxy + auto HTTPS| G
+    M[External MQTT broker] -->|MQTT messages| I
+    I -->|writes| DB[(SQLite — data/meshcore.db)]
+    G -->|reads| DB
 
-    N --> API[REST API]
-    N --> WS[WebSocket — live feed]
-    N --> MQTT[MQTT client — ingests packets]
-    N --> DB[(SQLite — data/meshcore.db)]
+    G --> API[REST API]
+    G --> WS[WebSocket — live feed]
 
-    style S fill:#475569,color:#fff
+    style E fill:#475569,color:#fff
     style C fill:#22c55e,color:#000
     style M fill:#3b82f6,color:#fff
-    style N fill:#f59e0b,color:#000
+    style I fill:#f59e0b,color:#000
+    style G fill:#f59e0b,color:#000
 ```
 
 ### Data flow
@@ -461,15 +479,18 @@ flowchart TD
 sequenceDiagram
     participant R as LoRa Repeater
     participant O as Observer
-    participant M as Mosquitto
-    participant N as Node.js
+    participant M as External MQTT broker
+    participant I as Go ingestor
+    participant D as SQLite
+    participant S as Go server
     participant B as Browser
 
     R->>O: Radio packet (915 MHz)
     O->>M: MQTT publish (raw hex + SNR + RSSI)
-    M->>N: Subscribe callback
-    N->>N: Decode, store in SQLite + memory
-    N->>B: WebSocket broadcast
-    B->>N: REST API requests
-    N->>B: JSON responses
+    M->>I: MQTT subscription delivery
+    I->>D: Decode and persist packet
+    S->>D: Poll for new packets
+    S->>B: WebSocket broadcast
+    B->>S: REST API requests
+    S->>B: JSON responses
 ```

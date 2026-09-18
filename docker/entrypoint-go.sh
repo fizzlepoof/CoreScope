@@ -14,22 +14,22 @@ if [ -f /app/data/theme.json ]; then
   ln -sf /app/data/theme.json /app/theme.json
 fi
 
-# Source .env from data volume if present (works with any launch method)
-if [ -f /app/data/.env ]; then
-  set -a
-  . /app/data/.env
-  set +a
-fi
+# Source .env from data volume if present (works with any launch method).
+# Runtime values take precedence during loading; explicit bundled-broker mode
+# then pins the ingestor to that local broker.
+. /app/docker/entrypoint-env.sh
+source_data_env_preserving_runtime /app/data/.env
+enforce_bundled_mqtt_broker
 
 SUPERVISORD_CONF="/etc/supervisor/conf.d/supervisord.conf"
-if [ "${DISABLE_MOSQUITTO:-false}" = "true" ] && [ "${DISABLE_CADDY:-false}" = "true" ]; then
+if is_true "${DISABLE_MOSQUITTO:-true}" && is_true "${DISABLE_CADDY:-false}"; then
   echo "[config] internal MQTT broker disabled (DISABLE_MOSQUITTO=true)"
   echo "[config] Caddy reverse proxy disabled (DISABLE_CADDY=true)"
   SUPERVISORD_CONF="/etc/supervisor/conf.d/supervisord-no-mosquitto-no-caddy.conf"
-elif [ "${DISABLE_MOSQUITTO:-false}" = "true" ]; then
+elif is_true "${DISABLE_MOSQUITTO:-true}"; then
   echo "[config] internal MQTT broker disabled (DISABLE_MOSQUITTO=true)"
   SUPERVISORD_CONF="/etc/supervisor/conf.d/supervisord-no-mosquitto.conf"
-elif [ "${DISABLE_CADDY:-false}" = "true" ]; then
+elif is_true "${DISABLE_CADDY:-false}"; then
   echo "[config] Caddy reverse proxy disabled (DISABLE_CADDY=true)"
   SUPERVISORD_CONF="/etc/supervisor/conf.d/supervisord-no-caddy.conf"
 fi

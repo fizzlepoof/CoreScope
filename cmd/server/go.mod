@@ -65,3 +65,7 @@ replace github.com/meshcore-analyzer/admindb => ../../internal/admindb
 require github.com/meshcore-analyzer/infraqueue v0.0.0
 
 replace github.com/meshcore-analyzer/infraqueue => ../../internal/infraqueue
+
+require github.com/meshcore-analyzer/pprofconfig v0.0.0
+
+replace github.com/meshcore-analyzer/pprofconfig => ../../internal/pprofconfig
