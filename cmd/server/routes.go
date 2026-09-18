@@ -2363,9 +2363,34 @@ func (s *Server) handleFleetClockSkew(w http.ResponseWriter, r *http.Request) {
 
 // --- Analytics Handlers ---
 
+func (s *Server) validateAnalyticsFilters(w http.ResponseWriter, region, area string) bool {
+	if len(region) > 64 {
+		writeError(w, http.StatusBadRequest, "region exceeds 64 bytes")
+		return false
+	}
+	if len(area) > 64 {
+		writeError(w, http.StatusBadRequest, "area exceeds 64 bytes")
+		return false
+	}
+	if area != "" {
+		if s.cfg == nil {
+			writeError(w, http.StatusBadRequest, "unknown area")
+			return false
+		}
+		if _, ok := s.cfg.Areas[area]; !ok {
+			writeError(w, http.StatusBadRequest, "unknown area")
+			return false
+		}
+	}
+	return true
+}
+
 func (s *Server) handleAnalyticsRF(w http.ResponseWriter, r *http.Request) {
 	region := r.URL.Query().Get("region")
 	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	window := ParseTimeWindow(r)
 	if s.store != nil {
 		// Issue #1659: gate the default-shape request behind first-pass
@@ -2416,6 +2441,9 @@ func (s *Server) handleAnalyticsRelayAirtimeShare(w http.ResponseWriter, r *http
 func (s *Server) handleAnalyticsTopology(w http.ResponseWriter, r *http.Request) {
 	region := r.URL.Query().Get("region")
 	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	window := ParseTimeWindow(r)
 	if s.store != nil {
 		// #1659 warmup gate (see handleAnalyticsRF for rationale).
@@ -2448,9 +2476,12 @@ func (s *Server) handleAnalyticsTopology(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Server) handleAnalyticsChannels(w http.ResponseWriter, r *http.Request) {
+	region := r.URL.Query().Get("region")
+	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	if s.store != nil {
-		region := r.URL.Query().Get("region")
-		area := r.URL.Query().Get("area")
 		window := ParseTimeWindow(r)
 		// #1659 warmup gate (see handleAnalyticsRF for rationale).
 		if region == "" && area == "" && window.IsZero() {
@@ -2482,6 +2513,9 @@ func (s *Server) handleAnalyticsChannels(w http.ResponseWriter, r *http.Request)
 func (s *Server) handleAnalyticsDistance(w http.ResponseWriter, r *http.Request) {
 	region := r.URL.Query().Get("region")
 	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	if s.store != nil {
 		// Lazy build (#1011): distance index is not built at startup.
 		// First request triggers an async build and gets 202 +
@@ -2510,9 +2544,12 @@ func (s *Server) handleAnalyticsDistance(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Server) handleAnalyticsHashSizes(w http.ResponseWriter, r *http.Request) {
+	region := r.URL.Query().Get("region")
+	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	if s.store != nil {
-		region := r.URL.Query().Get("region")
-		area := r.URL.Query().Get("area")
 		writeJSON(w, s.store.GetAnalyticsHashSizes(region, area))
 		return
 	}
@@ -2527,9 +2564,12 @@ func (s *Server) handleAnalyticsHashSizes(w http.ResponseWriter, r *http.Request
 }
 
 func (s *Server) handleAnalyticsHashCollisions(w http.ResponseWriter, r *http.Request) {
+	region := r.URL.Query().Get("region")
+	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	if s.store != nil {
-		region := r.URL.Query().Get("region")
-		area := r.URL.Query().Get("area")
 		writeJSON(w, s.store.GetAnalyticsHashCollisions(region, area))
 		return
 	}
@@ -2540,12 +2580,16 @@ func (s *Server) handleAnalyticsHashCollisions(w http.ResponseWriter, r *http.Re
 }
 
 func (s *Server) handleAnalyticsSubpaths(w http.ResponseWriter, r *http.Request) {
+	region := r.URL.Query().Get("region")
+	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	if s.store != nil {
 		if !s.store.SubpathIndexReady() {
 			writeIndexLoading503(w)
 			return
 		}
-		region := r.URL.Query().Get("region")
 		minLen := queryInt(r, "minLen", 2)
 		if minLen < 2 {
 			minLen = 2
@@ -2572,11 +2616,15 @@ func (s *Server) handleAnalyticsSubpaths(w http.ResponseWriter, r *http.Request)
 //
 //	?groups=2-2:50,3-3:30,4-4:20,5-8:15   (minLen-maxLen:limit per group)
 func (s *Server) handleAnalyticsSubpathsBulk(w http.ResponseWriter, r *http.Request) {
+	region := r.URL.Query().Get("region")
+	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	if s.store != nil && !s.store.SubpathIndexReady() {
 		writeIndexLoading503(w)
 		return
 	}
-	region := r.URL.Query().Get("region")
 	groupsParam := r.URL.Query().Get("groups")
 	if groupsParam == "" {
 		writeJSON(w, ErrorResp{Error: "groups parameter required (e.g. groups=2-2:50,3-3:30)"})
