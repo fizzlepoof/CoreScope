@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"strings"
 	"sync"
@@ -12,12 +14,25 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const (
+	defaultWebSocketMaxClients      = 256
+	defaultWebSocketMaxClientsPerIP = 16
+)
+
 // Hub manages WebSocket clients and broadcasts.
 type Hub struct {
 	mu             sync.RWMutex
 	clients        map[*Client]bool
 	upgrader       websocket.Upgrader
 	allowedOrigins []string // exact-match allowlist for /ws CheckOrigin (see SetAllowedOrigins)
+
+	admissionMu     sync.Mutex
+	activeTotal     int
+	activeByIP      map[string]int
+	maxClients      int
+	maxClientsPerIP int
+	trustedProxyMu  sync.RWMutex
+	trustedProxies  trustedProxySet
 }
 
 // SetAllowedOrigins configures the exact-match origin allowlist consulted by
@@ -75,14 +90,24 @@ func (h *Hub) checkOrigin(r *http.Request) bool {
 
 // Client is a single WebSocket connection.
 type Client struct {
-	conn     *websocket.Conn
-	send     chan []byte
-	closeOnce sync.Once
+	conn        *websocket.Conn
+	send        chan []byte
+	admitted    bool
+	admissionIP string
+	closeOnce   sync.Once
 }
 
 func NewHub() *Hub {
+	return newHubWithLimits(defaultWebSocketMaxClients, defaultWebSocketMaxClientsPerIP)
+}
+
+func newHubWithLimits(maxClients, maxClientsPerIP int) *Hub {
 	h := &Hub{
-		clients: make(map[*Client]bool),
+		clients:         make(map[*Client]bool),
+		activeByIP:      make(map[string]int),
+		maxClients:      maxClients,
+		maxClientsPerIP: maxClientsPerIP,
+		trustedProxies:  newTrustedProxySet(nil),
 	}
 	h.upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -90,6 +115,43 @@ func NewHub() *Hub {
 		CheckOrigin:     h.checkOrigin,
 	}
 	return h
+}
+
+// SetTrustedProxyCIDRs adds explicit proxy networks to the loopback networks
+// trusted by default for the bundled same-container reverse proxy.
+func (h *Hub) SetTrustedProxyCIDRs(cidrs []string) {
+	trusted := newTrustedProxySet(cidrs)
+	h.trustedProxyMu.Lock()
+	h.trustedProxies = trusted
+	h.trustedProxyMu.Unlock()
+}
+
+func (h *Hub) trustedProxySnapshot() trustedProxySet {
+	h.trustedProxyMu.RLock()
+	trusted := h.trustedProxies
+	h.trustedProxyMu.RUnlock()
+	return trusted
+}
+
+func (h *Hub) tryAdmit(ip string) bool {
+	h.admissionMu.Lock()
+	defer h.admissionMu.Unlock()
+	if h.activeTotal >= h.maxClients || h.activeByIP[ip] >= h.maxClientsPerIP {
+		return false
+	}
+	h.activeTotal++
+	h.activeByIP[ip]++
+	return true
+}
+
+func (h *Hub) releaseAdmission(ip string) {
+	h.admissionMu.Lock()
+	defer h.admissionMu.Unlock()
+	h.activeTotal--
+	h.activeByIP[ip]--
+	if h.activeByIP[ip] == 0 {
+		delete(h.activeByIP, ip)
+	}
 }
 
 func (h *Hub) ClientCount() int {
@@ -110,6 +172,9 @@ func (h *Hub) Unregister(c *Client) {
 	if _, ok := h.clients[c]; ok {
 		delete(h.clients, c)
 		c.closeOnce.Do(func() { close(c.send) })
+		if c.admitted {
+			h.releaseAdmission(c.admissionIP)
+		}
 	}
 	h.mu.Unlock()
 	log.Printf("[ws] client disconnected (%d total)", h.ClientCount())
@@ -126,6 +191,9 @@ func (h *Hub) Close() {
 		)
 		c.closeOnce.Do(func() { close(c.send) })
 		delete(h.clients, c)
+		if c.admitted {
+			h.releaseAdmission(c.admissionIP)
+		}
 	}
 	h.mu.Unlock()
 	log.Println("[ws] all clients disconnected")
@@ -151,20 +219,135 @@ func (h *Hub) Broadcast(msg interface{}) {
 
 // ServeWS handles the WebSocket upgrade and runs the client.
 func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
+	// Keep origin rejection behavior ahead of capacity checks so a full hub
+	// does not turn a forbidden cross-origin request into a retryable response.
+	if !h.checkOrigin(r) {
+		http.Error(w, "websocket: request origin not allowed by Upgrader.CheckOrigin", http.StatusForbidden)
+		return
+	}
+	clientIP := webSocketRemoteIP(r, h.trustedProxySnapshot())
+	if !h.tryAdmit(clientIP) {
+		w.Header().Set("Retry-After", "1")
+		http.Error(w, "websocket client limit reached", http.StatusServiceUnavailable)
+		return
+	}
+
 	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		h.releaseAdmission(clientIP)
 		log.Printf("[ws] upgrade error: %v", err)
 		return
 	}
 
 	client := &Client{
-		conn: conn,
-		send: make(chan []byte, 256),
+		conn:        conn,
+		send:        make(chan []byte, 256),
+		admitted:    true,
+		admissionIP: clientIP,
 	}
 	h.Register(client)
 
 	go client.writePump()
 	go client.readPump(h)
+}
+
+type trustedProxySet []netip.Prefix
+
+func newTrustedProxySet(additionalCIDRs []string) trustedProxySet {
+	trusted := trustedProxySet{
+		netip.MustParsePrefix("127.0.0.0/8"),
+		netip.MustParsePrefix("::1/128"),
+	}
+	for _, cidr := range additionalCIDRs {
+		prefix, err := netip.ParsePrefix(strings.TrimSpace(cidr))
+		if err != nil {
+			log.Printf("[ws] WARNING: ignoring invalid trusted proxy CIDR %q: %v", cidr, err)
+			continue
+		}
+		prefix, ok := canonicalPrefix(prefix)
+		if !ok {
+			log.Printf("[ws] WARNING: ignoring ambiguous IPv4-mapped trusted proxy CIDR %q", cidr)
+			continue
+		}
+		trusted = append(trusted, prefix)
+	}
+	return trusted
+}
+
+func canonicalPrefix(prefix netip.Prefix) (netip.Prefix, bool) {
+	addr := prefix.Addr()
+	bits := prefix.Bits()
+	if addr.Is4In6() {
+		if bits < 96 {
+			return netip.Prefix{}, false
+		}
+		bits -= 96
+	}
+	return netip.PrefixFrom(addr.Unmap(), bits).Masked(), true
+}
+
+func (s trustedProxySet) contains(ip netip.Addr) bool {
+	ip = ip.Unmap()
+	for _, prefix := range s {
+		if prefix.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
+func webSocketPeerIP(remoteAddr string) (string, netip.Addr, bool) {
+	if remoteAddr == "" {
+		return "unknown", netip.Addr{}, false
+	}
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		host = remoteAddr
+	}
+	ip, err := netip.ParseAddr(host)
+	if err != nil {
+		return remoteAddr, netip.Addr{}, false
+	}
+	ip = ip.Unmap()
+	return ip.String(), ip, true
+}
+
+// webSocketRemoteIP trusts X-Forwarded-For only when the TCP peer belongs to
+// an explicitly trusted network. It walks the chain from the trusted edge and
+// returns the first untrusted address, preventing client-supplied leftmost
+// values from becoming the admission identity. Any malformed value makes the
+// whole header unusable and safely falls back to the direct peer.
+func webSocketRemoteIP(r *http.Request, trusted trustedProxySet) string {
+	peerIdentity, peerIP, peerIsIP := webSocketPeerIP(r.RemoteAddr)
+	if !peerIsIP || !trusted.contains(peerIP) {
+		return peerIdentity
+	}
+
+	forwardedValues := r.Header.Values("X-Forwarded-For")
+	if len(forwardedValues) == 0 {
+		return peerIdentity
+	}
+
+	var chain []netip.Addr
+	for _, value := range forwardedValues {
+		for _, rawIP := range strings.Split(value, ",") {
+			ip, err := netip.ParseAddr(strings.TrimSpace(rawIP))
+			if err != nil {
+				return peerIdentity
+			}
+			chain = append(chain, ip.Unmap())
+		}
+	}
+	if len(chain) == 0 {
+		return peerIdentity
+	}
+
+	for i := len(chain) - 1; i >= 0; i-- {
+		if !trusted.contains(chain[i]) {
+			return chain[i].String()
+		}
+	}
+	return chain[0].String()
 }
 
 // wsOrStatic upgrades WebSocket requests at any path, serves static files otherwise.

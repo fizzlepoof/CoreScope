@@ -456,7 +456,8 @@ func main() {
 	}()
 
 	// WebSocket hub
-	hub := NewHub()
+	hub := newHubWithLimits(cfg.WebSocketMaxClients(), cfg.WebSocketMaxClientsPerIP())
+	hub.SetTrustedProxyCIDRs(cfg.WebSocketTrustedProxyCIDRs())
 	hub.SetAllowedOrigins(cfg.CORSAllowedOrigins)
 	hub.upgrader.EnableCompression = cfg.WSCompressionEnabled()
 

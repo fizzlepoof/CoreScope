@@ -5,11 +5,507 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sort"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
+
+func TestConfigWebSocketMaxClients(t *testing.T) {
+	tests := []struct {
+		name string
+		cfg  *Config
+		want int
+	}{
+		{name: "nil config uses safe default", cfg: nil, want: defaultWebSocketMaxClients},
+		{name: "missing config uses safe default", cfg: &Config{}, want: defaultWebSocketMaxClients},
+		{name: "configured positive limit", cfg: &Config{WebSocket: &WebSocketConfig{MaxClients: 12}}, want: 12},
+		{name: "zero cannot disable limit", cfg: &Config{WebSocket: &WebSocketConfig{}}, want: defaultWebSocketMaxClients},
+		{name: "negative cannot disable limit", cfg: &Config{WebSocket: &WebSocketConfig{MaxClients: -1}}, want: defaultWebSocketMaxClients},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.cfg.WebSocketMaxClients(); got != tt.want {
+				t.Fatalf("WebSocketMaxClients() = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConfigWebSocketMaxClientsPerIP(t *testing.T) {
+	tests := []struct {
+		name string
+		cfg  *Config
+		want int
+	}{
+		{name: "nil config uses safe default", cfg: nil, want: defaultWebSocketMaxClientsPerIP},
+		{name: "missing config uses safe default", cfg: &Config{}, want: defaultWebSocketMaxClientsPerIP},
+		{name: "configured positive limit", cfg: &Config{WebSocket: &WebSocketConfig{MaxClientsPerIP: 7}}, want: 7},
+		{name: "zero cannot disable limit", cfg: &Config{WebSocket: &WebSocketConfig{}}, want: defaultWebSocketMaxClientsPerIP},
+		{name: "negative cannot disable limit", cfg: &Config{WebSocket: &WebSocketConfig{MaxClientsPerIP: -1}}, want: defaultWebSocketMaxClientsPerIP},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.cfg.WebSocketMaxClientsPerIP(); got != tt.want {
+				t.Fatalf("WebSocketMaxClientsPerIP() = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConfigWebSocketTrustedProxyCIDRs(t *testing.T) {
+	configured := []string{"10.0.0.0/8", "2001:db8:1234::/48"}
+	cfg := &Config{WebSocket: &WebSocketConfig{TrustedProxyCIDRs: configured}}
+
+	got := cfg.WebSocketTrustedProxyCIDRs()
+	if len(got) != len(configured) {
+		t.Fatalf("WebSocketTrustedProxyCIDRs() = %q, want %q", got, configured)
+	}
+	for i := range configured {
+		if got[i] != configured[i] {
+			t.Fatalf("WebSocketTrustedProxyCIDRs()[%d] = %q, want %q", i, got[i], configured[i])
+		}
+	}
+	got[0] = "changed"
+	if cfg.WebSocket.TrustedProxyCIDRs[0] != configured[0] {
+		t.Fatal("WebSocketTrustedProxyCIDRs returned mutable config storage")
+	}
+
+	if got := (*Config)(nil).WebSocketTrustedProxyCIDRs(); len(got) != 0 {
+		t.Fatalf("nil config trusted proxies = %q, want empty", got)
+	}
+}
+
+func waitForClientCount(t *testing.T, hub *Hub, want int) {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if hub.ClientCount() == want {
+			return
+		}
+		time.Sleep(time.Millisecond)
+	}
+	t.Fatalf("timed out waiting for %d WebSocket clients; got %d", want, hub.ClientCount())
+}
+
+func TestHubRejectsUpgradeAtClientLimitAndAllowsReconnect(t *testing.T) {
+	hub := newHubWithLimits(1, 1)
+	srv := httptest.NewServer(http.HandlerFunc(hub.ServeWS))
+	defer srv.Close()
+	wsURL := "ws" + srv.URL[4:]
+
+	first, resp, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("first dial: %v", err)
+	}
+	if resp.StatusCode != http.StatusSwitchingProtocols {
+		t.Fatalf("first dial status = %d, want 101", resp.StatusCode)
+	}
+	waitForClientCount(t, hub, 1)
+
+	excess, resp, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if excess != nil {
+		excess.Close()
+	}
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if err == nil {
+		t.Fatal("excess dial succeeded; want admission rejection")
+	}
+	if resp == nil || resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("excess dial response = %#v, want 503 Service Unavailable", resp)
+	}
+	if got := resp.Header.Get("Retry-After"); got != "1" {
+		t.Fatalf("Retry-After = %q, want %q", got, "1")
+	}
+	if got := hub.ClientCount(); got != 1 {
+		t.Fatalf("client count after rejected upgrade = %d, want 1", got)
+	}
+
+	if err := first.Close(); err != nil {
+		t.Fatalf("close first client: %v", err)
+	}
+	waitForClientCount(t, hub, 0)
+
+	reconnected, resp, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("reconnect after slot release: %v", err)
+	}
+	defer reconnected.Close()
+	if resp.StatusCode != http.StatusSwitchingProtocols {
+		t.Fatalf("reconnect status = %d, want 101", resp.StatusCode)
+	}
+	waitForClientCount(t, hub, 1)
+}
+
+func TestHubClientLimitIsAtomicAcrossConcurrentUpgrades(t *testing.T) {
+	const (
+		maxClients = 3
+		attempts   = 24
+	)
+	hub := newHubWithLimits(maxClients, attempts)
+	srv := httptest.NewServer(http.HandlerFunc(hub.ServeWS))
+	defer srv.Close()
+	wsURL := "ws" + srv.URL[4:]
+
+	type result struct {
+		conn   *websocket.Conn
+		status int
+		err    error
+	}
+	results := make(chan result, attempts)
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for i := 0; i < attempts; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			conn, resp, err := websocket.DefaultDialer.Dial(wsURL, nil)
+			status := 0
+			if resp != nil {
+				status = resp.StatusCode
+			}
+			if err != nil && resp != nil {
+				resp.Body.Close()
+			}
+			results <- result{conn: conn, status: status, err: err}
+		}()
+	}
+	close(start)
+	wg.Wait()
+	close(results)
+
+	accepted := 0
+	for res := range results {
+		if res.err == nil {
+			accepted++
+			defer res.conn.Close()
+			if res.status != http.StatusSwitchingProtocols {
+				t.Errorf("accepted status = %d, want 101", res.status)
+			}
+			continue
+		}
+		if res.status != http.StatusServiceUnavailable {
+			t.Errorf("rejected status = %d, want 503 (err=%v)", res.status, res.err)
+		}
+	}
+	if accepted != maxClients {
+		t.Fatalf("accepted %d concurrent upgrades, want exactly %d", accepted, maxClients)
+	}
+	waitForClientCount(t, hub, maxClients)
+}
+
+func TestHubRejectsUpgradeAtPerIPLimit(t *testing.T) {
+	hub := newHubWithLimits(4, 1)
+	srv := httptest.NewServer(http.HandlerFunc(hub.ServeWS))
+	defer srv.Close()
+	wsURL := "ws" + srv.URL[4:]
+
+	first, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("first dial: %v", err)
+	}
+	defer first.Close()
+	waitForClientCount(t, hub, 1)
+
+	excess, resp, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if excess != nil {
+		excess.Close()
+	}
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if err == nil {
+		t.Fatal("second dial from same IP succeeded; want admission rejection")
+	}
+	if resp == nil || resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("second dial response = %#v, want 503 Service Unavailable", resp)
+	}
+}
+
+func TestHubPerIPLimitUsesForwardedClientFromBundledProxy(t *testing.T) {
+	hub := newHubWithLimits(4, 1)
+	srv := httptest.NewServer(http.HandlerFunc(hub.ServeWS))
+	defer srv.Close()
+	wsURL := "ws" + srv.URL[4:]
+
+	firstHeaders := http.Header{"X-Forwarded-For": []string{"198.51.100.10"}}
+	first, _, err := websocket.DefaultDialer.Dial(wsURL, firstHeaders)
+	if err != nil {
+		t.Fatalf("first proxied dial: %v", err)
+	}
+	defer first.Close()
+	waitForClientCount(t, hub, 1)
+
+	secondHeaders := http.Header{"X-Forwarded-For": []string{"198.51.100.11"}}
+	second, resp, err := websocket.DefaultDialer.Dial(wsURL, secondHeaders)
+	if err != nil {
+		t.Fatalf("second proxied client was grouped with first (response=%v): %v", resp, err)
+	}
+	defer second.Close()
+	waitForClientCount(t, hub, 2)
+}
+
+func TestWebSocketRemoteIP(t *testing.T) {
+	tests := []struct {
+		name                   string
+		remoteAddr             string
+		forwardedFor           []string
+		additionalTrustedCIDRs []string
+		want                   string
+	}{
+		{
+			name:         "bundled IPv4 loopback proxy forwards client",
+			remoteAddr:   "127.0.0.1:1234",
+			forwardedFor: []string{"198.51.100.20"},
+			want:         "198.51.100.20",
+		},
+		{
+			name:         "bundled IPv6 loopback proxy forwards client",
+			remoteAddr:   "[::1]:1234",
+			forwardedFor: []string{"2001:db8::20"},
+			want:         "2001:db8::20",
+		},
+		{
+			name:         "mapped IPv4 loopback peer uses default trusted network",
+			remoteAddr:   "[::ffff:127.0.0.1]:1234",
+			forwardedFor: []string{"::ffff:198.51.100.20"},
+			want:         "198.51.100.20",
+		},
+		{
+			name:                   "mapped trusted hop resolves to dotted client",
+			remoteAddr:             "[::ffff:10.0.0.3]:443",
+			forwardedFor:           []string{"::ffff:198.51.100.40, ::ffff:10.0.0.2"},
+			additionalTrustedCIDRs: []string{"10.0.0.0/8"},
+			want:                   "198.51.100.40",
+		},
+		{
+			name:                   "mapped configured prefix trusts dotted peer",
+			remoteAddr:             "10.0.0.3:443",
+			forwardedFor:           []string{"198.51.100.41"},
+			additionalTrustedCIDRs: []string{"::ffff:10.0.0.0/104"},
+			want:                   "198.51.100.41",
+		},
+		{
+			name:                   "trusted chain resolves from right to left",
+			remoteAddr:             "10.0.0.3:443",
+			forwardedFor:           []string{"192.0.2.66, 198.51.100.40, 10.0.0.2"},
+			additionalTrustedCIDRs: []string{"10.0.0.0/8"},
+			want:                   "198.51.100.40",
+		},
+		{
+			name:                   "multiple forwarding header lines form one chain",
+			remoteAddr:             "10.0.0.3:443",
+			forwardedFor:           []string{"192.0.2.66, 198.51.100.40", "10.0.0.2"},
+			additionalTrustedCIDRs: []string{"10.0.0.0/8"},
+			want:                   "198.51.100.40",
+		},
+		{
+			name:                   "all trusted chain returns leftmost address",
+			remoteAddr:             "10.0.0.3:443",
+			forwardedFor:           []string{"10.0.0.1", "10.0.0.2"},
+			additionalTrustedCIDRs: []string{"10.0.0.0/8"},
+			want:                   "10.0.0.1",
+		},
+		{
+			name:                   "invalid configured CIDRs preserve loopback defaults",
+			remoteAddr:             "127.0.0.1:1234",
+			forwardedFor:           []string{"198.51.100.42"},
+			additionalTrustedCIDRs: []string{"not-a-cidr", "::ffff:10.0.0.0/80"},
+			want:                   "198.51.100.42",
+		},
+		{
+			name:         "untrusted direct peer cannot spoof forwarding header",
+			remoteAddr:   "203.0.113.9:4321",
+			forwardedFor: []string{"198.51.100.99"},
+			want:         "203.0.113.9",
+		},
+		{
+			name:         "malformed forwarded value falls back to direct peer",
+			remoteAddr:   "127.0.0.1:1234",
+			forwardedFor: []string{"198.51.100.20, not-an-ip"},
+			want:         "127.0.0.1",
+		},
+		{
+			name:       "direct IPv4 client",
+			remoteAddr: "192.0.2.10:1234",
+			want:       "192.0.2.10",
+		},
+		{
+			name:       "direct IPv6 client",
+			remoteAddr: "[2001:db8::1]:4321",
+			want:       "2001:db8::1",
+		},
+		{
+			name:       "non-IP peer identifier remains stable",
+			remoteAddr: "local-client",
+			want:       "local-client",
+		},
+		{
+			name: "missing peer has stable identity",
+			want: "unknown",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := httptest.NewRequest(http.MethodGet, "http://example.test/ws", nil)
+			r.RemoteAddr = tt.remoteAddr
+			for _, value := range tt.forwardedFor {
+				r.Header.Add("X-Forwarded-For", value)
+			}
+			trustedProxies := newTrustedProxySet(tt.additionalTrustedCIDRs)
+			if got := webSocketRemoteIP(r, trustedProxies); got != tt.want {
+				t.Errorf("webSocketRemoteIP(%q, %q) = %q, want %q", tt.remoteAddr, tt.forwardedFor, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHubPerIPLimitTreatsMappedAndDottedForwardedIPAsSameClient(t *testing.T) {
+	hub := newHubWithLimits(4, 1)
+	srv := httptest.NewServer(http.HandlerFunc(hub.ServeWS))
+	defer srv.Close()
+	wsURL := "ws" + srv.URL[4:]
+
+	first, _, err := websocket.DefaultDialer.Dial(wsURL, http.Header{
+		"X-Forwarded-For": []string{"::ffff:198.51.100.55"},
+	})
+	if err != nil {
+		t.Fatalf("mapped client dial: %v", err)
+	}
+	defer first.Close()
+	waitForClientCount(t, hub, 1)
+
+	excess, resp, err := websocket.DefaultDialer.Dial(wsURL, http.Header{
+		"X-Forwarded-For": []string{"198.51.100.55"},
+	})
+	if excess != nil {
+		excess.Close()
+	}
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if err == nil {
+		t.Fatal("dotted form bypassed per-IP limit established by mapped form")
+	}
+	if resp == nil || resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("equivalent client response = %#v, want 503 Service Unavailable", resp)
+	}
+}
+
+func TestHubCloseReleasesAdmissionForReuse(t *testing.T) {
+	hub := newHubWithLimits(1, 1)
+	srv := httptest.NewServer(http.HandlerFunc(hub.ServeWS))
+	defer srv.Close()
+	wsURL := "ws" + srv.URL[4:]
+
+	first, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("first dial: %v", err)
+	}
+	defer first.Close()
+	waitForClientCount(t, hub, 1)
+
+	hub.Close()
+	waitForClientCount(t, hub, 0)
+
+	second, resp, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		if resp != nil {
+			resp.Body.Close()
+		}
+		t.Fatalf("dial after Hub.Close: %v", err)
+	}
+	defer second.Close()
+	waitForClientCount(t, hub, 1)
+}
+
+func TestHubTrustedProxyConfigurationIsRaceSafe(t *testing.T) {
+	hub := newHubWithLimits(1000, 1000)
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		<-start
+		for i := 0; i < 100; i++ {
+			hub.SetTrustedProxyCIDRs([]string{"10.0.0.0/8"})
+			hub.SetTrustedProxyCIDRs([]string{"192.0.2.0/24"})
+		}
+	}()
+
+	for i := 0; i < 4; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			for j := 0; j < 100; j++ {
+				r := httptest.NewRequest(http.MethodGet, "http://example.test/ws", nil)
+				r.RemoteAddr = "10.0.0.1:443"
+				r.Header.Set("X-Forwarded-For", "198.51.100.1")
+				hub.ServeWS(httptest.NewRecorder(), r)
+			}
+		}()
+	}
+
+	close(start)
+	wg.Wait()
+}
+
+func TestHubLimitDoesNotMaskOriginRejection(t *testing.T) {
+	hub := newHubWithLimits(1, 1)
+	srv := httptest.NewServer(http.HandlerFunc(hub.ServeWS))
+	defer srv.Close()
+	wsURL := "ws" + srv.URL[4:]
+
+	first, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("first dial: %v", err)
+	}
+	defer first.Close()
+	waitForClientCount(t, hub, 1)
+
+	headers := http.Header{"Origin": []string{"https://evil.example.com"}}
+	conn, resp, err := websocket.DefaultDialer.Dial(wsURL, headers)
+	if conn != nil {
+		conn.Close()
+	}
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if err == nil {
+		t.Fatal("foreign-origin dial succeeded; want rejection")
+	}
+	if resp == nil || resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("foreign-origin response = %#v, want 403 Forbidden", resp)
+	}
+}
+
+func TestHubFailedUpgradeReleasesAdmissionSlot(t *testing.T) {
+	hub := newHubWithLimits(1, 1)
+	srv := httptest.NewServer(http.HandlerFunc(hub.ServeWS))
+	defer srv.Close()
+
+	resp, err := srv.Client().Get(srv.URL)
+	if err != nil {
+		t.Fatalf("plain HTTP request: %v", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("plain HTTP status = %d, want 400", resp.StatusCode)
+	}
+
+	conn, _, err := websocket.DefaultDialer.Dial("ws"+srv.URL[4:], nil)
+	if err != nil {
+		t.Fatalf("valid dial after failed upgrade: %v", err)
+	}
+	defer conn.Close()
+	waitForClientCount(t, hub, 1)
+}
 
 func TestHubBroadcast(t *testing.T) {
 	hub := NewHub()
