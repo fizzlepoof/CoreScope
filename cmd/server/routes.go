@@ -57,6 +57,12 @@ type Server struct {
 	memStatsCache    runtime.MemStats
 	memStatsCachedAt time.Time
 
+	// Bounds the opt-in O(tx+obs) /api/perf?mem=1 store scan to one request
+	// followed by a per-server cooldown.
+	memoryDiagnosticActive        atomic.Bool
+	memoryDiagnosticCooldownUntil atomic.Int64
+	memoryDiagnosticNow           func() time.Time
+
 	// Cached /api/stats response — recomputed at most once every 10s
 	statsMu       sync.Mutex
 	statsCache    *StatsResponse
@@ -157,18 +163,37 @@ func NewServer(db *DB, cfg *Config, hub *Hub) *Server {
 		cfg.applyListLimitsDefaults()
 	}
 	return &Server{
-		db:        db,
-		cfg:       cfg,
-		hub:       hub,
-		startedAt: time.Now(),
-		perfStats: NewPerfStats(),
-		version:   resolveVersion(),
-		commit:    resolveCommit(),
-		buildTime: resolveBuildTime(),
+		db:                  db,
+		cfg:                 cfg,
+		hub:                 hub,
+		startedAt:           time.Now(),
+		perfStats:           NewPerfStats(),
+		version:             resolveVersion(),
+		commit:              resolveCommit(),
+		buildTime:           resolveBuildTime(),
+		memoryDiagnosticNow: time.Now,
 	}
 }
 
 const memStatsTTL = 5 * time.Second
+
+const memoryDiagnosticCooldown = 30 * time.Second
+
+func (s *Server) beginMemoryDiagnostic() bool {
+	if !s.memoryDiagnosticActive.CompareAndSwap(false, true) {
+		return false
+	}
+	if s.memoryDiagnosticNow().UnixNano() < s.memoryDiagnosticCooldownUntil.Load() {
+		s.memoryDiagnosticActive.Store(false)
+		return false
+	}
+	return true
+}
+
+func (s *Server) finishMemoryDiagnostic() {
+	s.memoryDiagnosticCooldownUntil.Store(s.memoryDiagnosticNow().Add(memoryDiagnosticCooldown).UnixNano())
+	s.memoryDiagnosticActive.Store(false)
+}
 
 // getMemStats returns cached runtime.MemStats, refreshing at most every 5 seconds.
 // runtime.ReadMemStats() stops the world; caching prevents per-request GC pauses.
@@ -989,6 +1014,16 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlePerf(w http.ResponseWriter, r *http.Request) {
+	wantsMemoryDiagnostic := s.store != nil && r.URL.Query().Get("mem") == "1"
+	if wantsMemoryDiagnostic {
+		if !s.beginMemoryDiagnostic() {
+			w.Header().Set("Retry-After", strconv.Itoa(int(memoryDiagnosticCooldown/time.Second)))
+			writeError(w, http.StatusTooManyRequests, "memory diagnostic already in progress")
+			return
+		}
+		defer s.finishMemoryDiagnostic()
+	}
+
 	// Copy perfStats under lock to avoid data races
 	s.perfStats.mu.Lock()
 	type epSnapshot struct {
@@ -1070,7 +1105,7 @@ func (s *Server) handlePerf(w http.ResponseWriter, r *http.Request) {
 	// requested so the hot /api/perf path stays cheap.
 	var memBreakdown *StoreMemoryBreakdown
 	var breakdownNote string
-	if s.store != nil && r.URL.Query().Get("mem") == "1" {
+	if wantsMemoryDiagnostic {
 		memBreakdown = s.store.GetStoreMemoryBreakdown()
 		breakdownNote = memBreakdownNote
 	}
