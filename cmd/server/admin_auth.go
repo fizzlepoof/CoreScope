@@ -343,7 +343,7 @@ func (s *Server) handleChangePassword(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, admindb.ErrInvalidCredentials):
 			writeError(w, http.StatusUnauthorized, "current password is incorrect")
-		case errors.Is(err, admindb.ErrPasswordTooShort):
+		case errors.Is(err, admindb.ErrPasswordTooShort), errors.Is(err, admindb.ErrPasswordTooLong):
 			writeError(w, http.StatusBadRequest, err.Error())
 		default:
 			log.Printf("[admin-auth] ChangePassword error: %v", err)
