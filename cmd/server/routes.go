@@ -253,6 +253,9 @@ func (s *Server) RegisterRoutes(r *mux.Router) {
 	// comment). Plain JSON string array, same shape as regions/list, for
 	// integrations that just want to know what's configured.
 	r.HandleFunc("/api/config/hash-regions", s.handleConfigHashRegions).Methods("GET")
+	// Structured scope metadata powers the public Region Scope Helper while
+	// writes remain protected under /api/admin/hash-regions.
+	r.HandleFunc("/api/config/hash-region-definitions", s.handleConfigHashRegionDefinitions).Methods("GET")
 	r.HandleFunc("/api/config/theme", s.handleConfigTheme).Methods("GET")
 	r.HandleFunc("/api/config/map", s.handleConfigMap).Methods("GET")
 	r.HandleFunc("/api/config/geo-filter", s.handleConfigGeoFilter).Methods("GET")
@@ -658,6 +661,22 @@ func (s *Server) handleConfigHashRegions(w http.ResponseWriter, r *http.Request)
 		regions = []string{} // avoid serializing "null" for an empty list
 	}
 	writeJSON(w, regions)
+}
+
+// handleConfigHashRegionDefinitions exposes saved hierarchy, descriptions,
+// and validated boundaries for the public Region Scope Helper.
+func (s *Server) handleConfigHashRegionDefinitions(w http.ResponseWriter, r *http.Request) {
+	if s.admin == nil {
+		writeJSON(w, []hashRegionDefinitionPayload{})
+		return
+	}
+	definitions, err := s.admin.ListHashRegionDefinitions()
+	if err != nil {
+		log.Printf("[hash-regions] load definitions failed: %v", err)
+		writeJSON(w, []hashRegionDefinitionPayload{})
+		return
+	}
+	writeJSON(w, hashRegionDefinitionPayloads(definitions))
 }
 
 func (s *Server) handleConfigTheme(w http.ResponseWriter, r *http.Request) {
@@ -4005,16 +4024,16 @@ const (
 	maxHashRegionNameLen = 64
 )
 
-// handleAdminGetHashRegions returns the current hashRegions list from
-// admin.db's hash_regions table.
+// handleAdminGetHashRegions returns the current hashRegions list and its
+// operator-managed hierarchy/boundary metadata from admin.db.
 func (s *Server) handleAdminGetHashRegions(w http.ResponseWriter, r *http.Request) {
-	regions, err := s.admin.ListHashRegions()
+	definitions, err := s.admin.ListHashRegionDefinitions()
 	if err != nil {
 		log.Printf("[hash-regions] load failed: %v", err)
 		writeError(w, http.StatusInternalServerError, "failed to read hash regions")
 		return
 	}
-	writeJSON(w, map[string]interface{}{"hashRegions": regions})
+	writeJSON(w, newHashRegionDefinitionsResponse(definitions))
 }
 
 // normalizeHashRegionName trims and adds a leading "#" if missing —
@@ -4039,12 +4058,29 @@ func (s *Server) handleAdminPutHashRegions(w http.ResponseWriter, r *http.Reques
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MB cap
 
 	var body struct {
-		HashRegions []string `json:"hashRegions"`
+		HashRegions           []string                       `json:"hashRegions"`
+		HashRegionDefinitions *[]hashRegionDefinitionPayload `json:"hashRegionDefinitions"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
+
+	if body.HashRegionDefinitions != nil {
+		definitions, err := cleanHashRegionDefinitions(*body.HashRegionDefinitions)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if err := s.admin.ReplaceHashRegionDefinitions(definitions); err != nil {
+			log.Printf("[hash-regions] save definitions failed: %v", err)
+			writeError(w, http.StatusInternalServerError, "failed to save hash regions")
+			return
+		}
+		writeJSON(w, newHashRegionDefinitionsResponse(definitions))
+		return
+	}
+
 	if len(body.HashRegions) > maxHashRegionEntries {
 		writeError(w, http.StatusBadRequest, fmt.Sprintf("too many hash regions (max %d)", maxHashRegionEntries))
 		return

@@ -36,23 +36,24 @@ type paramMeta struct {
 func routeDescriptions() map[string]routeMeta {
 	return map[string]routeMeta{
 		// Config
-		"GET /api/config/cache":        {Summary: "Get cache configuration", Tag: "config"},
-		"GET /api/config/client":       {Summary: "Get client configuration", Tag: "config"},
-		"GET /api/config/regions":      {Summary: "Get configured IATA regions", Tag: "config"},
-		"GET /api/config/regions/list": {Summary: "Get IATA region names as a JSON string array", Description: "Flattened, deduplicated, alphabetically sorted list of IATA region display names. Intended for simple integrations (e.g. a Discord bot) that just need to know what IATA regions currently exist.", Tag: "config"},
-		"GET /api/config/hash-regions": {Summary: "Get hashRegions as a JSON string array", Description: "Public, unauthenticated counterpart to GET /api/admin/hash-regions. Returns the configured MeshCore transport-scope names (e.g. \"#eu\") as a plain JSON array, alphabetically sorted.", Tag: "config"},
-		"GET /api/config/theme":        {Summary: "Get theme configuration", Description: "Returns color maps, CSS variables, and theme defaults.", Tag: "config"},
-		"GET /api/config/map":          {Summary: "Get map configuration", Tag: "config"},
-		"GET /api/config/geo-filter":   {Summary: "Get geo-filter configuration", Tag: "config"},
+		"GET /api/config/cache":                   {Summary: "Get cache configuration", Tag: "config"},
+		"GET /api/config/client":                  {Summary: "Get client configuration", Tag: "config"},
+		"GET /api/config/regions":                 {Summary: "Get configured IATA regions", Tag: "config"},
+		"GET /api/config/regions/list":            {Summary: "Get IATA region names as a JSON string array", Description: "Flattened, deduplicated, alphabetically sorted list of IATA region display names. Intended for simple integrations (e.g. a Discord bot) that just need to know what IATA regions currently exist.", Tag: "config"},
+		"GET /api/config/hash-regions":            {Summary: "Get hashRegions as a JSON string array", Description: "Public, unauthenticated counterpart to GET /api/admin/hash-regions. Returns the configured MeshCore transport-scope names (e.g. \"#eu\") as a plain JSON array, alphabetically sorted.", Tag: "config"},
+		"GET /api/config/hash-region-definitions": {Summary: "Get hash-region hierarchy and boundaries", Description: "Returns the saved MeshCore scope names, parent relationships, administrator descriptions, and validated GeoJSON Polygon or MultiPolygon boundaries used by the Region Scope Helper.", Tag: "config"},
+		"GET /api/config/theme":                   {Summary: "Get theme configuration", Description: "Returns color maps, CSS variables, and theme defaults.", Tag: "config"},
+		"GET /api/config/map":                     {Summary: "Get map configuration", Tag: "config"},
+		"GET /api/config/geo-filter":              {Summary: "Get geo-filter configuration", Tag: "config"},
 
 		// Admin / system
-		"GET /api/health":         {Summary: "Health check", Description: "Returns server health, uptime, and memory stats.", Tag: "admin"},
-		"GET /api/stats":          {Summary: "Network statistics", Description: "Returns aggregate stats (node counts, packet counts, observer counts). Cached for 10s.", Tag: "admin"},
-		"GET /api/perf":           {Summary: "Performance statistics", Description: "Returns per-endpoint request timing and slow query log.", Tag: "admin"},
-		"GET /api/mqtt/status":    {Summary: "MQTT source status", Description: "Returns per-MQTT-source connection state and counters (lastConnectUnix, lastPacketUnix, packetsTotal, etc.). Broker URL passwords are masked. Sourced from the ingestor stats file; empty list when unavailable. (#1043)", Tag: "admin"},
-		"GET /api/scope-coverage": {Summary: "Hash-region coverage areas", Description: "Groups repeaters/rooms by the MeshCore hash regions they've actually relayed traffic for — computed directly from transmissions.scope_name + observations.resolved_path (non-ADVERT packets only) — and returns a convex hull of each region's member node positions. An inferred coverage area, not an authoritative boundary (hash regions carry no shape of their own). A node's own self-broadcast scope (default_scope) is NOT used — only relay evidence. Excludes blacklisted/hidden/foreign-flagged nodes. Cached 30s.", Tag: "admin"},
+		"GET /api/health":               {Summary: "Health check", Description: "Returns server health, uptime, and memory stats.", Tag: "admin"},
+		"GET /api/stats":                {Summary: "Network statistics", Description: "Returns aggregate stats (node counts, packet counts, observer counts). Cached for 10s.", Tag: "admin"},
+		"GET /api/perf":                 {Summary: "Performance statistics", Description: "Returns per-endpoint request timing and slow query log.", Tag: "admin"},
+		"GET /api/mqtt/status":          {Summary: "MQTT source status", Description: "Returns per-MQTT-source connection state and counters (lastConnectUnix, lastPacketUnix, packetsTotal, etc.). Broker URL passwords are masked. Sourced from the ingestor stats file; empty list when unavailable. (#1043)", Tag: "admin"},
+		"GET /api/scope-coverage":       {Summary: "Hash-region coverage areas", Description: "Groups repeaters/rooms by the MeshCore hash regions they've actually relayed traffic for — computed directly from transmissions.scope_name + observations.resolved_path (non-ADVERT packets only) — and returns a convex hull of each region's member node positions. An inferred coverage area, not an authoritative boundary (hash regions carry no shape of their own). A node's own self-broadcast scope (default_scope) is NOT used — only relay evidence. Excludes blacklisted/hidden/foreign-flagged nodes. Cached 30s.", Tag: "admin"},
 		"GET /api/scope-coverage/nodes": {Summary: "Hash-region node membership", Description: "Sibling to /api/scope-coverage: instead of each region's aggregate coverage shape, returns for every node with a GPS fix the list of hash region(s) it has actually relayed traffic for. A node sitting on a region boundary can belong to more than one region. Same relay-evidence semantics and blacklist/hidden-name filtering as /api/scope-coverage. Cached 30s.", Tag: "admin"},
-		"POST /api/perf/reset":    {Summary: "Reset performance stats", Tag: "admin", Auth: true},
+		"POST /api/perf/reset":          {Summary: "Reset performance stats", Tag: "admin", Auth: true},
 		// "POST /api/admin/prune" removed in #1283 (ingestor owns prune).
 		"GET /api/debug/affinity": {Summary: "Debug neighbor affinity scores", Tag: "admin", Auth: true},
 		"GET /api/backup":         {Summary: "Download SQLite backup", Description: "Streams a consistent SQLite snapshot of the analyzer DB (VACUUM INTO). Response is application/octet-stream with attachment filename corescope-backup-<unix>.db.", Tag: "admin", Auth: true},
@@ -82,8 +83,8 @@ func routeDescriptions() map[string]routeMeta {
 		// Hash-region management: MeshCore transport-scope names (e.g.
 		// "#eu") the ingestor hashes to derive HMAC scope-matching keys.
 		// Distinct from /api/admin/regions above (IATA display names).
-		"GET /api/admin/hash-regions": {Summary: "Get hashRegions for editing", Description: "Returns the current hashRegions list from admin.db's hash_regions table.", Tag: "admin", Auth: true},
-		"PUT /api/admin/hash-regions": {Summary: "Replace the hashRegions list", Description: "Full-replace: the request body's hashRegions list becomes the new content of admin.db's hash_regions table. Takes effect within ~15s — the ingestor holds a read-only connection to admin.db and re-checks this table on its prune-request-queue ticker, hot-swapping its derived HMAC keys, no restart needed.", Tag: "admin", Auth: true},
+		"GET /api/admin/hash-regions": {Summary: "Get hashRegions for editing", Description: "Returns the current hashRegions string list plus structured hashRegionDefinitions containing saved parent relationships, descriptions, and GeoJSON boundaries.", Tag: "admin", Auth: true},
+		"PUT /api/admin/hash-regions": {Summary: "Replace hashRegions or structured definitions", Description: "Full-replace: accepts the legacy hashRegions string list or hashRegionDefinitions with hierarchy, descriptions, and validated GeoJSON Polygon/MultiPolygon geometry. Legacy name-only updates preserve metadata for retained names. Changes to scope names take effect in the ingestor within ~15s.", Tag: "admin", Auth: true},
 
 		// Packets
 		"GET /api/packets": {Summary: "List packets", Description: "Returns decoded packets with filtering, sorting, and pagination.", Tag: "packets",
