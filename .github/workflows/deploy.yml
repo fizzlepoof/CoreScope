@@ -92,6 +92,9 @@ jobs:
           node scripts/check-css-vars.js
           node scripts/test-check-css-vars.js
 
+      - name: Validate canonical test manifest
+        run: npm run test:manifest
+
       - name: Run JS unit tests (packet-filter)
         run: |
           set -e

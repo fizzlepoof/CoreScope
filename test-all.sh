@@ -7,6 +7,9 @@ echo "  CoreScope — Test Suite"
 echo "═══════════════════════════════════════"
 echo ""
 
+# Canonical inventory guard (keeps local and CI test metadata synchronized)
+npm run test:manifest
+
 # Unit tests (deterministic, fast)
 echo "── Unit Tests ──"
 node test-packet-filter.js
