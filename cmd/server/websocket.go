@@ -75,8 +75,8 @@ func (h *Hub) checkOrigin(r *http.Request) bool {
 
 // Client is a single WebSocket connection.
 type Client struct {
-	conn     *websocket.Conn
-	send     chan []byte
+	conn      *websocket.Conn
+	send      chan []byte
 	closeOnce sync.Once
 }
 
@@ -151,7 +151,9 @@ func (h *Hub) Broadcast(msg interface{}) {
 
 // ServeWS handles the WebSocket upgrade and runs the client.
 func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
-	conn, err := h.upgrader.Upgrade(w, r, nil)
+	// gorilla/websocket writes the 101 response directly after hijacking the
+	// connection, so pass through headers already installed by middleware.
+	conn, err := h.upgrader.Upgrade(w, r, w.Header().Clone())
 	if err != nil {
 		log.Printf("[ws] upgrade error: %v", err)
 		return
