@@ -41,8 +41,8 @@ function fixture() {
   return { repoRoot, manifest: { version: 1, tests: [entry()] } };
 }
 
-function errorsFor(manifest, repoRoot, trackedRootTests = ['test-example.js']) {
-  return validateManifest(manifest, { repoRoot, trackedRootTests });
+function errorsFor(manifest, repoRoot, trackedRootTests = ['test-example.js'], options = {}) {
+  return validateManifest(manifest, { repoRoot, trackedRootTests, ...options });
 }
 
 test('accepts a complete valid inventory', () => {
@@ -394,6 +394,78 @@ test('requires status to reflect references across the five declared surfaces', 
   assert(errors.some(error => error.includes('must use status dormant because it is absent')));
 });
 
+test('uses the frozen legacy inventory after orchestration surfaces become generic', () => {
+  const { repoRoot, manifest } = fixture();
+  fs.writeFileSync(path.join(repoRoot, 'test-all.sh'), 'node scripts/tests/run-manifest.js\n');
+  const frozenInventory = {
+    profiles: { local: ['test-example.js'] },
+    orchestration: new Set(),
+    references: new Map([
+      ['package.json', new Set()],
+      ['test-all.sh', new Set(['test-example.js'])],
+      ['.github/workflows/deploy.yml', new Set()],
+      ['AGENTS.md', new Set()],
+      ['README.md', new Set()],
+    ]),
+  };
+  assert.deepStrictEqual(
+    errorsFor(manifest, repoRoot, ['test-example.js'], { frozenInventory }),
+    []
+  );
+});
+
+test('requires orchestration markers to exactly match the frozen inventory', () => {
+  const { repoRoot, manifest } = fixture();
+  const frozenInventory = {
+    profiles: { local: [] },
+    orchestration: new Set(['test-example.js']),
+    references: new Map([
+      ['package.json', new Set()],
+      ['test-all.sh', new Set(['test-example.js'])],
+      ['.github/workflows/deploy.yml', new Set()],
+      ['AGENTS.md', new Set()],
+      ['README.md', new Set()],
+    ]),
+  };
+  const errors = errorsFor(
+    manifest,
+    repoRoot,
+    ['test-example.js'],
+    { frozenInventory }
+  );
+  assert(errors.some(error => error.includes('orchestration marker must match')));
+});
+
+test('rejects drift in frozen execution profiles and captured commit metadata', () => {
+  const { repoRoot, manifest } = fixture();
+  const checkedIn = JSON.parse(fs.readFileSync(
+    path.resolve(__dirname, '../../tests/legacy-runner-inventory.json'),
+    'utf8'
+  ));
+  fs.mkdirSync(path.join(repoRoot, 'tests'));
+  const drifted = JSON.parse(JSON.stringify(checkedIn));
+  drifted.executedRootTests['local-package-and-test-all'].pop();
+  fs.writeFileSync(
+    path.join(repoRoot, 'tests/legacy-runner-inventory.json'),
+    JSON.stringify(drifted)
+  );
+  assert.throws(
+    () => errorsFor(manifest, repoRoot),
+    /does not match the frozen baseline/
+  );
+
+  drifted.executedRootTests = checkedIn.executedRootTests;
+  drifted.capturedAtCommit = '0000000000000000000000000000000000000000';
+  fs.writeFileSync(
+    path.join(repoRoot, 'tests/legacy-runner-inventory.json'),
+    JSON.stringify(drifted)
+  );
+  assert.throws(
+    () => errorsFor(manifest, repoRoot),
+    /capturedAtCommit must equal/
+  );
+});
+
 test('requires active status evidence sources to exactly match referencing surfaces', () => {
   const { repoRoot, manifest } = fixture();
   fs.writeFileSync(path.join(repoRoot, 'package.json'), JSON.stringify({
@@ -510,7 +582,7 @@ test('keeps Playwright tests e2e when they also launch child processes', () => {
   assert(!errors.some(error => error.includes('Playwright source must use suite e2e')));
 });
 
-test('wires manifest validation into npm, the local runner, and CI', () => {
+test('wires manifest validation and canonical suites into npm, the local wrapper, and CI', () => {
   const repoRoot = path.resolve(__dirname, '../..');
   const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
   const localRunner = fs.readFileSync(path.join(repoRoot, 'test-all.sh'), 'utf8');
@@ -518,10 +590,30 @@ test('wires manifest validation into npm, the local runner, and CI', () => {
 
   assert.strictEqual(
     packageJson.scripts['test:manifest'],
-    'node scripts/tests/validate-manifest.test.js && node scripts/tests/validate-manifest.js'
+    'node scripts/tests/validate-manifest.test.js && node scripts/tests/run-manifest.test.js && node scripts/tests/validate-manifest.js'
   );
-  assert(localRunner.includes('npm run test:manifest'));
+  assert.strictEqual(packageJson.scripts.test,
+    'npx c8 --reporter=text --reporter=text-summary sh test-all.sh');
+  assert.strictEqual(packageJson.scripts['test:unit'],
+    'node scripts/tests/run-manifest.js --profile legacy-test-unit');
+  assert.strictEqual(packageJson.scripts['test:unit:all-active'],
+    'node scripts/tests/run-manifest.js --suite unit --status active');
+  assert.strictEqual(packageJson.scripts['test:integration'],
+    'node scripts/tests/run-manifest.js --suite integration --status active');
+  assert.strictEqual(packageJson.scripts['test:e2e'],
+    'node scripts/tests/run-manifest.js --suite e2e --status active');
+  assert.strictEqual(packageJson.scripts['test:ci'],
+    'node scripts/tests/run-manifest.js --profile ci-unit-and-integration-phase');
+  assert.strictEqual(packageJson.scripts['test:ci:e2e'],
+    'node scripts/tests/run-manifest.js --profile ci-e2e-phase');
+  assert.strictEqual(packageJson.scripts['test:audit:all-active'],
+    'node scripts/tests/run-manifest.js --status active --list');
+  assert(localRunner.includes('node scripts/tests/run-manifest.js --profile local-package-and-test-all'));
+  assert(!/^\s*(?:node|sh|bash)\s+test[^\s]*\.(?:js|sh)/m.test(localRunner),
+    'compatibility wrapper must not contain a second root-test inventory');
   assert(workflow.includes('npm run test:manifest'));
+  assert(workflow.includes('npm run test:ci'));
+  assert(workflow.includes('npm run test:ci:e2e'));
 });
 
 test('accepts the checked-in manifest and all tracked root test runners', () => {

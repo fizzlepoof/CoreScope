@@ -368,6 +368,7 @@
         "flags": []
       },
       "status": "active",
+      "orchestration": true,
       "statusEvidence": [
         {
           "source": "package.json",
@@ -377,7 +378,7 @@
       "classificationEvidence": [
         {
           "source": "test-all.sh",
-          "detail": "orchestrates the repository Node test set as a multi-runner integration surface"
+          "detail": "compatibility wrapper around the canonical manifest runner; excluded from child execution to prevent recursion"
         }
       ]
     },

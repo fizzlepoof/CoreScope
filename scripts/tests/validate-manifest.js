@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 
 const VALID_SUITES = new Set(['unit', 'integration', 'e2e']);
@@ -21,6 +22,13 @@ const STATUS_SURFACES = [
 const DORMANT_EVIDENCE_DETAIL =
   'not listed in package.json, test-all.sh, .github/workflows/deploy.yml, AGENTS.md, or README.md';
 const NO_INTEGRATION_EVIDENCE = /\b(?:unit|isolated|without integration|no integration)\b/i;
+const FROZEN_INVENTORY_COMMIT = '0206b84c00c08bd30d13ef79b767614b55aa04ce';
+const FROZEN_PROFILE_DIGESTS = new Map([
+  ['ci-e2e-phase', '3d3f79731bb58b723d8f23a2fa428fb9b2df360c0941ba47718c7438702a0d75'],
+  ['ci-unit-and-integration-phase', '22930740a0c192eb7b12efca345172d2def5ac1482dc116e848005e4bdd3d88f'],
+  ['legacy-test-unit', 'deee9658f1e9dd6cacad06a5136a72eb945c074ed2743f7f275ffef096bb6bb3'],
+  ['local-package-and-test-all', '923b599550c2b7ce0fea68de475e981c1d6f38902e6c2d722407d672631584fe'],
+]);
 
 function trackedRootTests(repoRoot) {
   const output = execFileSync(
@@ -190,6 +198,56 @@ function readStatusSurfaces(repoRoot) {
   }));
 }
 
+function readFrozenInventory(repoRoot) {
+  const inventoryPath = path.join(repoRoot, 'tests/legacy-runner-inventory.json');
+  try {
+    const inventory = JSON.parse(fs.readFileSync(inventoryPath, 'utf8'));
+    if (inventory.version !== 1 || !inventory.historicalStatusReferences ||
+        !Array.isArray(inventory.orchestrationRootTests) ||
+        !inventory.executedRootTests || typeof inventory.executedRootTests !== 'object' ||
+        Array.isArray(inventory.executedRootTests)) {
+      throw new Error('unsupported or incomplete inventory');
+    }
+    if (inventory.capturedAtCommit !== FROZEN_INVENTORY_COMMIT) {
+      throw new Error(`capturedAtCommit must equal ${FROZEN_INVENTORY_COMMIT}`);
+    }
+    const profileNames = Object.keys(inventory.executedRootTests).sort();
+    const expectedProfileNames = [...FROZEN_PROFILE_DIGESTS.keys()].sort();
+    if (!sameStringSet(profileNames, expectedProfileNames)) {
+      throw new Error('executedRootTests profile names do not match the frozen baseline');
+    }
+    for (const [profileName, expectedDigest] of FROZEN_PROFILE_DIGESTS) {
+      const paths = inventory.executedRootTests[profileName];
+      if (!Array.isArray(paths) || paths.some(testPath =>
+        typeof testPath !== 'string' || !/^test[^/\\]*\.(?:js|sh)$/.test(testPath))) {
+        throw new Error(`invalid executedRootTests.${profileName}`);
+      }
+      if (new Set(paths).size !== paths.length) {
+        throw new Error(`duplicate path in executedRootTests.${profileName}`);
+      }
+      const digest = crypto.createHash('sha256').update(`${paths.join('\n')}\n`).digest('hex');
+      if (digest !== expectedDigest) {
+        throw new Error(`executedRootTests.${profileName} does not match the frozen baseline`);
+      }
+    }
+    const references = new Map(STATUS_SURFACES.map(surface => {
+      const paths = inventory.historicalStatusReferences[surface];
+      if (!Array.isArray(paths) || paths.some(testPath => typeof testPath !== 'string')) {
+        throw new Error(`invalid historicalStatusReferences.${surface}`);
+      }
+      return [surface, new Set(paths)];
+    }));
+    return {
+      profiles: inventory.executedRootTests,
+      references,
+      orchestration: new Set(inventory.orchestrationRootTests),
+    };
+  } catch (error) {
+    if (error.code === 'ENOENT') return null;
+    throw new Error(`cannot read frozen test inventory: ${error.message}`);
+  }
+}
+
 function sameStringSet(left, right) {
   return left.length === right.length &&
     new Set(left).size === left.length &&
@@ -232,7 +290,10 @@ function validateManifest(manifest, options = {}) {
   const tracked = (options.trackedRootTests || trackedRootTests(repoRoot)).slice().sort();
   const trackedSet = new Set(tracked);
   const packages = declaredPackages(repoRoot);
-  const statusSurfaces = readStatusSurfaces(repoRoot);
+  const frozenInventory = options.frozenInventory !== undefined
+    ? options.frozenInventory
+    : readFrozenInventory(repoRoot);
+  const statusSurfaces = frozenInventory ? null : readStatusSurfaces(repoRoot);
   const errors = [];
 
   if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
@@ -310,9 +371,19 @@ function validateManifest(manifest, options = {}) {
     }
 
     if (typeof item.path === 'string' && VALID_STATUSES.has(item.status)) {
-      const referencingSurfaces = STATUS_SURFACES.filter(
-        surface => statusSurfaces.get(surface).includes(item.path)
+      const referencingSurfaces = STATUS_SURFACES.filter(surface =>
+        frozenInventory
+          ? frozenInventory.references.get(surface).has(item.path)
+          : statusSurfaces.get(surface).includes(item.path)
       );
+      if (frozenInventory) {
+        const expectedOrchestration = frozenInventory.orchestration.has(item.path);
+        if ((item.orchestration === true) !== expectedOrchestration) {
+          errors.push(`${prefix}.orchestration marker must match the frozen inventory`);
+        }
+      } else if (item.orchestration !== undefined && typeof item.orchestration !== 'boolean') {
+        errors.push(`${prefix}.orchestration must be boolean when present`);
+      }
       if (item.status === 'active') {
         if (referencingSurfaces.length === 0) {
           errors.push(`${prefix} must use status dormant because it is absent from all declared surfaces`);
@@ -384,6 +455,23 @@ function validateManifest(manifest, options = {}) {
   listed.forEach(testPath => {
     if (!trackedSet.has(testPath)) errors.push(`untracked root test: ${testPath}`);
   });
+  if (frozenInventory) {
+    const manifestByPath = new Map(manifest.tests
+      .filter(item => item && typeof item.path === 'string')
+      .map(item => [item.path, item]));
+    for (const [profileName, paths] of Object.entries(frozenInventory.profiles)) {
+      for (const testPath of paths) {
+        const item = manifestByPath.get(testPath);
+        if (!item) {
+          errors.push(`execution profile ${profileName} references missing manifest path: ${testPath}`);
+        } else if (item.status !== 'active') {
+          errors.push(`execution profile ${profileName} references non-active test: ${testPath}`);
+        } else if (item.orchestration) {
+          errors.push(`execution profile ${profileName} references orchestration test: ${testPath}`);
+        }
+      }
+    }
+  }
 
   return errors;
 }
