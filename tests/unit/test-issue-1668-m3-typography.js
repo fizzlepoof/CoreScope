@@ -1,5 +1,5 @@
 /**
- * test-issue-1668-m3-typography.js
+ * tests/unit/test-issue-1668-m3-typography.js
  *
  * Milestone 3 of #1668 — enforce a readable typography floor on chips,
  * badges, table cells and meta labels flagged by the M1 a11y audit as
@@ -15,12 +15,13 @@
  */
 
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-const repoRoot = __dirname;
+const repoRoot = repositoryRoot;
 const cssPath = path.join(repoRoot, 'public', 'style.css');
 const audioLabJsPath = path.join(repoRoot, 'public', 'audio-lab.js');
 const css = fs.readFileSync(cssPath, 'utf8');

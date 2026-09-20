@@ -1,5 +1,5 @@
 /**
- * test-issue-1668-m4-per-route.js
+ * tests/unit/test-issue-1668-m4-per-route.js
  *
  * Milestone 4 of #1668 — per-route polish. Targets the route-specific
  * residuals that M2 (color tokens) and M3 (typography floor) didn't catch:
@@ -19,12 +19,13 @@
  */
 
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-const repoRoot = __dirname;
+const repoRoot = repositoryRoot;
 const cssPath = path.join(repoRoot, 'public', 'style.css');
 const liveCssPath = path.join(repoRoot, 'public', 'live.css');
 const audioLabJsPath = path.join(repoRoot, 'public', 'audio-lab.js');

@@ -2856,7 +2856,7 @@ button.ch-item.ch-item-encrypted .ch-badge { filter: grayscale(0.6); }
    against page bg). Cell bgs need their own contrast budget vs #fff fg.
    taken:    #22c55e (2.28:1) -> #15803d (green-700, 5.02:1)
    possible: #eab308 (1.92:1) -> #854d0e (yellow-800, 6.85:1)
-   See test-issue-1668-m4-per-route.js hash-cell contrast block. */
+   See tests/unit/test-issue-1668-m4-per-route.js hash-cell contrast block. */
 .hash-cell-taken    { background: #15803d; color: #fff; font-size: 12px; font-weight: 700; }
 .hash-cell-possible { background: #854d0e; color: #fff; font-size: 12px; font-weight: 700; }
 .hash-cell-collision { color: #fff; font-size: 12px; font-weight: 700; }
