@@ -1,5 +1,6 @@
 /* Unit tests for node aging system */
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
@@ -7,7 +8,7 @@ const assert = require('assert');
 // Load roles.js in a sandboxed context
 const ctx = { window: {}, console, Date, Infinity, document: { readyState: 'complete', createElement: () => ({ id: '' }), head: { appendChild: () => {} }, getElementById: () => null, addEventListener: () => {} }, fetch: () => Promise.resolve({ json: () => Promise.resolve({}) }) };
 vm.createContext(ctx);
-vm.runInContext(fs.readFileSync('public/roles.js', 'utf8'), ctx);
+vm.runInContext(fs.readFileSync(fromRepositoryRoot('public', 'roles.js'), 'utf8'), ctx);
 
 // The IIFE assigns to window.*, but the functions reference HEALTH_THRESHOLDS as a bare global
 // In the VM context, window.X doesn't create a global X, so we need to copy them
@@ -63,7 +64,7 @@ test('0 lastSeenMs → stale', () => assert.strictEqual(getNodeStatus('repeater'
 
 // === Bug check: renderRows uses last_seen instead of last_heard || last_seen ===
 console.log('\n=== BUG CHECK ===');
-const nodesJs = fs.readFileSync('public/nodes.js', 'utf8');
+const nodesJs = fs.readFileSync(fromRepositoryRoot('public', 'nodes.js'), 'utf8');
 const renderRowsMatch = nodesJs.match(/const status = getNodeStatus\(n\.role[^;]+/);
 if (renderRowsMatch) {
   const line = renderRowsMatch[0];

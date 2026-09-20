@@ -1,4 +1,5 @@
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 // Unit test for #6: pan/zoom coverage redraws must be debounced so dragging the
 // map fires at most one /api/...rx-coverage request per settle, not one per
 // moveend. We load node-reach-coverage.js in a vm sandbox with controllable
@@ -9,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const code = fs.readFileSync(path.join(__dirname, 'public', 'node-reach-coverage.js'), 'utf8');
+const code = fs.readFileSync(fromRepositoryRoot('public', 'node-reach-coverage.js'), 'utf8');
 
 // Controllable timer queue.
 let now = 0;

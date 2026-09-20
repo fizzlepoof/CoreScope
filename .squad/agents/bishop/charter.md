@@ -10,7 +10,7 @@ Unit tests, Playwright E2E, coverage gates, and quality assurance for CoreScope.
 
 ## Responsibilities
 
-- Unit tests: test-packet-filter.js, test-aging.js, test-decoder.js, test-decoder-spec.js, test-server-helpers.js, test-server-routes.js, test-packet-store.js, test-db.js, test-frontend-helpers.js, test-regional-filter.js, test-regional-integration.js, test-live-dedup.js
+- Unit tests: test-packet-filter.js, tests/unit/test-aging.js, test-decoder.js, test-decoder-spec.js, test-server-helpers.js, test-server-routes.js, test-packet-store.js, test-db.js, test-frontend-helpers.js, test-regional-filter.js, test-regional-integration.js, test-live-dedup.js
 - Playwright E2E: test-e2e-playwright.js (8 browser tests, default localhost:3000)
 - E2E tools: tools/e2e-test.js, tools/frontend-test.js
 - Coverage: Backend 85%+ (c8), Frontend 42%+ (Istanbul + nyc). Both only go up.

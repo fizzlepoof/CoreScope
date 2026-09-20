@@ -1,4 +1,5 @@
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 // Unit test for #14: the mobile RX coverage leaderboard must HTML-escape the
 // pubkey it interpolates into the row markup (data-rx="..." and the truncated
 // fallback label), not only the name. A no-ACL broker / pre-validation rows
@@ -13,7 +14,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const src = fs.readFileSync(path.join(__dirname, 'public', 'rx-coverage.js'), 'utf8');
+const src = fs.readFileSync(fromRepositoryRoot('public', 'rx-coverage.js'), 'utf8');
 
 // Slice from `var nm = o.name ...` through the end of the returned row string.
 const startMarker = 'var nm = o.name ? escapeHtml(o.name)';

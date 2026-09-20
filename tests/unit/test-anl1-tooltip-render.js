@@ -32,6 +32,7 @@
  *   (4) Source no longer contains `tip.innerHTML = td.dataset.tip`.
  */
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const assert = require('assert');
 const vm = require('vm');
@@ -42,7 +43,7 @@ function test(name, fn) {
   catch (e) { failed++; console.log(`  ❌ ${name}: ${e.message}`); }
 }
 
-const SRC = fs.readFileSync('public/analytics.js', 'utf8');
+const SRC = fs.readFileSync(fromRepositoryRoot('public', 'analytics.js'), 'utf8');
 
 // --------------------------------------------------------------------------
 // Minimal DOM mock — enough to exercise createElement / appendChild /

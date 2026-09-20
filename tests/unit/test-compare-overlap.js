@@ -1,5 +1,6 @@
 /* Unit tests for compare.js asymmetric overlap stats — Fixes #671 */
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
@@ -40,7 +41,7 @@ function makeSandbox() {
 
 const ctx = makeSandbox();
 const sandbox = vm.createContext(ctx);
-const compareSrc = fs.readFileSync(__dirname + '/public/compare.js', 'utf8');
+const compareSrc = fs.readFileSync(fromRepositoryRoot('public', 'compare.js'), 'utf8');
 vm.runInContext(compareSrc, sandbox);
 
 console.log('\ncompare.js asymmetric overlap stats (#671):');

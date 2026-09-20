@@ -20,6 +20,7 @@
  *   every sink test flips red.
  */
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const assert = require('assert');
 const vm = require('vm');
@@ -54,7 +55,7 @@ function assertNoXss(html, label) {
 // We don't use the giant test-frontend-helpers sandbox — just extract the
 // escapeHtml function definition and evaluate it standalone.
 function loadEscapeHtml() {
-  const src = fs.readFileSync('public/app.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'app.js'), 'utf8');
   const m = src.match(/\/\* Global escapeHtml [\s\S]*?\nfunction escapeHtml\(s\) \{[\s\S]*?\n\}/);
   if (!m) throw new Error('could not locate global escapeHtml in public/app.js');
   const ctx = { escapeHtml: null };
@@ -69,7 +70,7 @@ const escapeHtml = loadEscapeHtml();
 // group that contains the inner of the backtick-delimited template.
 // Evaluates it with the supplied bindings + escapeHtml in scope.
 function evalTemplate(srcFile, regex, bindings) {
-  const src = fs.readFileSync(srcFile, 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot(srcFile), 'utf8');
   const m = src.match(regex);
   if (!m) throw new Error(`template not found in ${srcFile} via ${regex}`);
   const tpl = m[1];
@@ -120,7 +121,7 @@ test('escapeHtml(null/undefined) → empty string', () => {
 console.log('\n=== B. safeEsc identity-passthrough pin (gates public/map.js:30) ===');
 
 test('public/map.js safeEsc fallback is NOT identity (returns s)', () => {
-  const src = fs.readFileSync('public/map.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'map.js'), 'utf8');
   // Look up the safeEsc declaration block and the inline fallback function body.
   const m = src.match(/const safeEsc[\s\S]{0,400}?function\s*\(s\)\s*\{([\s\S]*?)\}/);
   assert.ok(m, 'safeEsc fallback function not found in map.js');
@@ -198,7 +199,7 @@ test('packets.js: grouped observer cell escapes observer name', () => {
   // Capture the isSingle ternary on the grouped header row.
   // Master form: `${isSingle ? truncate(obsNameOnly(headerObserverId), 16) + obsIataBadge(p) : ...}`
   // Fixed form:  `${isSingle ? escapeHtml(truncate(obsNameOnly(headerObserverId), 16)) + obsIataBadge(p) : ...}`
-  const src = fs.readFileSync('public/packets.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'packets.js'), 'utf8');
   const m = src.match(
     /(<td class="col-observer"[^`]*?headerObserverId[^`]*?groupedObserverIataBadgesHtml\(p\)\}<\/td>)/
   );
@@ -223,7 +224,7 @@ test('packets.js: flat observer cell escapes observer name', () => {
   // Capture the flat observer cell — the OUTER form, with or without
   // escapeHtml: `${truncate(obsNameOnly(p.observer_id), 16)}${obsIataBadge(p)}`
   // or            `${escapeHtml(truncate(obsNameOnly(p.observer_id), 16))}${obsIataBadge(p)}`.
-  const src = fs.readFileSync('public/packets.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'packets.js'), 'utf8');
   // Find the FLAT row (the third occurrence with p.observer_id, not c.observer_id).
   const re = /\$\{(?:escapeHtml\()?truncate\(obsNameOnly\(p\.observer_id\),\s*16\)\)?\}\$\{obsIataBadge\(p\)\}/;
   const m = src.match(re);
@@ -259,7 +260,7 @@ test('map.js buildObserverPopup: observer name escaped (via real safeEsc)', () =
   //   then `<h3>${name}</h3>`.
   // On master safeEsc is identity → name is raw → XSS.
   // On the fixed branch safeEsc falls back to a real escaper → name is safe.
-  const src = fs.readFileSync('public/map.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'map.js'), 'utf8');
   // Extract safeEsc fallback body.
   const m = src.match(/const safeEsc\s*=[\s\S]*?function\s*\(s\)\s*\{([\s\S]*?)\};?/);
   assert.ok(m, 'safeEsc declaration not found in map.js');
@@ -274,7 +275,7 @@ test('map.js buildObserverPopup: observer name escaped (via real safeEsc)', () =
 // --- 8. public/live.js hop popup (buildClickablePathPopupHtml) ----------
 test('live.js buildClickablePathPopupHtml: hopNames join escapes each hop', () => {
   // Extract the function body and evaluate with a malicious hopNames array.
-  const src = fs.readFileSync('public/live.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'live.js'), 'utf8');
   const m = src.match(
     /function buildClickablePathPopupHtml\(typeName, color, hopNames, tsMs, hash\)\s*\{([\s\S]*?)\n\s*\}/
   );
@@ -294,7 +295,7 @@ test('live.js buildClickablePathPopupHtml: hopNames join escapes each hop', () =
 
 // --- 9. public/area-map.html node popup ----------------------------------
 test('area-map.html node popup: node name escaped (local helper handles 5 chars)', () => {
-  const src = fs.readFileSync('public/area-map.html', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'area-map.html'), 'utf8');
   // Local escapeHtml must exist AND escape single quotes.
   const localM = src.match(/function escapeHtml\(s\)\s*\{[\s\S]*?\n\}/);
   assert.ok(localM, 'area-map.html local escapeHtml not found');
@@ -335,7 +336,7 @@ test('hop-display.js data-conflict attribute: single-quote payload escaped', () 
   assert.ok(/&#39;/.test(escaped),
     'escapeHtml output missing &#39; marker: ' + escaped);
   // And the source file still uses this attribute pattern.
-  const src = fs.readFileSync('public/hop-display.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'hop-display.js'), 'utf8');
   assert.ok(/data-conflict='\$\{(escapeHtml\(JSON\.stringify|conflictData)/.test(src),
     'hop-display.js data-conflict attribute pattern changed unexpectedly');
 });
@@ -348,7 +349,7 @@ console.log('\n=== D. XSS R2: TRACE-1 / OBS-1 / ANL-1 ===');
 // ----- TRACE-1: traces.js <input value="${urlHash}"> -----
 // urlHash comes from URL fragment, interpolated raw → URL-fragment XSS.
 test('TRACE-1: traces.js urlHash interpolation escapes URL-fragment payload', () => {
-  const src = fs.readFileSync('public/traces.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'traces.js'), 'utf8');
   const m = src.match(/(<input type="text" id="traceHashInput"[^`]*?value="\$\{[^}]+\}"[^`]*?>)/);
   assert.ok(m, 'TRACE-1: <input value="${urlHash}"> template not found in traces.js');
   const tpl = m[1];
@@ -360,7 +361,7 @@ test('TRACE-1: traces.js urlHash interpolation escapes URL-fragment payload', ()
 
 // ----- OBS-1: observer-detail.js obs.* fields → renderDetail innerHTML -----
 function extractObsStatValue(field) {
-  const src = fs.readFileSync('public/observer-detail.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'observer-detail.js'), 'utf8');
   const labelMap = { model: 'Model', firmware: 'Firmware', client_version: 'Client', iata: 'IATA Region' };
   const label = labelMap[field];
   const re = new RegExp(
@@ -401,7 +402,7 @@ test('OBS-1: observer-detail.js obs.client_version is escaped at render sink', (
 // entity-decodes), and `:1524` does `tip.innerHTML = td.dataset.tip` which
 // reanimates the raw payload. Fix A: tip.textContent = td.dataset.tip.
 test('ANL-1: analytics.js does NOT assign td.dataset.tip to tip.innerHTML', () => {
-  const src = fs.readFileSync('public/analytics.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'analytics.js'), 'utf8');
   const broken = /\btip\.innerHTML\s*=\s*td\.dataset\.tip\b/;
   assert.ok(!broken.test(src),
     'ANL-1: `tip.innerHTML = td.dataset.tip` still present (mutation-XSS). Use textContent.');
@@ -413,7 +414,7 @@ test('ANL-1: hashCellTd now emits per-field data-tip-* attrs (no HTML round-trip
   // pre-rendered HTML string in a single data-tip attribute. Per-field
   // attrs (data-tip-hex / data-tip-status / data-tip-lines) are plain text
   // and are rebuilt into DOM via createElement + textContent.
-  const src = fs.readFileSync('public/analytics.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'analytics.js'), 'utf8');
   const m = src.match(/function hashCellTd\([^)]*\)\s*\{([\s\S]*?)\n\s{2}\}/);
   assert.ok(m, 'ANL-1: hashCellTd function not found');
   const body = m[1];
@@ -439,14 +440,14 @@ console.log('\n=== E. OBS-1 expanded + OBS-2 Number() coercion ===');
 // between the first ${window.ObserverDetailNaiveBanner.render(obs)} marker
 // and the closing `;`.
 function loadRenderDetailTemplate() {
-  const src = fs.readFileSync('public/observer-detail.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'observer-detail.js'), 'utf8');
   const m = src.match(/el\.innerHTML\s*=\s*`([\s\S]*?)`;/);
   if (!m) throw new Error('renderDetail template literal not found');
   return m[1];
 }
 
 function renderObsDetail(obs) {
-  const src = fs.readFileSync('public/observer-detail.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'observer-detail.js'), 'utf8');
   const tpl = loadRenderDetailTemplate();
   // Extract the PRODUCTION radio-parsing block from source so reverting the
   // escapeHtml() calls inside that block flips red here. Don't duplicate it
@@ -538,7 +539,7 @@ test('OBS-2: contaminated string obs.noise_floor is Number()-coerced (no payload
 console.log('\n=== F. renderRecentPackets: no inline onclick (CSP / XSS-amplifier) ===');
 
 test('renderRecentPackets row template does NOT use inline onclick=', () => {
-  const src = fs.readFileSync('public/observer-detail.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'observer-detail.js'), 'utf8');
   // Locate the renderRecentPackets function body and grep for onclick=.
   const m = src.match(/function renderRecentPackets\([^)]*\)\s*\{([\s\S]*?)\n\s{2}\}/);
   assert.ok(m, 'renderRecentPackets function not found');
@@ -559,7 +560,7 @@ test('renderRecentPackets row template does NOT use inline onclick=', () => {
 console.log('\n=== G. loadDetail error path: textContent over innerHTML ===');
 
 test('loadDetail catch block does NOT interpolate e.message into innerHTML', () => {
-  const src = fs.readFileSync('public/observer-detail.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'observer-detail.js'), 'utf8');
   const m = src.match(/catch\s*\(\s*e\s*\)\s*\{([\s\S]*?)\n\s{4}\}/);
   assert.ok(m, 'loadDetail catch block not found');
   const body = m[1];

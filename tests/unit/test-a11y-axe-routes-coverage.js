@@ -15,15 +15,16 @@
  */
 
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-const mod = require('./test-a11y-axe-1668.js');
+const mod = require(fromRepositoryRoot('test-a11y-axe-1668.js'));
 
 const analyticsSrc = fs.readFileSync(
-  path.join(__dirname, 'public', 'analytics.js'),
+  fromRepositoryRoot('public', 'analytics.js'),
   'utf8'
 );
 

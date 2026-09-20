@@ -6,6 +6,7 @@
  *  3) Endpoints table claims "sorted by total time" but renders in map order
  */
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
@@ -54,7 +55,7 @@ function makeSandbox(opts = {}) {
 
 function loadPerf() {
   const sb = makeSandbox();
-  const code = fs.readFileSync('public/perf.js', 'utf8');
+  const code = fs.readFileSync(fromRepositoryRoot('public', 'perf.js'), 'utf8');
   vm.runInNewContext(code, sb.ctx);
   return sb;
 }

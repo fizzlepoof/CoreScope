@@ -1,5 +1,6 @@
 /* Tests for perf.js Go runtime vs Node event loop rendering (fixes #153) */
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
@@ -42,7 +43,7 @@ function makeSandbox() {
 // Load perf.js into sandbox
 function loadPerf() {
   const sb = makeSandbox();
-  const code = fs.readFileSync('public/perf.js', 'utf8');
+  const code = fs.readFileSync(fromRepositoryRoot('public', 'perf.js'), 'utf8');
   vm.runInNewContext(code, sb.ctx);
   return sb;
 }
