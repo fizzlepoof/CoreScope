@@ -1,0 +1,52 @@
+#!/usr/bin/env node
+'use strict';
+
+const assert = require('assert');
+const fs = require('fs');
+
+const index = fs.readFileSync('public/index.html', 'utf8');
+const app = fs.readFileSync('public/app.js', 'utf8');
+const scopeJS = fs.readFileSync('public/region-scope.js', 'utf8');
+const scopeCSS = fs.readFileSync('public/region-scope.css', 'utf8');
+const bottomNav = fs.readFileSync('public/bottom-nav.js', 'utf8');
+const testAll = fs.readFileSync('test-all.sh', 'utf8');
+const packageJSON = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const adminHTML = fs.readFileSync('public/admin/hash-regions.html', 'utf8');
+const adminJS = fs.readFileSync('public/admin/hash-regions.js', 'utf8');
+
+assert.match(index, /href="#\/tools\/region-scope"/, 'public navigation links the helper');
+assert.match(index, /region-scope-helpers\.js\?v=__BUST__/, 'shared helper is loaded by browser');
+assert.match(index, /region-scope\.js\?v=__BUST__/, 'helper page module is loaded');
+assert.match(index, /region-scope\.css\?v=__BUST__/, 'helper page CSS is loaded');
+assert.match(app, /region-scope/, 'router recognizes helper as a Tools route');
+assert.match(scopeJS, /id="region-scope-lat"/, 'helper provides an accessible latitude input');
+assert.match(scopeJS, /id="region-scope-lon"/, 'helper provides an accessible longitude input');
+assert.match(scopeJS, /id="region-scope-recommend"/, 'helper provides a keyboard-operable recommendation button');
+assert.match(scopeJS, /id="region-scope-home"/, 'helper provides an explicit home selector');
+assert.match(scopeJS, /id="region-scope-default"/, 'helper provides an explicit default selector');
+assert.match(scopeJS, /<option value="">No choice<\/option>/, 'home/default selectors start with no choice');
+assert.match(scopeJS, /copy-region-mutations/, 'hierarchy mutations have a separate copy control');
+assert.match(scopeJS, /copy-region-verification/, 'verification has a separate copy control');
+assert.match(scopeJS, /copy-region-home-default/, 'optional home/default has a separate copy control');
+assert.match(scopeJS, /copy-region-save/, 'persistence has a separate copy control');
+assert.match(scopeJS, /persists immediately/, 'UI explains immediate default persistence');
+assert.match(scopeJS, /recommendRegionDetails/, 'UI exposes direct-vs-ancestor recommendation provenance');
+assert.match(scopeJS, /AbortController|loadGeneration/, 'definition loading guards against stale SPA fetches');
+assert.match(scopeJS, /replaceChildren\(\)|textContent\s*=\s*''/, 'definition target is cleared before append');
+assert.match(scopeJS, /_applyTilesToNodeMap/, 'helper uses the established tile provider path');
+assert.doesNotMatch(scopeJS, /basemaps\.cartocdn\.com/, 'helper does not bypass configured tile providers');
+assert.match(bottomNav, /region-scope/, 'mobile navigation exposes the helper route directly');
+assert.match(scopeCSS, /@media \(max-width: 800px\)/, 'helper has mobile layout coverage');
+assert.match(testAll, /node test-region-scope-e2e\.js/, 'canonical full test runner includes real Chromium coverage');
+assert.doesNotMatch(packageJSON.scripts['test:unit'], /region-scope-e2e/, 'fast unit runner does not require a browser');
+
+assert.match(adminHTML, /id="region-editor-list"/, 'admin has structured editor list');
+assert.match(adminHTML, /id="county-select"/, 'admin has bundled county selection');
+assert.match(adminHTML, /id="geometry-map"/, 'admin has boundary preview/editor map');
+assert.match(adminHTML, /id="geometry-coordinates"/, 'admin has accessible coordinate editing');
+assert.match(adminHTML, /id="geojson-import"/, 'admin has GeoJSON import');
+assert.match(adminJS, /hashRegionDefinitions/, 'admin persists structured definitions');
+assert.match(adminJS, /\/geo\/tn-counties\.geojson/, 'admin loads bundled counties once');
+assert.doesNotMatch(adminJS, /\.innerHTML\s*=\s*[^'"`]/, 'admin does not inject untrusted values through innerHTML');
+
+console.log('test-region-scope-ui.js: all tests passed');

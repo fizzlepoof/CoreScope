@@ -174,3 +174,43 @@ body.auth-gated.authed { visibility: visible; }
   border: 1px solid color-mix(in srgb, var(--success) 40%, var(--border));
   color: var(--success); padding: 8px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 12px;
 }
+
+/* --- Structured hash-region editor --- */
+.hash-region-admin { max-width: 1200px; }
+.admin-note { color: var(--text-muted); font-size: 12px; }
+.region-editor-toolbar, .region-save-bar, .boundary-actions {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.region-editor-toolbar { justify-content: space-between; margin-bottom: 12px; }
+.region-editor-toolbar h2 { margin: 0; }
+.region-editor-list { display: grid; gap: 12px; }
+.region-definition-card {
+  display: grid; grid-template-columns: minmax(160px, .8fr) minmax(160px, .8fr) minmax(240px, 1.5fr) auto;
+  gap: 12px; align-items: end; padding: 14px; background: var(--surface-1);
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.region-definition-card.is-active { border-color: var(--accent); }
+.region-definition-field label, .boundary-tools label {
+  display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 12px; font-weight: 600;
+}
+.region-definition-field input, .region-definition-field select,
+.region-definition-field textarea, .boundary-tools select, .boundary-tools textarea {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--input-bg); color: var(--text); font: inherit;
+}
+.region-definition-field textarea { min-height: 68px; resize: vertical; }
+.region-card-actions { display: flex; flex-direction: column; gap: 7px; }
+.boundary-layout { display: grid; grid-template-columns: minmax(360px, 1.2fr) minmax(280px, .8fr); gap: 18px; }
+#geometry-map { height: 430px; border: 1px solid var(--border); border-radius: 6px; }
+.boundary-actions { margin-top: 10px; }
+.freehand-toggle { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 12px; }
+.boundary-tools { display: flex; flex-direction: column; gap: 8px; }
+.boundary-tools .admin-note { margin: -3px 0 3px; }
+.region-save-bar { max-width: 1200px; margin: 0 auto 30px; }
+#save-status { color: var(--text-muted); font-size: 13px; }
+#payload-size-status.is-over-limit { color: var(--danger); font-weight: 600; }
+@media (max-width: 850px) {
+  .region-definition-card { grid-template-columns: 1fr; align-items: stretch; }
+  .region-card-actions { flex-direction: row; }
+  .boundary-layout { grid-template-columns: 1fr; }
+}
