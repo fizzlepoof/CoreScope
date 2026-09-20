@@ -6,12 +6,14 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -57,6 +59,10 @@ func resolveBuildTime() string {
 		return BuildTime
 	}
 	return "unknown"
+}
+
+func httpListenAddress(host string, port int) string {
+	return net.JoinHostPort(host, strconv.Itoa(port))
 }
 
 // waitForObservationsTable blocks (bounded) until dbPath's observations
@@ -144,6 +150,7 @@ func main() {
 
 	var (
 		configDir string
+		host      string
 		port      int
 		dbPath    string
 		publicDir string
@@ -151,6 +158,7 @@ func main() {
 	)
 
 	flag.StringVar(&configDir, "config-dir", ".", "Directory containing config.json")
+	flag.StringVar(&host, "host", "", "HTTP bind host (empty binds all interfaces)")
 	flag.IntVar(&port, "port", 0, "HTTP port (overrides config)")
 	flag.StringVar(&dbPath, "db", "", "SQLite database path (overrides config/env)")
 	flag.StringVar(&publicDir, "public", "public", "Directory to serve static files from")
@@ -625,7 +633,7 @@ func main() {
 		log.Printf("[server] WebSocket permessage-deflate compression enabled")
 	}
 	httpServer := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.Port),
+		Addr:         httpListenAddress(host, cfg.Port),
 		Handler:      handler,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 60 * time.Second,

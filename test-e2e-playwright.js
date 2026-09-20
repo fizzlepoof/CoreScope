@@ -2581,12 +2581,26 @@ async function run() {
     await gotoPackets(page);
     await page.waitForTimeout(500);
 
-    // Click rows until we find one whose detail pane renders a multi-hop path
-    const rows = await page.$$('table tbody tr[data-action]');
+    // Re-query by index before each click. The virtualized packet table may
+    // replace rows after its initial render, which detaches cached handles.
+    const rowCount = await page.locator('table tbody tr[data-action]').count();
     let found = false;
-    for (let i = 0; i < Math.min(rows.length, 15); i++) {
-      await rows[i].click({ timeout: 3000 }).catch(() => null);
-      await page.waitForTimeout(500);
+    for (let i = 0; i < Math.min(rowCount, 15); i++) {
+      const row = page.locator('table tbody tr[data-action]').nth(i);
+      const expectedHash = await row.evaluate(element => {
+        const hash = element.getAttribute('data-value');
+        element.click();
+        return hash;
+      }).catch(() => null);
+      if (!expectedHash) continue;
+      const loaded = await page.waitForFunction(
+        hash => window.location.hash.includes(`/packets/${hash}`) &&
+          document.querySelector('.detail-hash')?.textContent.includes(hash) &&
+          document.querySelector('.hex-dump') && document.querySelector('table.field-table'),
+        expectedHash,
+        { timeout: 5000 },
+      ).then(() => true, () => false);
+      if (!loaded) continue;
 
       const result = await page.evaluate(() => {
         // Path pill: <dt>Path</dt><dd><span class="badge ...">N hops</span> ...names...</dd>
@@ -2661,11 +2675,24 @@ async function run() {
     await gotoPackets(page);
     await page.waitForTimeout(500);
 
-    const rows = await page.$$('table tbody tr[data-action]');
+    const rowCount = await page.locator('table tbody tr[data-action]').count();
     let checked = 0;
-    for (let i = 0; i < Math.min(rows.length, 25) && checked < 3; i++) {
-      await rows[i].click({ timeout: 3000 }).catch(() => null);
-      await page.waitForTimeout(400);
+    for (let i = 0; i < Math.min(rowCount, 25) && checked < 3; i++) {
+      const row = page.locator('table tbody tr[data-action]').nth(i);
+      const expectedHash = await row.evaluate(element => {
+        const hash = element.getAttribute('data-value');
+        element.click();
+        return hash;
+      }).catch(() => null);
+      if (!expectedHash) continue;
+      const loaded = await page.waitForFunction(
+        hash => window.location.hash.includes(`/packets/${hash}`) &&
+          document.querySelector('.detail-hash')?.textContent.includes(hash) &&
+          document.querySelector('.hex-dump') && document.querySelector('table.field-table'),
+        expectedHash,
+        { timeout: 5000 },
+      ).then(() => true, () => false);
+      if (!loaded) continue;
 
       const result = await page.evaluate(() => {
         const dump = document.querySelector('.hex-dump');
