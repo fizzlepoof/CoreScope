@@ -10,10 +10,11 @@
  * back in and re-introducing the 5% flake described in #1662.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const path = require('path');
 
-const SRC = path.join(__dirname, 'test-slideover-1056-e2e.js');
+const SRC = path.join(repositoryRoot, 'test-slideover-1056-e2e.js');
 const src = fs.readFileSync(SRC, 'utf8');
 
 let passed = 0, failed = 0;

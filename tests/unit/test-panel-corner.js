@@ -3,6 +3,7 @@
  * Tests the pure logic functions extracted from live.js
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const assert = require('assert');
 const vm = require('vm');
@@ -98,7 +99,7 @@ function createContext() {
 function loadLiveModule(ctx) {
   // Load the REAL live.js in a VM context and return window._panelCorner.
   // This tests the actual code, not a copy (per AGENTS.md "test the real code, not copies").
-  const src = fs.readFileSync(path.join(__dirname, 'public', 'live.js'), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'live.js'), 'utf8');
 
   // Minimal stubs for live.js dependencies (only what's needed to avoid errors)
   ctx.registerPage = () => {};

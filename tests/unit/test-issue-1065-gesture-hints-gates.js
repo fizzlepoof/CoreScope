@@ -12,12 +12,13 @@
  * Pure source-file assertions — no browser required.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 
-const JS_PATH = path.join(__dirname, 'public', 'gesture-hints.js');
-const CSS_PATH = path.join(__dirname, 'public', 'style.css');
+const JS_PATH = path.join(repositoryRoot, 'public', 'gesture-hints.js');
+const CSS_PATH = path.join(repositoryRoot, 'public', 'style.css');
 
 let failures = 0, passes = 0;
 const fail = (m) => { failures++; console.error('  FAIL: ' + m); };
@@ -78,5 +79,5 @@ if (ruleMatch) {
   else pass('no em-dash inside .gesture-hint rule body');
 }
 
-console.log(`\ntest-issue-1065-gesture-hints-gates.js: ${passes} passed, ${failures} failed`);
+console.log(`\ntests/unit/test-issue-1065-gesture-hints-gates.js: ${passes} passed, ${failures} failed`);
 process.exit(failures > 0 ? 1 : 0);

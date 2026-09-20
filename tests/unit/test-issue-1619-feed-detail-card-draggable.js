@@ -14,6 +14,7 @@
  *      the exposed instance.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -24,8 +25,8 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const liveCss = fs.readFileSync(path.join(__dirname, 'public', 'live.css'), 'utf8');
-const liveJs = fs.readFileSync(path.join(__dirname, 'public', 'live.js'), 'utf8');
+const liveCss = fs.readFileSync(path.join(repositoryRoot, 'public', 'live.css'), 'utf8');
+const liveJs = fs.readFileSync(path.join(repositoryRoot, 'public', 'live.js'), 'utf8');
 
 console.log('\n=== #1619 A: .feed-detail-card z-index above legend ===');
 

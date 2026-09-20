@@ -1,5 +1,6 @@
-/* test-drag-manager.js — Unit tests for DragManager (#608 M1) */
+/* tests/unit/test-drag-manager.js — Unit tests for DragManager (#608 M1) */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const vm = require('vm');
 const fs = require('fs');
@@ -87,7 +88,7 @@ const mockLocalStorage = {
 };
 
 // Load DragManager
-const src = fs.readFileSync(path.join(__dirname, 'public', 'drag-manager.js'), 'utf8');
+const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'drag-manager.js'), 'utf8');
 const ctx = vm.createContext({
   window: mockWindow,
   document: mockDocument,

@@ -15,7 +15,7 @@
  *   4. The 'default' preset seeds both light + dark themes with a navActiveBg
  *      default so themes don't fall back to the hardcoded rgba()
  *
- * Run: node test-issue-1509-nav-active-bg.js
+ * Run: node tests/unit/test-issue-1509-nav-active-bg.js
  */
 'use strict';
 const vm = require('vm');
