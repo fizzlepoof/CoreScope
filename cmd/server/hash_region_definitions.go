@@ -50,8 +50,17 @@ func newHashRegionDefinitionsResponse(definitions []admindb.HashRegionDefinition
 }
 
 func cleanHashRegionDefinitions(input []hashRegionDefinitionPayload) ([]admindb.HashRegionDefinition, error) {
+	return cleanHashRegionDefinitionsWithTrusted(input, nil)
+}
+
+func cleanHashRegionDefinitionsWithTrusted(input []hashRegionDefinitionPayload, trusted []admindb.HashRegionDefinition) ([]admindb.HashRegionDefinition, error) {
 	if len(input) > maxHashRegionEntries {
 		return nil, fmt.Errorf("too many hash regions (max %d)", maxHashRegionEntries)
+	}
+
+	trustedGeometry := make(map[string]string, len(trusted))
+	for _, definition := range trusted {
+		trustedGeometry[definition.Name] = definition.GeometryJSON
 	}
 
 	definitions := make([]admindb.HashRegionDefinition, 0, len(input))
@@ -78,10 +87,16 @@ func cleanHashRegionDefinitions(input []hashRegionDefinitionPayload) ([]admindb.
 		if err != nil {
 			return nil, fmt.Errorf("invalid color for %q: %w", name, err)
 		}
-		remainingWork := maxGeoJSONValidationWork - requestValidationWork
-		geometryJSON, geometryWork, err := normalizeHashRegionGeometry(raw.Geometry, remainingWork)
-		if err != nil {
-			return nil, fmt.Errorf("invalid geometry for %q: %w", name, err)
+		geometryJSON, geometryWork := "", int64(0)
+		canonicalGeometry, canonicalErr := canonicalHashRegionGeometry(raw.Geometry)
+		if storedGeometry, ok := trustedGeometry[name]; ok && canonicalErr == nil && canonicalGeometry == storedGeometry {
+			geometryJSON = storedGeometry
+		} else {
+			remainingWork := maxGeoJSONValidationWork - requestValidationWork
+			geometryJSON, geometryWork, err = normalizeHashRegionGeometry(raw.Geometry, remainingWork)
+			if err != nil {
+				return nil, fmt.Errorf("invalid geometry for %q: %w", name, err)
+			}
 		}
 		requestValidationWork += geometryWork
 		if requestValidationWork > maxGeoJSONValidationWork {
@@ -112,6 +127,28 @@ func cleanHashRegionDefinitions(input []hashRegionDefinitionPayload) ([]admindb.
 		return nil, fmt.Errorf("hash region hierarchy contains a cycle at %q", cycleAt)
 	}
 	return definitions, nil
+}
+
+func canonicalHashRegionGeometry(raw json.RawMessage) (string, error) {
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || bytes.Equal(raw, []byte("null")) {
+		return "", nil
+	}
+	var geometry struct {
+		Type        string          `json:"type"`
+		Coordinates json.RawMessage `json:"coordinates"`
+	}
+	if err := json.Unmarshal(raw, &geometry); err != nil {
+		return "", err
+	}
+	canonical, err := json.Marshal(struct {
+		Type        string          `json:"type"`
+		Coordinates json.RawMessage `json:"coordinates"`
+	}{Type: geometry.Type, Coordinates: geometry.Coordinates})
+	if err != nil {
+		return "", err
+	}
+	return string(canonical), nil
 }
 
 func normalizeHashRegionColor(input string) (string, error) {
