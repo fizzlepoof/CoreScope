@@ -224,41 +224,51 @@ func (s *PacketStore) StartAnalyticsRecomputers(defaultInterval time.Duration, o
 	// Each recomputer wraps the underlying compute* function with the
 	// default arguments. We use computeAnalytics* (not GetAnalytics*) to
 	// bypass the legacy TTL cache layer — the recomputer IS the cache.
+	guarded := func(name string, compute func() interface{}) func() interface{} {
+		var initial atomic.Bool
+		return func() interface{} {
+			if initial.CompareAndSwap(false, true) {
+				return s.runBackgroundRecompute(compute)
+			}
+			result, _ := s.tryBackgroundRecompute(name, compute)
+			return result
+		}
+	}
 	s.recompTopology = newAnalyticsRecomputer(
 		"topology", pickInterval(ov.Topology, defaultInterval),
-		func() interface{} { return s.computeAnalyticsTopology("", "", TimeWindow{}) },
+		guarded("topology", func() interface{} { return s.computeAnalyticsTopology("", "", TimeWindow{}) }),
 	)
 	s.recompRF = newAnalyticsRecomputer(
 		"rf", pickInterval(ov.RF, defaultInterval),
-		func() interface{} { return s.computeAnalyticsRF("", "", TimeWindow{}) },
+		guarded("rf", func() interface{} { return s.computeAnalyticsRF("", "", TimeWindow{}) }),
 	)
 	s.recompDistance = newAnalyticsRecomputer(
 		"distance", pickInterval(ov.Distance, defaultInterval),
-		func() interface{} { return s.computeAnalyticsDistance("", "") },
+		guarded("distance", func() interface{} { return s.computeAnalyticsDistance("", "") }),
 	)
 	s.recompChannels = newAnalyticsRecomputer(
 		"channels", pickInterval(ov.Channels, defaultInterval),
-		func() interface{} { return s.computeAnalyticsChannels("", "", TimeWindow{}) },
+		guarded("channels", func() interface{} { return s.computeAnalyticsChannels("", "", TimeWindow{}) }),
 	)
 	s.recompHashCollisions = newAnalyticsRecomputer(
 		"hash-collisions", pickInterval(ov.HashCollisions, defaultInterval),
-		func() interface{} { return s.computeHashCollisions("", "") },
+		guarded("hash-collisions", func() interface{} { return s.computeHashCollisions("", "") }),
 	)
 	s.recompHashSizes = newAnalyticsRecomputer(
 		"hash-sizes", pickInterval(ov.HashSizes, defaultInterval),
-		func() interface{} { return s.computeAnalyticsHashSizesWithCapability("", "") },
+		guarded("hash-sizes", func() interface{} { return s.computeAnalyticsHashSizesWithCapability("", "") }),
 	)
 	s.recompRoles = newAnalyticsRecomputer(
 		"roles", pickInterval(ov.Roles, defaultInterval),
-		func() interface{} { return s.computeAnalyticsRoles() },
+		guarded("roles", func() interface{} { return s.computeAnalyticsRoles() }),
 	)
 	s.recompObserversClockSkew = newAnalyticsRecomputer(
 		"observers-clock-skew", pickInterval(ov.ObserversClockSkew, defaultInterval),
-		func() interface{} { return s.computeObserverCalibrations() },
+		guarded("observers-clock-skew", func() interface{} { return s.computeObserverCalibrations() }),
 	)
 	s.recompNodesClockSkew = newAnalyticsRecomputer(
 		"nodes-clock-skew", pickInterval(ov.NodesClockSkew, defaultInterval),
-		func() interface{} { return s.computeFleetClockSkew() },
+		guarded("nodes-clock-skew", func() interface{} { return s.computeFleetClockSkew() }),
 	)
 	all := []*analyticsRecomputer{
 		s.recompTopology, s.recompRF, s.recompDistance,

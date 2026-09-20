@@ -57,7 +57,10 @@ func (s *PacketStore) StartNeighborGraphRecomputer(interval time.Duration) func(
 		for {
 			select {
 			case <-t.C:
-				s.refreshNeighborGraphFromSnapshot()
+				_, _ = s.tryBackgroundRecompute("neighbor-graph", func() interface{} {
+					s.refreshNeighborGraphFromSnapshot()
+					return struct{}{}
+				})
 			case <-stop:
 				return
 			}
