@@ -8,7 +8,7 @@
  *
  * Tested viewports: 768, 1080, 1440 (parent task: 768/1080/1440/1920).
  *
- * Usage: BASE_URL=http://localhost:13581 node test-table-fluid-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-table-fluid-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

@@ -7062,11 +7062,11 @@
       ]
     },
     {
-      "path": "test-nav-fluid-1055-e2e.js",
+      "path": "tests/e2e/test-nav-fluid-1055-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-nav-fluid-1055-e2e.js"
+        "tests/e2e/test-nav-fluid-1055-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -7105,7 +7105,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-nav-fluid-1055-e2e.js",
+          "source": "tests/e2e/test-nav-fluid-1055-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -8243,11 +8243,11 @@
       ]
     },
     {
-      "path": "test-table-fluid-e2e.js",
+      "path": "tests/e2e/test-table-fluid-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-table-fluid-e2e.js"
+        "tests/e2e/test-table-fluid-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -8273,7 +8273,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-table-fluid-e2e.js",
+          "source": "tests/e2e/test-table-fluid-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]

@@ -42,12 +42,12 @@ Running test-observer-iata-1188-e2e.js
 All observer-IATA E2E tests passed.
 
 === Results: passed 5 failed 0 ===
-Running test-nav-fluid-1055-e2e.js
+Running tests/e2e/test-nav-fluid-1055-e2e.js
   PASS: narrow viewport
   PASS: medium viewport
   PASS: wide viewport
 
-test-nav-fluid-1055-e2e.js: OK — 3/3 passed
+tests/e2e/test-nav-fluid-1055-e2e.js: OK — 3/3 passed
 Running test-nav-priority-1102-e2e.js
   PASS: priority A
   PASS: priority B
@@ -88,7 +88,7 @@ Running tests/e2e/test-channel-fluid-e2e.js
   ✓ fluid layout 2
 
 === Results: 2 passed, 0 failed ===
-Running test-table-fluid-e2e.js
+Running tests/e2e/test-table-fluid-e2e.js
   ✓ table fluid 1
   ✓ table fluid 2
 
