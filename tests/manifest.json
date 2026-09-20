@@ -576,11 +576,11 @@
       ]
     },
     {
-      "path": "test-bottom-nav-1061-e2e.js",
+      "path": "tests/e2e/test-bottom-nav-1061-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-bottom-nav-1061-e2e.js"
+        "tests/e2e/test-bottom-nav-1061-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -613,7 +613,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-bottom-nav-1061-e2e.js",
+          "source": "tests/e2e/test-bottom-nav-1061-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -1958,11 +1958,11 @@
       ]
     },
     {
-      "path": "test-drag-manager-e2e.js",
+      "path": "tests/e2e/test-drag-manager-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-drag-manager-e2e.js"
+        "tests/e2e/test-drag-manager-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1995,7 +1995,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-drag-manager-e2e.js",
+          "source": "tests/e2e/test-drag-manager-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -2312,11 +2312,11 @@
       ]
     },
     {
-      "path": "test-gesture-hints-1065-e2e.js",
+      "path": "tests/e2e/test-gesture-hints-1065-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-gesture-hints-1065-e2e.js"
+        "tests/e2e/test-gesture-hints-1065-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -2349,17 +2349,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-gesture-hints-1065-e2e.js",
+          "source": "tests/e2e/test-gesture-hints-1065-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-gestures-1062-e2e.js",
+      "path": "tests/e2e/test-gestures-1062-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-gestures-1062-e2e.js"
+        "tests/e2e/test-gestures-1062-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -2392,17 +2392,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-gestures-1062-e2e.js",
+          "source": "tests/e2e/test-gestures-1062-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-gestures-1185-scroll-discriminator-e2e.js",
+      "path": "tests/e2e/test-gestures-1185-scroll-discriminator-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-gestures-1185-scroll-discriminator-e2e.js"
+        "tests/e2e/test-gestures-1185-scroll-discriminator-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -2435,7 +2435,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-gestures-1185-scroll-discriminator-e2e.js",
+          "source": "tests/e2e/test-gestures-1185-scroll-discriminator-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -3905,11 +3905,11 @@
       ]
     },
     {
-      "path": "test-issue-1400-nav-vertical-clip.js",
+      "path": "tests/e2e/test-issue-1400-nav-vertical-clip.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1400-nav-vertical-clip.js"
+        "tests/e2e/test-issue-1400-nav-vertical-clip.js"
       ],
       "requirements": {
         "environment": [
@@ -3942,7 +3942,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1400-nav-vertical-clip.js",
+          "source": "tests/e2e/test-issue-1400-nav-vertical-clip.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -4027,11 +4027,11 @@
       ]
     },
     {
-      "path": "test-issue-1413-nav-overlap-e2e.js",
+      "path": "tests/e2e/test-issue-1413-nav-overlap-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1413-nav-overlap-e2e.js"
+        "tests/e2e/test-issue-1413-nav-overlap-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -4064,7 +4064,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1413-nav-overlap-e2e.js",
+          "source": "tests/e2e/test-issue-1413-nav-overlap-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -4968,11 +4968,11 @@
       ]
     },
     {
-      "path": "test-issue-1567-corner-clears-drag-e2e.js",
+      "path": "tests/e2e/test-issue-1567-corner-clears-drag-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1567-corner-clears-drag-e2e.js"
+        "tests/e2e/test-issue-1567-corner-clears-drag-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -5005,7 +5005,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1567-corner-clears-drag-e2e.js",
+          "source": "tests/e2e/test-issue-1567-corner-clears-drag-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -7150,11 +7150,11 @@
       ]
     },
     {
-      "path": "test-nav-drawer-1064-e2e.js",
+      "path": "tests/e2e/test-nav-drawer-1064-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-nav-drawer-1064-e2e.js"
+        "tests/e2e/test-nav-drawer-1064-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -7187,7 +7187,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-nav-drawer-1064-e2e.js",
+          "source": "tests/e2e/test-nav-drawer-1064-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -7242,11 +7242,11 @@
       ]
     },
     {
-      "path": "test-nav-more-floor-1139-e2e.js",
+      "path": "tests/e2e/test-nav-more-floor-1139-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-nav-more-floor-1139-e2e.js"
+        "tests/e2e/test-nav-more-floor-1139-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -7279,17 +7279,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-nav-more-floor-1139-e2e.js",
+          "source": "tests/e2e/test-nav-more-floor-1139-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-nav-priority-1102-e2e.js",
+      "path": "tests/e2e/test-nav-priority-1102-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-nav-priority-1102-e2e.js"
+        "tests/e2e/test-nav-priority-1102-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -7322,17 +7322,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-nav-priority-1102-e2e.js",
+          "source": "tests/e2e/test-nav-priority-1102-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-nav-priority-1311-e2e.js",
+      "path": "tests/e2e/test-nav-priority-1311-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-nav-priority-1311-e2e.js"
+        "tests/e2e/test-nav-priority-1311-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -7365,17 +7365,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-nav-priority-1311-e2e.js",
+          "source": "tests/e2e/test-nav-priority-1311-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-nav-priority-1391-e2e.js",
+      "path": "tests/e2e/test-nav-priority-1391-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-nav-priority-1391-e2e.js"
+        "tests/e2e/test-nav-priority-1391-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -7408,7 +7408,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-nav-priority-1391-e2e.js",
+          "source": "tests/e2e/test-nav-priority-1391-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -8277,11 +8277,11 @@
       ]
     },
     {
-      "path": "test-slideover-1056-e2e.js",
+      "path": "tests/e2e/test-slideover-1056-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-slideover-1056-e2e.js"
+        "tests/e2e/test-slideover-1056-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -8307,7 +8307,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-slideover-1056-e2e.js",
+          "source": "tests/e2e/test-slideover-1056-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -8338,11 +8338,11 @@
       ]
     },
     {
-      "path": "test-slideover-1168-munger-e2e.js",
+      "path": "tests/e2e/test-slideover-1168-munger-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-slideover-1168-munger-e2e.js"
+        "tests/e2e/test-slideover-1168-munger-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -8368,7 +8368,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-slideover-1168-munger-e2e.js",
+          "source": "tests/e2e/test-slideover-1168-munger-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -8485,11 +8485,11 @@
       ]
     },
     {
-      "path": "test-touch-targets.js",
+      "path": "tests/e2e/test-touch-targets.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-touch-targets.js"
+        "tests/e2e/test-touch-targets.js"
       ],
       "requirements": {
         "environment": [
@@ -8517,7 +8517,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-touch-targets.js",
+          "source": "tests/e2e/test-touch-targets.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]

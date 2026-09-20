@@ -351,7 +351,7 @@ jobs:
           set -e
           for i in $(seq 1 3); do
             echo "--- slide-over E2E run $i/20 ---"
-            BASE_URL=http://localhost:13581 node test-slideover-1056-e2e.js 2>&1 | tee -a slideover-repeat-output.txt
+            BASE_URL=http://localhost:13581 node tests/e2e/test-slideover-1056-e2e.js 2>&1 | tee -a slideover-repeat-output.txt
           done
           echo "3 passed"
 

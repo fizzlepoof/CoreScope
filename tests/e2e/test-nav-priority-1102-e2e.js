@@ -52,10 +52,10 @@ async function main() {
     });
   } catch (err) {
     if (process.env.CHROMIUM_REQUIRE === '1') {
-      console.error(`test-nav-priority-1102-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-nav-priority-1102-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
       process.exit(1);
     }
-    console.log(`test-nav-priority-1102-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-nav-priority-1102-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 
@@ -211,11 +211,11 @@ async function main() {
   }
 
   await browser.close();
-  console.log(`\ntest-nav-priority-1102-e2e.js: ${failures === 0 ? 'OK' : 'FAIL'} — ${passes}/${CASES.length + 1} passed`);
+  console.log(`\ntests/e2e/test-nav-priority-1102-e2e.js: ${failures === 0 ? 'OK' : 'FAIL'} — ${passes}/${CASES.length + 1} passed`);
   process.exit(failures === 0 ? 0 : 1);
 }
 
 main().catch((err) => {
-  console.error('test-nav-priority-1102-e2e.js: fatal', err);
+  console.error('tests/e2e/test-nav-priority-1102-e2e.js: fatal', err);
   process.exit(1);
 });

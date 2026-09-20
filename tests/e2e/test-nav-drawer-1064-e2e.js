@@ -80,10 +80,10 @@ async function edgeSwipe(page, x0, y0, x1, y1, steps) {
     });
   } catch (err) {
     if (requireChromium) {
-      console.error(`test-nav-drawer-1064-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-nav-drawer-1064-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
       process.exit(1);
     }
-    console.log(`test-nav-drawer-1064-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-nav-drawer-1064-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 

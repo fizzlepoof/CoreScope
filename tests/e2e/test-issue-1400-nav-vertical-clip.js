@@ -59,10 +59,10 @@ async function main() {
     });
   } catch (err) {
     if (process.env.CHROMIUM_REQUIRE === '1') {
-      console.error(`test-issue-1400-nav-vertical-clip.js: FAIL — Chromium required but unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-issue-1400-nav-vertical-clip.js: FAIL — Chromium required but unavailable: ${err.message}`);
       process.exit(1);
     }
-    console.log(`test-issue-1400-nav-vertical-clip.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-issue-1400-nav-vertical-clip.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 
@@ -166,11 +166,11 @@ async function main() {
 
   await browser.close();
 
-  console.log(`\ntest-issue-1400-nav-vertical-clip.js: ${passes} passed, ${failures} failed`);
+  console.log(`\ntests/e2e/test-issue-1400-nav-vertical-clip.js: ${passes} passed, ${failures} failed`);
   if (failures > 0) process.exit(1);
 }
 
 main().catch((err) => {
-  console.error('test-issue-1400-nav-vertical-clip.js: ERROR', err);
+  console.error('tests/e2e/test-issue-1400-nav-vertical-clip.js: ERROR', err);
   process.exit(1);
 });

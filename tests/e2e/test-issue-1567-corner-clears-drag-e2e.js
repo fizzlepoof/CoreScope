@@ -25,7 +25,7 @@
  * Red-on-master: assertion (b) fails on master — panel stays at the
  * dragged coords after the click because inline styles are not cleared.
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1567-corner-clears-drag-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1567-corner-clears-drag-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

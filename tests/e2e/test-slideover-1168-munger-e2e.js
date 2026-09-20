@@ -23,7 +23,7 @@
  *       reference-counted `body.scroll-locked` class — multiple lockers
  *       each add/remove independently; class only removed when count==0.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-slideover-1168-munger-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-slideover-1168-munger-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

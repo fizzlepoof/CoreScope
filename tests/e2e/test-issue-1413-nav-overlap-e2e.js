@@ -48,10 +48,10 @@ async function main() {
     });
   } catch (err) {
     if (process.env.CHROMIUM_REQUIRE === '1') {
-      console.error(`test-issue-1413-nav-overlap-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-issue-1413-nav-overlap-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
       process.exit(1);
     }
-    console.log(`test-issue-1413-nav-overlap-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-issue-1413-nav-overlap-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 
@@ -127,8 +127,8 @@ async function main() {
   }
 
   await browser.close();
-  console.log(`\ntest-issue-1413-nav-overlap-e2e.js: ${passes} pass, ${failures} fail`);
+  console.log(`\ntests/e2e/test-issue-1413-nav-overlap-e2e.js: ${passes} pass, ${failures} fail`);
   process.exit(failures > 0 ? 1 : 0);
 }
 
-main().catch((err) => { console.error('test-issue-1413-nav-overlap-e2e.js: ERROR', err); process.exit(1); });
+main().catch((err) => { console.error('tests/e2e/test-issue-1413-nav-overlap-e2e.js: ERROR', err); process.exit(1); });

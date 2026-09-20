@@ -9,7 +9,7 @@
  *  - panel-drag-{id} localStorage entry contains xPct/yPct
  *  - Restoring on reload re-applies the position
  *
- * Usage: BASE_URL=http://localhost:13581 node test-drag-manager-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-drag-manager-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

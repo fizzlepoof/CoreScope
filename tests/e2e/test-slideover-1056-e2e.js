@@ -10,7 +10,7 @@
  * Wide viewports (>=1280) MUST NOT trigger the slide-over — the existing
  * right-side detail panel behavior is preserved.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-slideover-1056-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-slideover-1056-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

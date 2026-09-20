@@ -48,41 +48,41 @@ Running tests/e2e/test-nav-fluid-1055-e2e.js
   PASS: wide viewport
 
 tests/e2e/test-nav-fluid-1055-e2e.js: OK — 3/3 passed
-Running test-nav-priority-1102-e2e.js
+Running tests/e2e/test-nav-priority-1102-e2e.js
   PASS: priority A
   PASS: priority B
   PASS: priority C
   PASS: overflow rule
 
-test-nav-priority-1102-e2e.js: OK — 4/4 passed
-Running test-nav-more-floor-1139-e2e.js
+tests/e2e/test-nav-priority-1102-e2e.js: OK — 4/4 passed
+Running tests/e2e/test-nav-more-floor-1139-e2e.js
   PASS: small
   PASS: medium
 
-test-nav-more-floor-1139-e2e.js: OK — 2/2 passed
-Running test-bottom-nav-1061-e2e.js
+tests/e2e/test-nav-more-floor-1139-e2e.js: OK — 2/2 passed
+Running tests/e2e/test-bottom-nav-1061-e2e.js
   PASS: shows on mobile
   PASS: hidden on desktop
   PASS: highlights active
 
-test-bottom-nav-1061-e2e.js: 3 passed, 0 failed
-Running test-gestures-1062-e2e.js
+tests/e2e/test-bottom-nav-1061-e2e.js: 3 passed, 0 failed
+Running tests/e2e/test-gestures-1062-e2e.js
   PASS: swipe left
   PASS: swipe right
 
-test-gestures-1062-e2e.js: 2 passed, 0 failed
-Running test-gestures-1185-scroll-discriminator-e2e.js
+tests/e2e/test-gestures-1062-e2e.js: 2 passed, 0 failed
+Running tests/e2e/test-gestures-1185-scroll-discriminator-e2e.js
   PASS: vertical scroll
   PASS: horizontal swipe
   PASS: diagonal ignored
 
-test-gestures-1185-scroll-discriminator-e2e.js: 3 passed, 0 failed
-Running test-gesture-hints-1065-e2e.js
+tests/e2e/test-gestures-1185-scroll-discriminator-e2e.js: 3 passed, 0 failed
+Running tests/e2e/test-gesture-hints-1065-e2e.js
   PASS: hint shows once
   PASS: hint dismissed
   PASS: localStorage stored
 
-test-gesture-hints-1065-e2e.js: 3 passed, 0 failed
+tests/e2e/test-gesture-hints-1065-e2e.js: 3 passed, 0 failed
 Running tests/e2e/test-channel-fluid-e2e.js
   ✓ fluid layout 1
   ✓ fluid layout 2
@@ -98,14 +98,14 @@ Running tests/e2e/test-charts-fluid-1058-e2e.js
   ✓ chart 2
 
 === #1058 fluid analytics charts E2E: 2 passed, 0 failed ===
-Running test-slideover-1056-e2e.js
+Running tests/e2e/test-slideover-1056-e2e.js
   ✓ slideover open
   ✓ slideover close
   ✓ slideover backdrop
   ✓ slideover keyboard
 
 === #1056 AC#4 slide-over E2E: 4 passed, 0 failed, 0 skipped ===
-Running test-slideover-1168-munger-e2e.js
+Running tests/e2e/test-slideover-1168-munger-e2e.js
   ✓ munger 1
   ✓ munger 2
 
@@ -233,8 +233,8 @@ Running tests/e2e/test-issue-1206-resize-observer-leak-e2e.js
   ✓ resize observer
 
 #1206 ResizeObserver leak: 1 passed, 0 failed
-Running test-nav-drawer-1064-e2e.js
+Running tests/e2e/test-nav-drawer-1064-e2e.js
   PASS: drawer 1
   PASS: drawer 2
 
-test-nav-drawer-1064-e2e.js: 2 passed, 0 failed
+tests/e2e/test-nav-drawer-1064-e2e.js: 2 passed, 0 failed

@@ -1,5 +1,5 @@
 /**
- * Pin test for #1662: the packets PAGES entry in test-slideover-1056-e2e.js
+ * Pin test for #1662: the packets PAGES entry in tests/e2e/test-slideover-1056-e2e.js
  * must use a STRICT row selector (data-id only) — never a bare
  * `tbody tr` fallback that would match the virtual-scroll spacer row.
  *
@@ -14,7 +14,7 @@ const { repositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const path = require('path');
 
-const SRC = path.join(repositoryRoot, 'test-slideover-1056-e2e.js');
+const SRC = path.join(repositoryRoot, 'tests/e2e/test-slideover-1056-e2e.js');
 const src = fs.readFileSync(SRC, 'utf8');
 
 let passed = 0, failed = 0;

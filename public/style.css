@@ -2461,7 +2461,7 @@ button.ch-item:hover .ch-icon-btn { opacity: 1; }
      the td and `table-layout: auto`, the cell's min-content becomes the
      full single-line text width, blowing past the `max-width: 100px`
      mobile hint. Rows then grow wider than the 360px viewport — which
-     breaks `test-gestures-1062-e2e.js` (a)/(h) because the swipe coords
+     breaks `tests/e2e/test-gestures-1062-e2e.js` (a)/(h) because the swipe coords
      fall outside the viewport and `elementFromPoint` no longer hits the
      row. Inline-block + fixed `max-width` on the clip caps the column's
      preferred width so the row stays viewport-bounded and gestures work. */
