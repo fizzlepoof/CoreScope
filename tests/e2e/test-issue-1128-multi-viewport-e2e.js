@@ -35,7 +35,7 @@
  *   F. Screenshots saved under e2e-screenshots/ for the PR record.
  *
  * Usage: BASE_URL=http://localhost:13581 node \
- *        test-issue-1128-multi-viewport-e2e.js
+ *        tests/e2e/test-issue-1128-multi-viewport-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

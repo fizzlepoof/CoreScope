@@ -15,7 +15,7 @@
  *      (was --accent pre-M5; now --link-color after #1668/PR #1696 AA-contrast
  *      fix). The hard guarantee is: NOT the default UA blue rgb(0,0,238).
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1281-location-row-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1281-location-row-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

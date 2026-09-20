@@ -4,7 +4,7 @@
  * Response/Trace/Path/Ack; this PR adds Anon Req, Group Data, Multipart,
  * Control and Raw Custom.
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1279-legend-p2-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1279-legend-p2-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

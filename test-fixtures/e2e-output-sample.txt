@@ -1,4 +1,4 @@
-Running test-e2e-playwright.js against http://localhost:13581
+Running tests/e2e/test-e2e-playwright.js against http://localhost:13581
   ✓ home loads
   ✓ nodes table renders
   ✓ packets table renders
@@ -126,7 +126,7 @@ Running test-issue-1128-packets-layout-e2e.js
   ✓ packets layout 2
 
 === Results: 2 passed, 0 failed ===
-Running test-issue-1128-multi-viewport-e2e.js
+Running tests/e2e/test-issue-1128-multi-viewport-e2e.js
   ✓ multi viewport 1
   ✓ multi viewport 2
   ✓ multi viewport 3
@@ -137,7 +137,7 @@ Running test-issue-1136-live-region-e2e.js
   ✓ live region debounced
 
 === Results: 2 passed, 0 failed ===
-Running test-issue-1150-404-state-e2e.js
+Running tests/e2e/test-issue-1150-404-state-e2e.js
   ✓ 404 renders
   ✓ 404 link back
 
@@ -147,12 +147,12 @@ Running test-issue-1146-path-link-contrast-e2e.js
   ✓ contrast above threshold
 
 === Results: 2 passed, 0 failed ===
-Running test-issue-1147-section-order-e2e.js
+Running tests/e2e/test-issue-1147-section-order-e2e.js
   ✓ order 1
   ✓ order 2
 
 === Results: 2 passed, 0 failed ===
-Running test-issue-1151-orphan-separators-e2e.js
+Running tests/e2e/test-issue-1151-orphan-separators-e2e.js
   ✓ orphan separators handled
 
 === #1151: 1 passed, 0 failed ===
@@ -171,8 +171,8 @@ Running test-logo-default-sage-teal-e2e.js
   ✓ default sage teal
 
 test-logo-default-sage-teal-e2e.js: 1/1 PASS
-Running test-issue-1109-hamburger-dropdown-visible-e2e.js
-test-issue-1109-hamburger-dropdown-visible-e2e.js: PASS
+Running tests/e2e/test-issue-1109-hamburger-dropdown-visible-e2e.js
+tests/e2e/test-issue-1109-hamburger-dropdown-visible-e2e.js: PASS
 Running test-live-layout-1178-1179-e2e.js
   ✓ live layout
   ✓ live layout 2
@@ -220,12 +220,12 @@ Running tests/e2e/test-issue-1273-qr-overlay-height-e2e.js
   ✓ qr overlay
 
 1/1 tests passed
-Running test-issue-1281-location-row-e2e.js
+Running tests/e2e/test-issue-1281-location-row-e2e.js
   ✓ location row 1
   ✓ location row 2
 
 === Results: 2 passed, 0 failed ===
-Running test-issue-1279-legend-p2-e2e.js
+Running tests/e2e/test-issue-1279-legend-p2-e2e.js
   ✓ legend p2
 
 === Results: 1 passed, 0 failed ===

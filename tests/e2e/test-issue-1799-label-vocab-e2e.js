@@ -8,7 +8,7 @@
  *   - Item 14: every key in the canonical map is exercised against pinned
  *     literals — not just the original 3 enums.
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1799-label-vocab-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1799-label-vocab-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

@@ -13,7 +13,7 @@
  *     AND < index of "Clock Skew" header (when present).
  *   - Side panel (open from /nodes list): same ordering.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1147-section-order-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1147-section-order-e2e.js
  */
 'use strict';
 

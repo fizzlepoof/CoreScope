@@ -27,7 +27,7 @@ const BASE = process.env.BASE_URL || 'http://localhost:13581';
 const VIEWPORT = { width: 390, height: 844 }; // iPhone 13 dimensions
 
 function fail(msg) {
-  console.error(`test-issue-1109-hamburger-dropdown-visible-e2e.js: FAIL — ${msg}`);
+  console.error(`tests/e2e/test-issue-1109-hamburger-dropdown-visible-e2e.js: FAIL — ${msg}`);
   process.exit(1);
 }
 
@@ -41,10 +41,10 @@ async function main() {
     });
   } catch (err) {
     if (process.env.CHROMIUM_REQUIRE === '1') {
-      console.error(`test-issue-1109-hamburger-dropdown-visible-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-issue-1109-hamburger-dropdown-visible-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
       process.exit(1);
     }
-    console.log(`test-issue-1109-hamburger-dropdown-visible-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-issue-1109-hamburger-dropdown-visible-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 
@@ -183,13 +183,13 @@ async function main() {
     });
     if (!afterToggle.closed) fail('sheet did not close on second More tap (toggle behavior expected)');
 
-    console.log('test-issue-1109-hamburger-dropdown-visible-e2e.js: PASS');
+    console.log('tests/e2e/test-issue-1109-hamburger-dropdown-visible-e2e.js: PASS');
   } finally {
     await browser.close();
   }
 }
 
 main().catch((err) => {
-  console.error(`test-issue-1109-hamburger-dropdown-visible-e2e.js: FAIL — ${err.stack || err.message}`);
+  console.error(`tests/e2e/test-issue-1109-hamburger-dropdown-visible-e2e.js: FAIL — ${err.stack || err.message}`);
   process.exit(1);
 });

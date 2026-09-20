@@ -1,8 +1,8 @@
 /**
  * Issue #1110 E2E — Live page node filter (autocomplete + theming).
  * Standalone runner so it can be exercised independently of the
- * full test-e2e-playwright.js suite. Mirrors the same assertions
- * that have been added to test-e2e-playwright.js.
+ * full tests/e2e/test-e2e-playwright.js suite. Mirrors the same assertions
+ * that have been added to tests/e2e/test-e2e-playwright.js.
  *
  * Usage:
  *   BASE_URL=http://localhost:13581 node test-1110-live-filter.js
