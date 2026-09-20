@@ -11,6 +11,7 @@ const scopeCSS = fs.readFileSync('public/region-scope.css', 'utf8');
 const bottomNav = fs.readFileSync('public/bottom-nav.js', 'utf8');
 const testAll = fs.readFileSync('test-all.sh', 'utf8');
 const packageJSON = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const testManifest = JSON.parse(fs.readFileSync('tests/manifest.json', 'utf8'));
 const adminHTML = fs.readFileSync('public/admin/hash-regions.html', 'utf8');
 const adminJS = fs.readFileSync('public/admin/hash-regions.js', 'utf8');
 
@@ -49,7 +50,8 @@ assert.match(scopeCSS, /@media \(max-width: 800px\)/, 'helper has mobile layout 
 assert.match(scopeCSS, /scrollbar-gutter:\s*stable/, 'available region list reserves visible scrollbar space');
 assert.match(scopeCSS, /region-scope-list-frame\.is-scrollable/, 'scrollable list has a distinct visual treatment');
 assert.match(scopeCSS, /var\(--region-scope-color\)/, 'region cards visibly use their assigned colors');
-assert.match(testAll, /node test-region-scope-e2e\.js/, 'canonical full test runner includes real Chromium coverage');
+assert.match(testAll, /run-manifest\.js --profile local-package-and-test-all/, 'canonical full test runner delegates to the manifest orchestrator');
+assert.ok(testManifest.tests.some(test => test.path === 'test-region-scope-e2e.js' && test.suite === 'e2e' && test.status === 'active'), 'canonical manifest includes real Chromium coverage');
 assert.doesNotMatch(packageJSON.scripts['test:unit'], /region-scope-e2e/, 'fast unit runner does not require a browser');
 
 assert.match(adminHTML, /id="region-editor-list"/, 'admin has structured editor list');
