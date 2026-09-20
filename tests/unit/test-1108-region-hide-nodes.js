@@ -7,7 +7,7 @@
  *     active AND showAll is OFF; empty string otherwise.
  *
  * These tests load the module via vm sandbox with mocked globals
- * (no DOM, no fetch). Mirrors the pattern from test-area-filter.js.
+ * (no DOM, no fetch). Mirrors the pattern from tests/unit/test-area-filter.js.
  */
 'use strict';
 const { repositoryRoot } = require('../helpers/repository-root');

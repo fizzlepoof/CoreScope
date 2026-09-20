@@ -7,7 +7,7 @@
  *   - Saved-filter dropdown (localStorage, with starter defaults)
  *
  * Pure-logic helpers (SavedFilters, buildCellFilterClause, appendClauseToExpr)
- * are unit-tested in test-packet-filter-ux.js. DOM glue is exercised by
+ * are unit-tested in tests/unit/test-packet-filter-ux.js. DOM glue is exercised by
  * test-filter-ux-e2e.js (Playwright).
  */
 (function() {

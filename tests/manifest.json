@@ -465,11 +465,11 @@
       ]
     },
     {
-      "path": "test-area-filter.js",
+      "path": "tests/unit/test-area-filter.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-area-filter.js"
+        "tests/unit/test-area-filter.js"
       ],
       "requirements": {
         "environment": [],
@@ -484,7 +484,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-area-filter.js",
+          "source": "tests/unit/test-area-filter.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -1639,11 +1639,11 @@
       ]
     },
     {
-      "path": "test-clear-filters.js",
+      "path": "tests/unit/test-clear-filters.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-clear-filters.js"
+        "tests/unit/test-clear-filters.js"
       ],
       "requirements": {
         "environment": [],
@@ -1658,7 +1658,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-clear-filters.js",
+          "source": "tests/unit/test-clear-filters.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -3478,11 +3478,11 @@
       ]
     },
     {
-      "path": "test-issue-1279-p2-code-filter.js",
+      "path": "tests/unit/test-issue-1279-p2-code-filter.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1279-p2-code-filter.js"
+        "tests/unit/test-issue-1279-p2-code-filter.js"
       ],
       "requirements": {
         "environment": [],
@@ -3497,7 +3497,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1279-p2-code-filter.js",
+          "source": "tests/unit/test-issue-1279-p2-code-filter.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -3973,11 +3973,11 @@
       ]
     },
     {
-      "path": "test-issue-1409-no-encrypted-flood.js",
+      "path": "tests/unit/test-issue-1409-no-encrypted-flood.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1409-no-encrypted-flood.js"
+        "tests/unit/test-issue-1409-no-encrypted-flood.js"
       ],
       "requirements": {
         "environment": [],
@@ -3996,7 +3996,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1409-no-encrypted-flood.js",
+          "source": "tests/unit/test-issue-1409-no-encrypted-flood.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -7513,11 +7513,11 @@
       ]
     },
     {
-      "path": "test-packet-filter-time.js",
+      "path": "tests/unit/test-packet-filter-time.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-packet-filter-time.js"
+        "tests/unit/test-packet-filter-time.js"
       ],
       "requirements": {
         "environment": [],
@@ -7532,17 +7532,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-packet-filter-time.js",
+          "source": "tests/unit/test-packet-filter-time.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-packet-filter-ux.js",
+      "path": "tests/unit/test-packet-filter-ux.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-packet-filter-ux.js"
+        "tests/unit/test-packet-filter-ux.js"
       ],
       "requirements": {
         "environment": [],
@@ -7557,17 +7557,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-packet-filter-ux.js",
+          "source": "tests/unit/test-packet-filter-ux.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-packet-filter.js",
+      "path": "tests/unit/test-packet-filter.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-packet-filter.js"
+        "tests/unit/test-packet-filter.js"
       ],
       "requirements": {
         "environment": [],
@@ -7594,17 +7594,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-packet-filter.js",
+          "source": "tests/unit/test-packet-filter.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-packets.js",
+      "path": "tests/unit/test-packets.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-packets.js"
+        "tests/unit/test-packets.js"
       ],
       "requirements": {
         "environment": [],
@@ -7619,7 +7619,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-packets.js",
+          "source": "tests/unit/test-packets.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -7758,11 +7758,11 @@
       ]
     },
     {
-      "path": "test-payload-labels-content.js",
+      "path": "tests/unit/test-payload-labels-content.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-payload-labels-content.js"
+        "tests/unit/test-payload-labels-content.js"
       ],
       "requirements": {
         "environment": [],
@@ -7777,17 +7777,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-payload-labels-content.js",
+          "source": "tests/unit/test-payload-labels-content.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-payload-labels-namespace.js",
+      "path": "tests/unit/test-payload-labels-namespace.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-payload-labels-namespace.js"
+        "tests/unit/test-payload-labels-namespace.js"
       ],
       "requirements": {
         "environment": [],
@@ -7802,7 +7802,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-payload-labels-namespace.js",
+          "source": "tests/unit/test-payload-labels-namespace.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -8392,11 +8392,11 @@
       ]
     },
     {
-      "path": "test-traces.js",
+      "path": "tests/unit/test-traces.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-traces.js"
+        "tests/unit/test-traces.js"
       ],
       "requirements": {
         "environment": [],
@@ -8415,7 +8415,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-traces.js",
+          "source": "tests/unit/test-traces.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
