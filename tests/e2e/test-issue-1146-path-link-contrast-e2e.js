@@ -17,7 +17,7 @@
  * Currently FAILS (link color resolves to rgb(0,0,238)).
  * After the style.css fix it PASSES.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1146-path-link-contrast-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1146-path-link-contrast-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

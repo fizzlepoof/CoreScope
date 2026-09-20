@@ -18,7 +18,7 @@
  *     (map fills extra horizontal space on ultrawide).
  *   - MAJOR-5: viewports list includes 1080 (matches PR body).
  *
- * Usage: BASE_URL=http://localhost:13581 node test-map-modal-fluid-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-map-modal-fluid-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

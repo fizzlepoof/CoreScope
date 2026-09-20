@@ -6,7 +6,7 @@
  * 'none', visibility !== 'hidden', and that its top edge is within the
  * viewport (not pushed below the visible area).
  *
- * Usage: BASE_URL=http://localhost:13581 node test-e2e-1267-mobile-vcr.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-e2e-1267-mobile-vcr.js
  */
 const { chromium, devices } = require('playwright');
 

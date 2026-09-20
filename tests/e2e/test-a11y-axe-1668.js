@@ -1,5 +1,5 @@
 /**
- * test-a11y-axe-1668.js — Milestones 5 + 6 of #1668
+ * tests/e2e/test-a11y-axe-1668.js — Milestones 5 + 6 of #1668
  *
  * axe-core CI gate. Loads every major CoreScope route in dark + light theme,
  * injects axe-core, runs the configured ruleset, and asserts zero
@@ -21,7 +21,7 @@
  *   failure). Missing fields => refused.
  *
  * Usage:
- *   BASE_URL=http://localhost:13581 node test-a11y-axe-1668.js
+ *   BASE_URL=http://localhost:13581 node tests/e2e/test-a11y-axe-1668.js
  *
  * Env:
  *   BASE_URL          required (server to test against)
@@ -31,6 +31,7 @@
  */
 
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -41,7 +42,7 @@ const path = require('path');
 const BASE = process.env.BASE_URL || 'http://localhost:13581';
 const ROUTES_FILTER = (process.env.AXE_ROUTES_ONLY || '').split(',').filter(Boolean);
 const SHOT_DIR = process.env.AXE_SCREENSHOT_DIR || '/tmp/axe-1668';
-const ALLOWLIST_PATH = path.join(__dirname, 'tests', 'a11y-allowlist.yaml');
+const ALLOWLIST_PATH = path.join(repositoryRoot, 'tests', 'a11y-allowlist.yaml');
 
 // Routes: M1 audit baseline (already proven coverage).
 // Hash routes — CoreScope is a SPA, server returns the same shell for any path.

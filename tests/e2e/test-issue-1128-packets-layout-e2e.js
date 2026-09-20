@@ -21,7 +21,7 @@
  *     have a CSS `max-width` ≤ 280px (clamp viewport-aware cap) so a long
  *     "TRACE,MULTIPART,..." label doesn't balloon the row.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1128-packets-layout-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1128-packets-layout-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

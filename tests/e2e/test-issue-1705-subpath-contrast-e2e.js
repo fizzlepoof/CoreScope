@@ -26,19 +26,20 @@
  *     browser would render them.
  *
  * Designed to be runnable in CI; degrades to SKIP if Chromium cannot
- * launch (mirrors test-logo-theme-e2e.js policy). Set CHROMIUM_REQUIRE=1
+ * launch (mirrors tests/e2e/test-logo-theme-e2e.js policy). Set CHROMIUM_REQUIRE=1
  * to convert SKIP -> FAIL.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 
-const CSS_PATH = path.resolve(__dirname, 'public', 'style.css');
+const CSS_PATH = path.resolve(repositoryRoot, 'public', 'style.css');
 
 function fail(msg) {
-  console.error(`test-issue-1705-subpath-contrast-e2e.js: FAIL — ${msg}`);
+  console.error(`tests/e2e/test-issue-1705-subpath-contrast-e2e.js: FAIL — ${msg}`);
   process.exit(1);
 }
 
@@ -89,7 +90,7 @@ async function main() {
     if (requireChromium) {
       fail(`Chromium required but unavailable: ${err.message}`);
     }
-    console.log(`test-issue-1705-subpath-contrast-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-issue-1705-subpath-contrast-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 
@@ -205,6 +206,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error(`test-issue-1705-subpath-contrast-e2e.js: ERROR — ${err && err.stack || err}`);
+  console.error(`tests/e2e/test-issue-1705-subpath-contrast-e2e.js: ERROR — ${err && err.stack || err}`);
   process.exit(1);
 });

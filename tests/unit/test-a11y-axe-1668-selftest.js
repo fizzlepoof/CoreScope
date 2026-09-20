@@ -4,21 +4,21 @@
  * Deterministic, browser-free unit test for the M5 axe gate's
  * allowlist parser and shape. Runs in <100ms on any Node host.
  *
- * The full axe browser run (test-a11y-axe-1668.js) executes in the
+ * The full axe browser run (tests/e2e/test-a11y-axe-1668.js) executes in the
  * Playwright E2E block after the fixture server + chromium are up.
  * THIS file guards the gate's metadata: route list, theme list,
  * allowlist parser, and the "expires_at refuses suppression" policy.
  */
 
 'use strict';
-const { repositoryRoot } = require('../helpers/repository-root');
+const { repositoryRoot, fromRepositoryRoot } = require('../helpers/repository-root');
 
 const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const mod = require('./test-a11y-axe-1668.js');
+const mod = require(fromRepositoryRoot('tests', 'e2e', 'test-a11y-axe-1668.js'));
 
 // ---- routes / themes --------------------------------------------------------
 assert.ok(Array.isArray(mod.ROUTES), 'ROUTES must be an array');
@@ -185,7 +185,7 @@ assert.throws(
 // And loadAllowlist must propagate the throw end-to-end via a tmpfile.
 const tmpMalformed = path.join(os.tmpdir(), `a11y-malformed-${process.pid}.yaml`);
 fs.writeFileSync(tmpMalformed, 'this :: is :: garbage\n!!! no\n');
-const ALLOWLIST_PATH_ORIG = require.resolve('./test-a11y-axe-1668.js');
+const ALLOWLIST_PATH_ORIG = require.resolve(fromRepositoryRoot('tests', 'e2e', 'test-a11y-axe-1668.js'));
 // We can't easily redirect ALLOWLIST_PATH without re-requiring; instead call
 // parseAllowlistYaml directly on the tmpfile content for end-to-end coverage.
 assert.throws(

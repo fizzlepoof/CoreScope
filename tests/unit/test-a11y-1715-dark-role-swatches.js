@@ -26,7 +26,7 @@
  *     custom properties are the single source of truth across themes.
  *
  * This test is CSS-driven (parses public/style.css) so it runs without
- * a browser. The umbrella axe gate (test-a11y-axe-1668.js) is the
+ * a browser. The umbrella axe gate (tests/e2e/test-a11y-axe-1668.js) is the
  * live-browser net.
  *
  * Usage:  node tests/unit/test-a11y-1715-dark-role-swatches.js

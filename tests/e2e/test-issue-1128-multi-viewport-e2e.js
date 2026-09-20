@@ -1,7 +1,7 @@
 /**
  * E2E (#1128 final): Multi-viewport layout collision + z-scale enforcement.
  *
- * Sister of test-issue-1128-packets-layout-e2e.js. That file asserts
+ * Sister of tests/e2e/test-issue-1128-packets-layout-e2e.js. That file asserts
  * individual component properties; this one closes the original
  * acceptance criterion: SCREENSHOTS at multiple viewports + bounding-rect
  * collision detection on visible interactive elements.

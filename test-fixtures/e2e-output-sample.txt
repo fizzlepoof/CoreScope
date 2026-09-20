@@ -26,7 +26,7 @@ Running tests/e2e/test-channel-issue-1111-e2e.js
   ✓ filter clears
   ✓ scroll restores
 === Results: 3 passed, 0 failed ===
-Running test-map-modal-fluid-e2e.js
+Running tests/e2e/test-map-modal-fluid-e2e.js
   ✓ modal opens
   ✓ modal closes
   ✓ scroll lock
@@ -93,7 +93,7 @@ Running test-table-fluid-e2e.js
   ✓ table fluid 2
 
 === Results: 2 passed, 0 failed ===
-Running test-charts-fluid-1058-e2e.js
+Running tests/e2e/test-charts-fluid-1058-e2e.js
   ✓ chart 1
   ✓ chart 2
 
@@ -110,7 +110,7 @@ Running test-slideover-1168-munger-e2e.js
   ✓ munger 2
 
 === #1168 Munger SlideOver hardening: 2 passed, 0 failed ===
-Running test-logo-pulse-1173-e2e.js
+Running tests/e2e/test-logo-pulse-1173-e2e.js
   ✓ pulse animates
   ✓ pulse respects reduced motion
 
@@ -121,7 +121,7 @@ Running test-issue-1122-packets-filter-ux-e2e.js
   ✓ packets filter UX 3
 
 === Results: 3 passed, 0 failed ===
-Running test-issue-1128-packets-layout-e2e.js
+Running tests/e2e/test-issue-1128-packets-layout-e2e.js
   ✓ packets layout 1
   ✓ packets layout 2
 
@@ -142,7 +142,7 @@ Running tests/e2e/test-issue-1150-404-state-e2e.js
   ✓ 404 link back
 
 === Results: 2 passed, 0 failed ===
-Running test-issue-1146-path-link-contrast-e2e.js
+Running tests/e2e/test-issue-1146-path-link-contrast-e2e.js
   ✓ contrast computed
   ✓ contrast above threshold
 
@@ -156,24 +156,24 @@ Running tests/e2e/test-issue-1151-orphan-separators-e2e.js
   ✓ orphan separators handled
 
 === #1151: 1 passed, 0 failed ===
-Running test-logo-rebrand-e2e.js
+Running tests/e2e/test-logo-rebrand-e2e.js
   ✓ rebrand 1
   ✓ rebrand 2
   ✓ rebrand 3
 
-test-logo-rebrand-e2e.js: 3/3 PASS
-Running test-logo-theme-e2e.js
+tests/e2e/test-logo-rebrand-e2e.js: 3/3 PASS
+Running tests/e2e/test-logo-theme-e2e.js
   ✓ theme 1
   ✓ theme 2
 
-test-logo-theme-e2e.js: 2/2 PASS
-Running test-logo-default-sage-teal-e2e.js
+tests/e2e/test-logo-theme-e2e.js: 2/2 PASS
+Running tests/e2e/test-logo-default-sage-teal-e2e.js
   ✓ default sage teal
 
-test-logo-default-sage-teal-e2e.js: 1/1 PASS
+tests/e2e/test-logo-default-sage-teal-e2e.js: 1/1 PASS
 Running tests/e2e/test-issue-1109-hamburger-dropdown-visible-e2e.js
 tests/e2e/test-issue-1109-hamburger-dropdown-visible-e2e.js: PASS
-Running test-live-layout-1178-1179-e2e.js
+Running tests/e2e/test-live-layout-1178-1179-e2e.js
   ✓ live layout
   ✓ live layout 2
 
@@ -211,7 +211,7 @@ Running tests/e2e/test-issue-1224-channels-mobile-ux-e2e.js
   ✓ mobile UX 3
 
 3/3 tests passed
-Running test-issue-1236-map-mobile-e2e.js
+Running tests/e2e/test-issue-1236-map-mobile-e2e.js
   ✓ map mobile 1
   ✓ map mobile 2
 

@@ -11,7 +11,7 @@
  * Desktop guard (≥768px): map controls panel layout must remain absolute
  * (position: absolute), not stretched full width.
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1236-map-mobile-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1236-map-mobile-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

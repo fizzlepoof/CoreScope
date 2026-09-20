@@ -26,7 +26,7 @@
  * before any code reaches the allowlist.
  *
  * Pure CSS parse — no browser required. The live axe gate
- * (test-a11y-axe-1668.js) remains the umbrella net.
+ * (tests/e2e/test-a11y-axe-1668.js) remains the umbrella net.
  *
  * Usage:  node tests/unit/test-a11y-1716-rf-range-btn-active.js
  */

@@ -247,11 +247,11 @@
       ]
     },
     {
-      "path": "test-a11y-axe-1668.js",
+      "path": "tests/e2e/test-a11y-axe-1668.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-a11y-axe-1668.js"
+        "tests/e2e/test-a11y-axe-1668.js"
       ],
       "requirements": {
         "environment": [
@@ -294,7 +294,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-a11y-axe-1668.js",
+          "source": "tests/e2e/test-a11y-axe-1668.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -1603,11 +1603,11 @@
       ]
     },
     {
-      "path": "test-charts-fluid-1058-e2e.js",
+      "path": "tests/e2e/test-charts-fluid-1058-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-charts-fluid-1058-e2e.js"
+        "tests/e2e/test-charts-fluid-1058-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1633,7 +1633,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-charts-fluid-1058-e2e.js",
+          "source": "tests/e2e/test-charts-fluid-1058-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -1789,11 +1789,11 @@
       ]
     },
     {
-      "path": "test-customize-branding-e2e.js",
+      "path": "tests/e2e/test-customize-branding-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-customize-branding-e2e.js"
+        "tests/e2e/test-customize-branding-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1819,17 +1819,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-customize-branding-e2e.js",
+          "source": "tests/e2e/test-customize-branding-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-customize-display-e2e.js",
+      "path": "tests/e2e/test-customize-display-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-customize-display-e2e.js"
+        "tests/e2e/test-customize-display-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1855,17 +1855,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-customize-display-e2e.js",
+          "source": "tests/e2e/test-customize-display-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-customize-export-e2e.js",
+      "path": "tests/e2e/test-customize-export-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-customize-export-e2e.js"
+        "tests/e2e/test-customize-export-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1891,17 +1891,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-customize-export-e2e.js",
+          "source": "tests/e2e/test-customize-export-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-customize-theme-e2e.js",
+      "path": "tests/e2e/test-customize-theme-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-customize-theme-e2e.js"
+        "tests/e2e/test-customize-theme-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1927,7 +1927,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-customize-theme-e2e.js",
+          "source": "tests/e2e/test-customize-theme-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -2026,11 +2026,11 @@
       ]
     },
     {
-      "path": "test-e2e-1267-mobile-vcr.js",
+      "path": "tests/e2e/test-e2e-1267-mobile-vcr.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-e2e-1267-mobile-vcr.js"
+        "tests/e2e/test-e2e-1267-mobile-vcr.js"
       ],
       "requirements": {
         "environment": [
@@ -2056,7 +2056,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-e2e-1267-mobile-vcr.js",
+          "source": "tests/e2e/test-e2e-1267-mobile-vcr.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -2724,11 +2724,11 @@
       ]
     },
     {
-      "path": "test-issue-1128-packets-layout-e2e.js",
+      "path": "tests/e2e/test-issue-1128-packets-layout-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1128-packets-layout-e2e.js"
+        "tests/e2e/test-issue-1128-packets-layout-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -2754,7 +2754,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1128-packets-layout-e2e.js",
+          "source": "tests/e2e/test-issue-1128-packets-layout-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -2821,11 +2821,11 @@
       ]
     },
     {
-      "path": "test-issue-1146-path-link-contrast-e2e.js",
+      "path": "tests/e2e/test-issue-1146-path-link-contrast-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1146-path-link-contrast-e2e.js"
+        "tests/e2e/test-issue-1146-path-link-contrast-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -2851,7 +2851,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1146-path-link-contrast-e2e.js",
+          "source": "tests/e2e/test-issue-1146-path-link-contrast-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -3291,11 +3291,11 @@
       ]
     },
     {
-      "path": "test-issue-1236-map-mobile-e2e.js",
+      "path": "tests/e2e/test-issue-1236-map-mobile-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1236-map-mobile-e2e.js"
+        "tests/e2e/test-issue-1236-map-mobile-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -3321,7 +3321,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1236-map-mobile-e2e.js",
+          "source": "tests/e2e/test-issue-1236-map-mobile-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -3779,11 +3779,11 @@
       ]
     },
     {
-      "path": "test-issue-1374-route-map-a11y-e2e.js",
+      "path": "tests/e2e/test-issue-1374-route-map-a11y-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1374-route-map-a11y-e2e.js"
+        "tests/e2e/test-issue-1374-route-map-a11y-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -3816,7 +3816,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1374-route-map-a11y-e2e.js",
+          "source": "tests/e2e/test-issue-1374-route-map-a11y-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -4638,11 +4638,11 @@
       ]
     },
     {
-      "path": "test-issue-1487-byop-modal-layout-e2e.js",
+      "path": "tests/e2e/test-issue-1487-byop-modal-layout-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1487-byop-modal-layout-e2e.js"
+        "tests/e2e/test-issue-1487-byop-modal-layout-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -4675,7 +4675,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1487-byop-modal-layout-e2e.js",
+          "source": "tests/e2e/test-issue-1487-byop-modal-layout-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -5158,11 +5158,11 @@
       ]
     },
     {
-      "path": "test-issue-1630-reach-mobile-e2e.js",
+      "path": "tests/e2e/test-issue-1630-reach-mobile-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1630-reach-mobile-e2e.js"
+        "tests/e2e/test-issue-1630-reach-mobile-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -5195,7 +5195,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1630-reach-mobile-e2e.js",
+          "source": "tests/e2e/test-issue-1630-reach-mobile-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -5405,11 +5405,11 @@
       ]
     },
     {
-      "path": "test-issue-1648-m1-icons-e2e.js",
+      "path": "tests/e2e/test-issue-1648-m1-icons-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1648-m1-icons-e2e.js"
+        "tests/e2e/test-issue-1648-m1-icons-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -5442,7 +5442,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1648-m1-icons-e2e.js",
+          "source": "tests/e2e/test-issue-1648-m1-icons-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -5473,11 +5473,11 @@
       ]
     },
     {
-      "path": "test-issue-1648-m2-icons-e2e.js",
+      "path": "tests/e2e/test-issue-1648-m2-icons-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1648-m2-icons-e2e.js"
+        "tests/e2e/test-issue-1648-m2-icons-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -5510,7 +5510,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1648-m2-icons-e2e.js",
+          "source": "tests/e2e/test-issue-1648-m2-icons-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -5541,11 +5541,11 @@
       ]
     },
     {
-      "path": "test-issue-1648-m3-icons-e2e.js",
+      "path": "tests/e2e/test-issue-1648-m3-icons-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1648-m3-icons-e2e.js"
+        "tests/e2e/test-issue-1648-m3-icons-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -5578,7 +5578,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1648-m3-icons-e2e.js",
+          "source": "tests/e2e/test-issue-1648-m3-icons-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -5609,11 +5609,11 @@
       ]
     },
     {
-      "path": "test-issue-1648-m4-icons-e2e.js",
+      "path": "tests/e2e/test-issue-1648-m4-icons-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1648-m4-icons-e2e.js"
+        "tests/e2e/test-issue-1648-m4-icons-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -5646,7 +5646,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1648-m4-icons-e2e.js",
+          "source": "tests/e2e/test-issue-1648-m4-icons-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -5677,11 +5677,11 @@
       ]
     },
     {
-      "path": "test-issue-1648-m5-icons-e2e.js",
+      "path": "tests/e2e/test-issue-1648-m5-icons-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1648-m5-icons-e2e.js"
+        "tests/e2e/test-issue-1648-m5-icons-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -5714,7 +5714,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1648-m5-icons-e2e.js",
+          "source": "tests/e2e/test-issue-1648-m5-icons-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -5944,11 +5944,11 @@
       ]
     },
     {
-      "path": "test-issue-1705-subpath-contrast-e2e.js",
+      "path": "tests/e2e/test-issue-1705-subpath-contrast-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1705-subpath-contrast-e2e.js"
+        "tests/e2e/test-issue-1705-subpath-contrast-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -5976,7 +5976,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1705-subpath-contrast-e2e.js",
+          "source": "tests/e2e/test-issue-1705-subpath-contrast-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -6419,11 +6419,11 @@
       ]
     },
     {
-      "path": "test-live-layout-1178-1179-e2e.js",
+      "path": "tests/e2e/test-live-layout-1178-1179-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-live-layout-1178-1179-e2e.js"
+        "tests/e2e/test-live-layout-1178-1179-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -6456,7 +6456,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-live-layout-1178-1179-e2e.js",
+          "source": "tests/e2e/test-live-layout-1178-1179-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -6641,11 +6641,11 @@
       ]
     },
     {
-      "path": "test-logo-default-sage-teal-e2e.js",
+      "path": "tests/e2e/test-logo-default-sage-teal-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-logo-default-sage-teal-e2e.js"
+        "tests/e2e/test-logo-default-sage-teal-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -6678,17 +6678,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-logo-default-sage-teal-e2e.js",
+          "source": "tests/e2e/test-logo-default-sage-teal-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-logo-pulse-1173-e2e.js",
+      "path": "tests/e2e/test-logo-pulse-1173-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-logo-pulse-1173-e2e.js"
+        "tests/e2e/test-logo-pulse-1173-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -6714,17 +6714,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-logo-pulse-1173-e2e.js",
+          "source": "tests/e2e/test-logo-pulse-1173-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-logo-rebrand-e2e.js",
+      "path": "tests/e2e/test-logo-rebrand-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-logo-rebrand-e2e.js"
+        "tests/e2e/test-logo-rebrand-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -6757,17 +6757,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-logo-rebrand-e2e.js",
+          "source": "tests/e2e/test-logo-rebrand-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-logo-theme-e2e.js",
+      "path": "tests/e2e/test-logo-theme-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-logo-theme-e2e.js"
+        "tests/e2e/test-logo-theme-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -6800,7 +6800,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-logo-theme-e2e.js",
+          "source": "tests/e2e/test-logo-theme-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -6831,11 +6831,11 @@
       ]
     },
     {
-      "path": "test-map-modal-fluid-e2e.js",
+      "path": "tests/e2e/test-map-modal-fluid-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-map-modal-fluid-e2e.js"
+        "tests/e2e/test-map-modal-fluid-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -6861,7 +6861,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-map-modal-fluid-e2e.js",
+          "source": "tests/e2e/test-map-modal-fluid-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]

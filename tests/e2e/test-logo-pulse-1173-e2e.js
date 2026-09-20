@@ -14,7 +14,7 @@
  *   .stats             — { triggered, dropped }
  * Implementations may also wire real WS handlers; this hook is the test seam.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-logo-pulse-1173-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-logo-pulse-1173-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

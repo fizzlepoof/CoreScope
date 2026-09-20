@@ -39,7 +39,7 @@ async function main() {
     });
   } catch (err) {
     if (requireChromium) {
-      console.error(`test-issue-1648-m1-icons-e2e.js: HARD FAIL — Chromium unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-issue-1648-m1-icons-e2e.js: HARD FAIL — Chromium unavailable: ${err.message}`);
       process.exit(1);
     }
     console.warn(`SKIP — Chromium unavailable: ${err.message}`);
@@ -199,7 +199,7 @@ async function main() {
   }
 
   await browser.close();
-  console.log(`\ntest-issue-1648-m1-icons-e2e.js: ${passes} passed, ${failures} failed`);
+  console.log(`\ntests/e2e/test-issue-1648-m1-icons-e2e.js: ${passes} passed, ${failures} failed`);
   // Hard assertion so the run exit code is gated on a real assertion call,
   // not just a process.exit branch.
   assert.strictEqual(failures, 0, `${failures} M1 icon-render assertions failed`);
@@ -207,6 +207,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('test-issue-1648-m1-icons-e2e.js: FAIL —', err);
+  console.error('tests/e2e/test-issue-1648-m1-icons-e2e.js: FAIL —', err);
   process.exit(1);
 });

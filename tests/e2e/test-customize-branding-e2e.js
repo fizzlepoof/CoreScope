@@ -7,7 +7,7 @@
  *  - Override persisted to cs-theme-overrides.branding
  *  - Survives reload
  *
- * Usage: BASE_URL=http://localhost:13581 node test-customize-branding-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-customize-branding-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

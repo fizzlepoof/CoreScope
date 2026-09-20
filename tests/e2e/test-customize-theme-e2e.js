@@ -9,7 +9,7 @@
  *    (verifies "all colors via CSS variables" invariant — NOT inline styles)
  *  - Reload page → assert override persists and CSS var still applied
  *
- * Usage: BASE_URL=http://localhost:13581 node test-customize-theme-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-customize-theme-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');
