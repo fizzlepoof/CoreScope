@@ -57,10 +57,10 @@ async function main() {
     });
   } catch (err) {
     if (requireChromium) {
-      console.error(`test-nav-fluid-1055-e2e.js: FAIL — Chromium required (CHROMIUM_REQUIRE=1) but unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-nav-fluid-1055-e2e.js: FAIL — Chromium required (CHROMIUM_REQUIRE=1) but unavailable: ${err.message}`);
       process.exit(1);
     }
-    console.log(`test-nav-fluid-1055-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-nav-fluid-1055-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 
@@ -149,11 +149,11 @@ async function main() {
   await browser.close();
 
   const total = ROUTES.length * VIEWPORTS.length;
-  console.log(`\ntest-nav-fluid-1055-e2e.js: ${failures === 0 ? 'OK' : 'FAIL'} — ${passes}/${total} passed`);
+  console.log(`\ntests/e2e/test-nav-fluid-1055-e2e.js: ${failures === 0 ? 'OK' : 'FAIL'} — ${passes}/${total} passed`);
   process.exit(failures === 0 ? 0 : 1);
 }
 
 main().catch((err) => {
-  console.error('test-nav-fluid-1055-e2e.js: fatal', err);
+  console.error('tests/e2e/test-nav-fluid-1055-e2e.js: fatal', err);
   process.exit(1);
 });
