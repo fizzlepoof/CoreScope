@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// test-preflight-xss-gate.js — exercises scripts/check-xss-sinks.sh against
+// tests/integration/test-preflight-xss-gate.js — exercises scripts/check-xss-sinks.sh against
 // the testdata/preflight-xss fixtures. Asserts the bad fixtures HARD-FAIL
 // (exit 1) and the good fixtures pass (exit 0).
 //
@@ -16,12 +16,13 @@
 // Exit 1 on any assertion failure.
 
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const { spawnSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-const SCRIPT = path.resolve(__dirname, 'scripts/check-xss-sinks.sh');
-const FIXTURE_DIR = path.resolve(__dirname, 'testdata/preflight-xss');
+const SCRIPT = path.resolve(repositoryRoot, 'scripts/check-xss-sinks.sh');
+const FIXTURE_DIR = path.resolve(repositoryRoot, 'testdata/preflight-xss');
 
 if (!fs.existsSync(SCRIPT)) {
   console.error(`FAIL: ${SCRIPT} missing`);

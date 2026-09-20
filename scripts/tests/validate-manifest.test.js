@@ -679,11 +679,11 @@ test('requires repository integration runners to retain behavior-based classific
       command: ['sh', 'test-e2e-badge-aggregate.sh'],
     },
     {
-      path: 'test-preflight-xss-gate.js',
+      path: 'tests/integration/test-preflight-xss-gate.js',
       source: "const { spawnSync } = require('child_process');\nspawnSync('bash', ['scripts/check-xss-sinks.sh', 'testdata/preflight-xss/bad.js']);\n",
-      command: ['node', 'test-preflight-xss-gate.js'],
+      command: ['node', 'tests/integration/test-preflight-xss-gate.js'],
       activeSurface: 'test-all.sh',
-      activeContent: 'node test-preflight-xss-gate.js\n',
+      activeContent: 'node tests/integration/test-preflight-xss-gate.js\n',
     },
     {
       path: 'test-tool-wrapper.js',
@@ -704,7 +704,9 @@ test('requires repository integration runners to retain behavior-based classific
 
   for (const testCase of cases) {
     const { repoRoot, manifest } = fixture();
-    fs.writeFileSync(path.join(repoRoot, testCase.path), testCase.source);
+    const testPath = path.join(repoRoot, testCase.path);
+    fs.mkdirSync(path.dirname(testPath), { recursive: true });
+    fs.writeFileSync(testPath, testCase.source);
     manifest.tests[0] = entry({
       path: testCase.path,
       suite: 'unit',

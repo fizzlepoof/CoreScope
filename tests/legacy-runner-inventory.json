@@ -375,6 +375,7 @@
     "test-perf-disk-io-1120.js": "tests/unit/test-perf-disk-io-1120.js",
     "test-perf-go-runtime.js": "tests/unit/test-perf-go-runtime.js",
     "test-perf-render-1258.js": "tests/unit/test-perf-render-1258.js",
+    "test-preflight-xss-gate.js": "tests/integration/test-preflight-xss-gate.js",
     "test-pull-to-reconnect-1091.js": "tests/unit/test-pull-to-reconnect-1091.js",
     "test-pull-to-reconnect.js": "tests/unit/test-pull-to-reconnect.js",
     "test-rx-coverage-config-race.js": "tests/unit/test-rx-coverage-config-race.js",
