@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"strings"
 	"unicode/utf8"
@@ -32,6 +33,11 @@ type hashRegionDefinitionPayload struct {
 type hashRegionDefinitionsResponse struct {
 	HashRegions           []string                      `json:"hashRegions"`
 	HashRegionDefinitions []hashRegionDefinitionPayload `json:"hashRegionDefinitions"`
+}
+
+type hashRegionGeometryPayload struct {
+	Type        string          `json:"type"`
+	Coordinates json.RawMessage `json:"coordinates"`
 }
 
 func newHashRegionDefinitionsResponse(definitions []admindb.HashRegionDefinition) (hashRegionDefinitionsResponse, error) {
@@ -134,11 +140,8 @@ func canonicalHashRegionGeometry(raw json.RawMessage) (string, error) {
 	if len(raw) == 0 || bytes.Equal(raw, []byte("null")) {
 		return "", nil
 	}
-	var geometry struct {
-		Type        string          `json:"type"`
-		Coordinates json.RawMessage `json:"coordinates"`
-	}
-	if err := json.Unmarshal(raw, &geometry); err != nil {
+	geometry, err := decodeHashRegionGeometry(raw)
+	if err != nil {
 		return "", err
 	}
 	canonical, err := json.Marshal(struct {
@@ -149,6 +152,19 @@ func canonicalHashRegionGeometry(raw json.RawMessage) (string, error) {
 		return "", err
 	}
 	return string(canonical), nil
+}
+
+func decodeHashRegionGeometry(raw json.RawMessage) (hashRegionGeometryPayload, error) {
+	var geometry hashRegionGeometryPayload
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&geometry); err != nil {
+		return geometry, err
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return geometry, errors.New("geometry must contain exactly one JSON value")
+	}
+	return geometry, nil
 }
 
 func normalizeHashRegionColor(input string) (string, error) {
@@ -204,11 +220,8 @@ func normalizeHashRegionGeometry(raw json.RawMessage, remainingWork int64) (stri
 	if len(raw) == 0 || bytes.Equal(raw, []byte("null")) {
 		return "", 0, nil
 	}
-	var geometry struct {
-		Type        string          `json:"type"`
-		Coordinates json.RawMessage `json:"coordinates"`
-	}
-	if err := json.Unmarshal(raw, &geometry); err != nil {
+	geometry, err := decodeHashRegionGeometry(raw)
+	if err != nil {
 		return "", 0, errors.New("must be valid GeoJSON")
 	}
 	if len(geometry.Coordinates) == 0 || bytes.Equal(bytes.TrimSpace(geometry.Coordinates), []byte("null")) {

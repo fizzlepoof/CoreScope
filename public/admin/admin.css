@@ -183,6 +183,10 @@ body.auth-gated.authed { visibility: visible; }
 }
 .region-editor-toolbar { justify-content: space-between; margin-bottom: 12px; }
 .region-editor-toolbar h2 { margin: 0; }
+.region-backup-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.region-backup-controls select { min-width: min(100%, 340px); }
+.region-replace-confirm { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 12px; }
+#region-backup-status.is-destructive { color: var(--danger); font-weight: 600; }
 .region-editor-list { display: grid; gap: 12px; }
 .region-definition-card {
   display: grid; grid-template-columns: minmax(150px, .8fr) minmax(150px, .8fr) minmax(220px, 1.5fr) minmax(120px, .5fr) auto;

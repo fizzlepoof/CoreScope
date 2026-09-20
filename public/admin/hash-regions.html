@@ -54,6 +54,31 @@
       <p>Define MeshCore transport-scope hierarchy, public descriptions, and authoritative Polygon or MultiPolygon boundaries. Region names begin with <code>#</code>.</p>
     </header>
 
+    <section class="admin-section" aria-labelledby="region-backup-heading">
+      <div class="region-editor-toolbar">
+        <div>
+          <h2 id="region-backup-heading">Region backups</h2>
+          <p class="admin-note">Export every definition, parent link, description, color, and boundary in one versioned JSON file. Imports are validated in full before anything is changed.</p>
+        </div>
+        <button class="btn-secondary" type="button" id="export-regions-btn">Export all regions</button>
+      </div>
+      <div class="region-backup-controls">
+        <button class="btn-secondary" type="button" id="choose-region-backup-btn">Choose backup file</button>
+        <input type="file" id="region-backup-file" accept=".json,application/json" hidden aria-label="Choose region backup JSON">
+        <label for="region-backup-mode">Import behavior</label>
+        <select id="region-backup-mode">
+          <option value="merge">Merge — update matching regions and preserve all others</option>
+          <option value="replace">Replace — remove regions absent from this backup</option>
+        </select>
+        <label class="region-replace-confirm" for="region-replace-confirm">
+          <input type="checkbox" id="region-replace-confirm" disabled>
+          I understand Replace can remove existing regions.
+        </label>
+        <button class="btn-primary" type="button" id="import-regions-btn" disabled>Import validated backup</button>
+      </div>
+      <p id="region-backup-status" class="admin-note" role="status" aria-live="polite">Choose a backup file to validate it before import.</p>
+    </section>
+
     <section class="admin-section">
       <p class="admin-note">Changes apply automatically after saving. Legacy name-only records load here without losing metadata already saved for retained names.</p>
       <div class="form-error" id="regions-error" role="alert"></div>
