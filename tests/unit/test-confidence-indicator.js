@@ -7,6 +7,7 @@
 // it against synthetic NeighborEntry-shaped inputs.
 
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const vm = require('vm');
 const assert = require('assert');
@@ -21,7 +22,7 @@ function test(name, fn) {
 // inner `function getConfidenceIndicator(entry) { ... }` — pull the body
 // via a balanced-brace scan and re-evaluate it standalone.
 function extractGetConfidenceIndicator() {
-  const src = fs.readFileSync(__dirname + '/public/nodes.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'nodes.js'), 'utf8');
   const start = src.indexOf('function getConfidenceIndicator(');
   if (start < 0) throw new Error('getConfidenceIndicator not found in nodes.js');
   // Walk braces to find end.

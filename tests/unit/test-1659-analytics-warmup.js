@@ -13,6 +13,7 @@
  * setTimeout that resolves immediately (to keep wall-time minimal).
  */
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
@@ -49,7 +50,7 @@ function makeCtx(fetchImpl) {
   vm.createContext(ctx);
   // Provide the no-op fetch('/api/config/cache') hit that app.js makes
   // on module load by returning a thenable that ignores.
-  const src = fs.readFileSync('public/app.js', 'utf8');
+  const src = fs.readFileSync(fromRepositoryRoot('public', 'app.js'), 'utf8');
   // Strip everything after the api()-related helpers we need; we only
   // want the top of the file (cache + api + _warmupNotify) and the
   // fetchAllNodes helper isn't required for these tests. Run the full

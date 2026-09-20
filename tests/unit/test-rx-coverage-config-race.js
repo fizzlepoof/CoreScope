@@ -1,4 +1,5 @@
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 // Unit test for #13: a direct land on #/rx-coverage must not read the coverage
 // feature flag before MeshConfigReady resolves. init() should defer its
 // enabled/disabled decision until the config promise settles, instead of
@@ -8,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const code = fs.readFileSync(path.join(__dirname, 'public', 'rx-coverage.js'), 'utf8');
+const code = fs.readFileSync(fromRepositoryRoot('public', 'rx-coverage.js'), 'utf8');
 
 let page = null;
 let resolveConfig;

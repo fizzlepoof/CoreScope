@@ -81,7 +81,7 @@ console.log('\n=== v384-1.2 — /observers .obs-clock-naive-chip sprite ===');
 // ── Finding 2: analytics decorate channels — encrypted displayName ──────────
 console.log('\n=== v384-12.18 — /analytics Channels encrypted group labels ===');
 (function () {
-  // Match the harness from test-analytics-channels-integration.js so we
+  // Match the harness from tests/unit/test-analytics-channels-integration.js so we
   // load analytics.js the same way.
   global.window = global;
   global.document = {

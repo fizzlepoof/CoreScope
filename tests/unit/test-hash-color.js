@@ -3,11 +3,12 @@
  *        outline darker than fill, sentinel, perceptual distance
  */
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
 
-const src = fs.readFileSync(path.join(__dirname, 'public', 'hash-color.js'), 'utf8');
+const src = fs.readFileSync(fromRepositoryRoot('public', 'hash-color.js'), 'utf8');
 
 function createSandbox() {
   const sandbox = { window: {}, module: {} };

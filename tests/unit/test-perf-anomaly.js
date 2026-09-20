@@ -8,10 +8,11 @@
  * This file exercises window.detectPerfAnomalies(history, current, opts).
  */
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 
-const code = fs.readFileSync('public/perf.js', 'utf8');
+const code = fs.readFileSync(fromRepositoryRoot('public', 'perf.js'), 'utf8');
 const ctx = {
   window: {},
   document: { addEventListener() {}, getElementById() { return null; }, hidden: true },

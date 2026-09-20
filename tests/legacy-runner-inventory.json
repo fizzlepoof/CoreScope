@@ -227,6 +227,30 @@
       "test-touch-gestures-coverage-e2e.js"
     ]
   },
+  "relocations": {
+    "test-1659-analytics-warmup.js": "tests/unit/test-1659-analytics-warmup.js",
+    "test-a11y-axe-routes-coverage.js": "tests/unit/test-a11y-axe-routes-coverage.js",
+    "test-aging.js": "tests/unit/test-aging.js",
+    "test-analytics-channels-integration.js": "tests/unit/test-analytics-channels-integration.js",
+    "test-anl1-tooltip-render.js": "tests/unit/test-anl1-tooltip-render.js",
+    "test-compare-flood-filter.js": "tests/unit/test-compare-flood-filter.js",
+    "test-compare-overlap.js": "tests/unit/test-compare-overlap.js",
+    "test-confidence-indicator.js": "tests/unit/test-confidence-indicator.js",
+    "test-coverage-gate.js": "tests/unit/test-coverage-gate.js",
+    "test-hash-color.js": "tests/unit/test-hash-color.js",
+    "test-hash-region-admin.js": "tests/unit/test-hash-region-admin.js",
+    "test-issue-1646-compare-polish.js": "tests/unit/test-issue-1646-compare-polish.js",
+    "test-mini-markdown-security.js": "tests/unit/test-mini-markdown-security.js",
+    "test-node-reach-coverage-debounce.js": "tests/unit/test-node-reach-coverage-debounce.js",
+    "test-node-reach-coverage.js": "tests/unit/test-node-reach-coverage.js",
+    "test-perf-anomaly.js": "tests/unit/test-perf-anomaly.js",
+    "test-perf-disk-io-1120.js": "tests/unit/test-perf-disk-io-1120.js",
+    "test-perf-go-runtime.js": "tests/unit/test-perf-go-runtime.js",
+    "test-perf-render-1258.js": "tests/unit/test-perf-render-1258.js",
+    "test-rx-coverage-config-race.js": "tests/unit/test-rx-coverage-config-race.js",
+    "test-rx-coverage-escape.js": "tests/unit/test-rx-coverage-escape.js",
+    "test-xss-escape-sinks.js": "tests/unit/test-xss-escape-sinks.js"
+  },
   "orchestrationRootTests": [
     "test-all.sh"
   ],

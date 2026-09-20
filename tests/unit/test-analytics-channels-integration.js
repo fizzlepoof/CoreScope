@@ -16,6 +16,7 @@
  *      jump to channel activity stats.
  */
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -55,7 +56,7 @@ global.histogram = () => ({ svg: '' });
 
 // Load analytics.js — it self-registers global helpers we test.
 const analyticsSrc = fs.readFileSync(
-  path.join(__dirname, 'public/analytics.js'),
+  fromRepositoryRoot('public', 'analytics.js'),
   'utf8'
 );
 // Strip top-level `await` / module syntax — analytics.js is plain IIFE so it's
@@ -177,7 +178,7 @@ assert(tbody.indexOf('0x40') > iEnc, 'encrypted section contains 0x40');
 console.log('\n=== Channels page links to Analytics ===');
 
 const channelsSrc = fs.readFileSync(
-  path.join(__dirname, 'public/channels.js'),
+  fromRepositoryRoot('public', 'channels.js'),
   'utf8'
 );
 assert(/#\/analytics/.test(channelsSrc) &&

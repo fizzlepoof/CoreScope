@@ -73,11 +73,11 @@
       ]
     },
     {
-      "path": "test-1659-analytics-warmup.js",
+      "path": "tests/unit/test-1659-analytics-warmup.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-1659-analytics-warmup.js"
+        "tests/unit/test-1659-analytics-warmup.js"
       ],
       "requirements": {
         "environment": [],
@@ -92,7 +92,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-1659-analytics-warmup.js",
+          "source": "tests/unit/test-1659-analytics-warmup.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -300,11 +300,11 @@
       ]
     },
     {
-      "path": "test-a11y-axe-routes-coverage.js",
+      "path": "tests/unit/test-a11y-axe-routes-coverage.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-a11y-axe-routes-coverage.js"
+        "tests/unit/test-a11y-axe-routes-coverage.js"
       ],
       "requirements": {
         "environment": [],
@@ -319,17 +319,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-a11y-axe-routes-coverage.js",
+          "source": "tests/unit/test-a11y-axe-routes-coverage.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-aging.js",
+      "path": "tests/unit/test-aging.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-aging.js"
+        "tests/unit/test-aging.js"
       ],
       "requirements": {
         "environment": [],
@@ -352,7 +352,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-aging.js",
+          "source": "tests/unit/test-aging.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -384,11 +384,11 @@
       ]
     },
     {
-      "path": "test-analytics-channels-integration.js",
+      "path": "tests/unit/test-analytics-channels-integration.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-analytics-channels-integration.js"
+        "tests/unit/test-analytics-channels-integration.js"
       ],
       "requirements": {
         "environment": [],
@@ -403,7 +403,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-analytics-channels-integration.js",
+          "source": "tests/unit/test-analytics-channels-integration.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -440,11 +440,11 @@
       ]
     },
     {
-      "path": "test-anl1-tooltip-render.js",
+      "path": "tests/unit/test-anl1-tooltip-render.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-anl1-tooltip-render.js"
+        "tests/unit/test-anl1-tooltip-render.js"
       ],
       "requirements": {
         "environment": [],
@@ -459,7 +459,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-anl1-tooltip-render.js",
+          "source": "tests/unit/test-anl1-tooltip-render.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -1689,11 +1689,11 @@
       ]
     },
     {
-      "path": "test-compare-flood-filter.js",
+      "path": "tests/unit/test-compare-flood-filter.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-compare-flood-filter.js"
+        "tests/unit/test-compare-flood-filter.js"
       ],
       "requirements": {
         "environment": [],
@@ -1708,17 +1708,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-compare-flood-filter.js",
+          "source": "tests/unit/test-compare-flood-filter.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-compare-overlap.js",
+      "path": "tests/unit/test-compare-overlap.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-compare-overlap.js"
+        "tests/unit/test-compare-overlap.js"
       ],
       "requirements": {
         "environment": [],
@@ -1733,17 +1733,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-compare-overlap.js",
+          "source": "tests/unit/test-compare-overlap.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-confidence-indicator.js",
+      "path": "tests/unit/test-confidence-indicator.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-confidence-indicator.js"
+        "tests/unit/test-confidence-indicator.js"
       ],
       "requirements": {
         "environment": [],
@@ -1758,17 +1758,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-confidence-indicator.js",
+          "source": "tests/unit/test-confidence-indicator.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-coverage-gate.js",
+      "path": "tests/unit/test-coverage-gate.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-coverage-gate.js"
+        "tests/unit/test-coverage-gate.js"
       ],
       "requirements": {
         "environment": [],
@@ -1783,7 +1783,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-coverage-gate.js",
+          "source": "tests/unit/test-coverage-gate.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -2441,11 +2441,11 @@
       ]
     },
     {
-      "path": "test-hash-color.js",
+      "path": "tests/unit/test-hash-color.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-hash-color.js"
+        "tests/unit/test-hash-color.js"
       ],
       "requirements": {
         "environment": [],
@@ -2460,7 +2460,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-hash-color.js",
+          "source": "tests/unit/test-hash-color.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -5330,11 +5330,11 @@
       ]
     },
     {
-      "path": "test-issue-1646-compare-polish.js",
+      "path": "tests/unit/test-issue-1646-compare-polish.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1646-compare-polish.js"
+        "tests/unit/test-issue-1646-compare-polish.js"
       ],
       "requirements": {
         "environment": [],
@@ -5349,7 +5349,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1646-compare-polish.js",
+          "source": "tests/unit/test-issue-1646-compare-polish.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -6944,25 +6944,29 @@
       ]
     },
     {
-      "path": "test-hash-region-admin.js",
+      "path": "tests/unit/test-hash-region-admin.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-hash-region-admin.js"
+        "tests/unit/test-hash-region-admin.js"
       ],
       "requirements": {
         "environment": [],
         "flags": []
       },
       "status": "active",
-      "statusEvidence": [{
-        "source": "package.json",
-        "detail": "explicitly listed in a Region Scope test command"
-      }],
-      "classificationEvidence": [{
-        "source": "test-hash-region-admin.js",
-        "detail": "runs isolated Node assertions for structured region administration behavior"
-      }]
+      "statusEvidence": [
+        {
+          "source": "package.json",
+          "detail": "explicitly listed in a Region Scope test command"
+        }
+      ],
+      "classificationEvidence": [
+        {
+          "source": "tests/unit/test-hash-region-admin.js",
+          "detail": "runs isolated Node assertions for structured region administration behavior"
+        }
+      ]
     },
     {
       "path": "test-region-scope-e2e.js",
@@ -6972,22 +6976,28 @@
         "test-region-scope-e2e.js"
       ],
       "requirements": {
-        "environment": [{
-          "name": "CHROMIUM_PATH",
-          "required": false,
-          "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
-        }],
+        "environment": [
+          {
+            "name": "CHROMIUM_PATH",
+            "required": false,
+            "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
+          }
+        ],
         "flags": []
       },
       "status": "active",
-      "statusEvidence": [{
-        "source": "package.json",
-        "detail": "explicitly listed as the Region Scope browser test command"
-      }],
-      "classificationEvidence": [{
-        "source": "test-region-scope-e2e.js",
-        "detail": "imports Playwright browser automation and exercises Region Scope admin/helper behavior"
-      }]
+      "statusEvidence": [
+        {
+          "source": "package.json",
+          "detail": "explicitly listed as the Region Scope browser test command"
+        }
+      ],
+      "classificationEvidence": [
+        {
+          "source": "test-region-scope-e2e.js",
+          "detail": "imports Playwright browser automation and exercises Region Scope admin/helper behavior"
+        }
+      ]
     },
     {
       "path": "test-region-scope-helper.js",
@@ -7001,14 +7011,18 @@
         "flags": []
       },
       "status": "active",
-      "statusEvidence": [{
-        "source": "package.json",
-        "detail": "explicitly listed in a Region Scope test command"
-      }],
-      "classificationEvidence": [{
-        "source": "test-region-scope-helper.js",
-        "detail": "runs isolated Node assertions for region recommendation and color helpers"
-      }]
+      "statusEvidence": [
+        {
+          "source": "package.json",
+          "detail": "explicitly listed in a Region Scope test command"
+        }
+      ],
+      "classificationEvidence": [
+        {
+          "source": "test-region-scope-helper.js",
+          "detail": "runs isolated Node assertions for region recommendation and color helpers"
+        }
+      ]
     },
     {
       "path": "test-region-scope-ui.js",
@@ -7022,21 +7036,25 @@
         "flags": []
       },
       "status": "active",
-      "statusEvidence": [{
-        "source": "package.json",
-        "detail": "explicitly listed in a Region Scope test command"
-      }],
-      "classificationEvidence": [{
-        "source": "test-region-scope-ui.js",
-        "detail": "runs isolated Node/source assertions for Region Scope UI wiring and lifecycle behavior"
-      }]
+      "statusEvidence": [
+        {
+          "source": "package.json",
+          "detail": "explicitly listed in a Region Scope test command"
+        }
+      ],
+      "classificationEvidence": [
+        {
+          "source": "test-region-scope-ui.js",
+          "detail": "runs isolated Node/source assertions for Region Scope UI wiring and lifecycle behavior"
+        }
+      ]
     },
     {
-      "path": "test-mini-markdown-security.js",
+      "path": "tests/unit/test-mini-markdown-security.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-mini-markdown-security.js"
+        "tests/unit/test-mini-markdown-security.js"
       ],
       "requirements": {
         "environment": [],
@@ -7051,7 +7069,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-mini-markdown-security.js",
+          "source": "tests/unit/test-mini-markdown-security.js",
           "detail": "runs isolated Node assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -7396,11 +7414,11 @@
       ]
     },
     {
-      "path": "test-node-reach-coverage-debounce.js",
+      "path": "tests/unit/test-node-reach-coverage-debounce.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-node-reach-coverage-debounce.js"
+        "tests/unit/test-node-reach-coverage-debounce.js"
       ],
       "requirements": {
         "environment": [],
@@ -7415,7 +7433,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-node-reach-coverage-debounce.js",
+          "source": "tests/unit/test-node-reach-coverage-debounce.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -7459,11 +7477,11 @@
       ]
     },
     {
-      "path": "test-node-reach-coverage.js",
+      "path": "tests/unit/test-node-reach-coverage.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-node-reach-coverage.js"
+        "tests/unit/test-node-reach-coverage.js"
       ],
       "requirements": {
         "environment": [],
@@ -7478,7 +7496,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-node-reach-coverage.js",
+          "source": "tests/unit/test-node-reach-coverage.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -7921,11 +7939,11 @@
       ]
     },
     {
-      "path": "test-perf-anomaly.js",
+      "path": "tests/unit/test-perf-anomaly.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-perf-anomaly.js"
+        "tests/unit/test-perf-anomaly.js"
       ],
       "requirements": {
         "environment": [],
@@ -7940,17 +7958,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-perf-anomaly.js",
+          "source": "tests/unit/test-perf-anomaly.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-perf-disk-io-1120.js",
+      "path": "tests/unit/test-perf-disk-io-1120.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-perf-disk-io-1120.js"
+        "tests/unit/test-perf-disk-io-1120.js"
       ],
       "requirements": {
         "environment": [],
@@ -7965,17 +7983,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-perf-disk-io-1120.js",
+          "source": "tests/unit/test-perf-disk-io-1120.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-perf-go-runtime.js",
+      "path": "tests/unit/test-perf-go-runtime.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-perf-go-runtime.js"
+        "tests/unit/test-perf-go-runtime.js"
       ],
       "requirements": {
         "environment": [],
@@ -7990,17 +8008,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-perf-go-runtime.js",
+          "source": "tests/unit/test-perf-go-runtime.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-perf-render-1258.js",
+      "path": "tests/unit/test-perf-render-1258.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-perf-render-1258.js"
+        "tests/unit/test-perf-render-1258.js"
       ],
       "requirements": {
         "environment": [],
@@ -8015,7 +8033,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-perf-render-1258.js",
+          "source": "tests/unit/test-perf-render-1258.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -8130,11 +8148,11 @@
       ]
     },
     {
-      "path": "test-rx-coverage-config-race.js",
+      "path": "tests/unit/test-rx-coverage-config-race.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-rx-coverage-config-race.js"
+        "tests/unit/test-rx-coverage-config-race.js"
       ],
       "requirements": {
         "environment": [],
@@ -8149,17 +8167,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-rx-coverage-config-race.js",
+          "source": "tests/unit/test-rx-coverage-config-race.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-rx-coverage-escape.js",
+      "path": "tests/unit/test-rx-coverage-escape.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-rx-coverage-escape.js"
+        "tests/unit/test-rx-coverage-escape.js"
       ],
       "requirements": {
         "environment": [],
@@ -8174,7 +8192,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-rx-coverage-escape.js",
+          "source": "tests/unit/test-rx-coverage-escape.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -8584,11 +8602,11 @@
       ]
     },
     {
-      "path": "test-xss-escape-sinks.js",
+      "path": "tests/unit/test-xss-escape-sinks.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-xss-escape-sinks.js"
+        "tests/unit/test-xss-escape-sinks.js"
       ],
       "requirements": {
         "environment": [],
@@ -8603,7 +8621,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-xss-escape-sinks.js",
+          "source": "tests/unit/test-xss-escape-sinks.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]

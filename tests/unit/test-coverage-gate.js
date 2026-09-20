@@ -1,4 +1,5 @@
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 // Unit test for the client-RX coverage frontend gate (SP2).
 //
 // The coverage toggle (#nqCoverage) and its legend (#nqCovLegend) are built
@@ -12,7 +13,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const src = fs.readFileSync(path.join(__dirname, 'public', 'node-reach.js'), 'utf8');
+const src = fs.readFileSync(fromRepositoryRoot('public', 'node-reach.js'), 'utf8');
 
 // Slice the actions-HTML expression: from the '<div class="nq-actions ...' line
 // through the table that closes the block (ends with '</div></div>';).

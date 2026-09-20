@@ -75,7 +75,7 @@ test('parses deterministic profile, suite, status, list, and dry-run options', (
   assert.throws(() => parseArguments(['--unknown']), /unknown argument: --unknown/);
 });
 
-test('combines a profile with suite and status filters in path order', () => {
+test('combines a profile with suite and status filters in frozen profile order', () => {
   const manifest = {
     tests: [
       entry('test-z.js', 'unit'),
@@ -95,7 +95,54 @@ test('combines a profile with suite and status filters in path order', () => {
       suites: ['unit', 'e2e'],
       statuses: ['active'],
     }, profiles).map(item => item.path),
-    ['test-a.js', 'test-z.js']
+    ['test-z.js', 'test-a.js']
+  );
+});
+
+test('resolves frozen profile identities through relocations without order drift', () => {
+  const manifest = {
+    tests: [
+      entry('tests/unit/test-z.js'),
+      entry('test-middle.js'),
+      entry('tests/unit/test-a.js'),
+    ],
+  };
+  const selected = selectTests(manifest, {
+    profile: 'selected',
+    suites: ['unit'],
+    statuses: ['active'],
+  }, {
+    selected: ['test-z.js', 'test-middle.js', 'test-a.js'],
+  }, {
+    'test-z.js': 'tests/unit/test-z.js',
+    'test-a.js': 'tests/unit/test-a.js',
+  });
+  assert.deepStrictEqual(selected.map(item => item.path), [
+    'tests/unit/test-z.js',
+    'test-middle.js',
+    'tests/unit/test-a.js',
+  ]);
+});
+
+test('rejects unresolved frozen identities and duplicate resolved destinations', () => {
+  const manifest = { tests: [entry('tests/unit/test-a.js')] };
+  const options = {
+    profile: 'broken',
+    suites: ['unit'],
+    statuses: ['active'],
+  };
+  assert.throws(
+    () => selectTests(manifest, options, { broken: ['test-a.js'] }, {}),
+    /references missing test: test-a\.js/
+  );
+  assert.throws(
+    () => selectTests(manifest, options, {
+      broken: ['test-a.js', 'test-alias.js'],
+    }, {
+      'test-a.js': 'tests/unit/test-a.js',
+      'test-alias.js': 'tests/unit/test-a.js',
+    }),
+    /resolves duplicate destination/
   );
 });
 
@@ -295,8 +342,12 @@ test('checked-in profiles exactly match each frozen legacy execution list', () =
       profile,
       suites: ['unit', 'integration', 'e2e'],
       statuses: ['active'],
-    }, inventory.executedRootTests).map(item => item.path);
-    assert.deepStrictEqual(selected, [...expected].sort(), profile);
+    }, inventory.executedRootTests, inventory.relocations).map(item => item.path);
+    assert.deepStrictEqual(
+      selected,
+      expected.map(testPath => inventory.relocations[testPath] || testPath),
+      profile
+    );
     assert(!selected.some(testPath =>
       manifest.tests.some(item => item.path === testPath && item.status === 'dormant')
     ));
@@ -316,7 +367,7 @@ test('frozen profile execution environments preserve legacy strict-flag behavior
     profile: 'ci-e2e-phase',
     suites: ['e2e'],
     statuses: ['active'],
-  }, inventory.executedRootTests);
+  }, inventory.executedRootTests, inventory.relocations);
   const frozenWorkflow = execFileSync(
     'git',
     ['show', `${inventory.capturedAtCommit}:.github/workflows/deploy.yml`],

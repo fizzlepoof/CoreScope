@@ -28,11 +28,12 @@
  *   8) The legacy Compare button has been removed from the DOM in compare.js.
  */
 'use strict';
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const path = require('path');
 
-const CSS = fs.readFileSync(path.join(__dirname, 'public/style.css'), 'utf8');
-const COMPARE_JS = fs.readFileSync(path.join(__dirname, 'public/compare.js'), 'utf8');
+const CSS = fs.readFileSync(fromRepositoryRoot('public', 'style.css'), 'utf8');
+const COMPARE_JS = fs.readFileSync(fromRepositoryRoot('public', 'compare.js'), 'utf8');
 
 // Token-rank used by font-size comparisons. Comments-only mirror of the
 // scale; if --fs-xl ever moves, only the relative order matters and that
