@@ -319,6 +319,72 @@ func TestAdminHashRegionDefinitionsRejectAggregateValidationWork(t *testing.T) {
 	}
 }
 
+func TestAdminHashRegionDefinitionsDoNotRevalidateUnchangedStoredGeometry(t *testing.T) {
+	largeRing := make([][]float64, 0, 4001)
+	for side := 0; side < 4; side++ {
+		for step := 0; step < 1000; step++ {
+			fraction := float64(step) / 1000
+			switch side {
+			case 0:
+				largeRing = append(largeRing, []float64{fraction, 0})
+			case 1:
+				largeRing = append(largeRing, []float64{1, fraction})
+			case 2:
+				largeRing = append(largeRing, []float64{1 - fraction, 1})
+			case 3:
+				largeRing = append(largeRing, []float64{0, 1 - fraction})
+			}
+		}
+	}
+	largeRing = append(largeRing, largeRing[0])
+	largeGeometry := map[string]any{"type": "Polygon", "coordinates": []any{largeRing}}
+	definitions := []any{
+		map[string]any{"name": "#large-a", "geometry": largeGeometry},
+		map[string]any{"name": "#large-b", "geometry": largeGeometry},
+	}
+
+	srv := newTestAdminServer(t)
+	initialBody, err := json.Marshal(map[string]any{"hashRegionDefinitions": definitions})
+	if err != nil {
+		t.Fatal(err)
+	}
+	initialRecorder := httptest.NewRecorder()
+	srv.handleAdminPutHashRegions(initialRecorder, httptest.NewRequest(http.MethodPut, "/api/admin/hash-regions", bytes.NewReader(initialBody)))
+	if initialRecorder.Code != http.StatusOK {
+		t.Fatalf("initial status = %d, want 200: %s", initialRecorder.Code, initialRecorder.Body.String())
+	}
+
+	smallRing := make([][]float64, 0, 501)
+	for side := 0; side < 4; side++ {
+		for step := 0; step < 125; step++ {
+			fraction := float64(step) / 125
+			switch side {
+			case 0:
+				smallRing = append(smallRing, []float64{2 + fraction, 0})
+			case 1:
+				smallRing = append(smallRing, []float64{3, fraction})
+			case 2:
+				smallRing = append(smallRing, []float64{3 - fraction, 1})
+			case 3:
+				smallRing = append(smallRing, []float64{2, 1 - fraction})
+			}
+		}
+	}
+	smallRing = append(smallRing, smallRing[0])
+	definitions = append(definitions, map[string]any{
+		"name": "#small-new", "geometry": map[string]any{"type": "Polygon", "coordinates": []any{smallRing}},
+	})
+	updatedBody, err := json.Marshal(map[string]any{"hashRegionDefinitions": definitions})
+	if err != nil {
+		t.Fatal(err)
+	}
+	updatedRecorder := httptest.NewRecorder()
+	srv.handleAdminPutHashRegions(updatedRecorder, httptest.NewRequest(http.MethodPut, "/api/admin/hash-regions", bytes.NewReader(updatedBody)))
+	if updatedRecorder.Code != http.StatusOK {
+		t.Fatalf("updated status = %d, want 200 when existing geometries are unchanged: %s", updatedRecorder.Code, updatedRecorder.Body.String())
+	}
+}
+
 func TestAdminHashRegionDefinitionsAcceptBundledCountyMultiPolygon(t *testing.T) {
 	data, err := os.ReadFile("../../public/geo/tn-counties.geojson")
 	if err != nil {
