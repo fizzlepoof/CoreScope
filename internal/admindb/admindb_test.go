@@ -1,9 +1,13 @@
 package admindb
 
 import (
+	"errors"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func openTestStore(t *testing.T) *Store {
@@ -91,6 +95,33 @@ func TestCreateAdminInvalidRole(t *testing.T) {
 	s := openTestStore(t)
 	if _, err := s.CreateAdmin("erin", "password12345", Role("owner"), nil); err == nil {
 		t.Fatal("expected error for invalid role")
+	}
+}
+
+func TestCreateAdminEnforcesPasswordPolicy(t *testing.T) {
+	s := openTestStore(t)
+
+	if _, err := s.CreateAdmin("short-password", "short", RoleAdmin, nil); !errors.Is(err, ErrPasswordTooShort) {
+		t.Fatalf("short password: got %v, want ErrPasswordTooShort", err)
+	}
+	if _, err := s.CreateAdmin("short-unicode-password", strings.Repeat("é", 4), RoleAdmin, nil); !errors.Is(err, ErrPasswordTooShort) {
+		t.Fatalf("short Unicode password: got %v, want ErrPasswordTooShort", err)
+	}
+	if _, err := s.CreateAdmin("long-password", strings.Repeat("x", maxPasswordBytes+1), RoleAdmin, nil); !errors.Is(err, ErrPasswordTooLong) {
+		t.Fatalf("long password: got %v, want ErrPasswordTooLong", err)
+	}
+	if _, err := s.CreateAdmin("boundary-password", strings.Repeat("x", minPasswordLen), RoleAdmin, nil); err != nil {
+		t.Fatalf("minimum-length password should be accepted: %v", err)
+	}
+}
+
+func TestInvalidCredentialHashMatchesConfiguredBCryptCost(t *testing.T) {
+	cost, err := bcrypt.Cost([]byte(invalidCredentialHash))
+	if err != nil {
+		t.Fatalf("invalidCredentialHash is not a valid bcrypt hash: %v", err)
+	}
+	if cost != bcryptCost {
+		t.Fatalf("invalidCredentialHash cost = %d, want %d", cost, bcryptCost)
 	}
 }
 
@@ -318,6 +349,17 @@ func TestChangePasswordUnknownAdminID(t *testing.T) {
 	s := openTestStore(t)
 	if err := s.ChangePassword(999999, "whatever", "new-password-123"); err != ErrInvalidCredentials {
 		t.Fatalf("got %v, want ErrInvalidCredentials", err)
+	}
+}
+
+func TestChangePasswordTooLong(t *testing.T) {
+	s := openTestStore(t)
+	a, err := s.CreateAdmin("long-change", "original-password", RoleAdmin, nil)
+	if err != nil {
+		t.Fatalf("CreateAdmin: %v", err)
+	}
+	if err := s.ChangePassword(a.ID, "original-password", strings.Repeat("x", maxPasswordBytes+1)); !errors.Is(err, ErrPasswordTooLong) {
+		t.Fatalf("got %v, want ErrPasswordTooLong", err)
 	}
 }
 

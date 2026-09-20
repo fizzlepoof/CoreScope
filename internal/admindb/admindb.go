@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"golang.org/x/crypto/bcrypt"
 	_ "modernc.org/sqlite"
@@ -61,15 +62,19 @@ var ErrUsernameTaken = errors.New("username already taken")
 // expired session token.
 var ErrSessionInvalid = errors.New("session invalid or expired")
 
-// ErrPasswordTooShort is returned by ChangePassword when newPassword is
-// under minPasswordLen.
+// ErrPasswordTooShort is returned when a newly chosen password is under
+// minPasswordLen.
 var ErrPasswordTooShort = errors.New("password must be at least 8 characters")
 
-// minPasswordLen is the minimum length enforced on a newly *chosen*
-// password (ChangePassword). Existing accounts and CreateAdmin are left
-// as-is — this only guards the one path where an admin is actively
-// picking their own new password.
-const minPasswordLen = 8
+// ErrPasswordTooLong is returned when a password exceeds bcrypt's
+// 72-byte input limit. Rejecting it explicitly avoids accepting a value
+// that bcrypt cannot represent safely.
+var ErrPasswordTooLong = errors.New("password must be at most 72 bytes")
+
+const (
+	minPasswordLen   = 8
+	maxPasswordBytes = 72
+)
 
 // sessionTTL is how long a session stays valid after its last use;
 // ValidateSession slides this window forward on every successful check.
@@ -82,6 +87,23 @@ const sessionTTL = 24 * time.Hour
 // embeds its cost in the hash string itself, so existing hashes keep
 // verifying correctly no matter what this constant changes to.
 const bcryptCost = 12
+
+// invalidCredentialHash makes an unknown-username failure perform the
+// same deliberately expensive bcrypt operation as a wrong password. It
+// is a hash of a fixed, non-secret value and exists only to prevent the
+// database lookup result from becoming a username-enumeration timing
+// signal. Keep its cost aligned with bcryptCost (enforced by a test).
+const invalidCredentialHash = "$2a$12$D6YuKS5ry8/SJJEDvG4QbeHoDLgY5n50DYtuP4umv2EvpqAMFFSkC"
+
+func validatePassword(password string) error {
+	if utf8.RuneCountInString(password) < minPasswordLen {
+		return ErrPasswordTooShort
+	}
+	if len(password) > maxPasswordBytes {
+		return ErrPasswordTooLong
+	}
+	return nil
+}
 
 // Store wraps a read-write SQLite connection dedicated to admin.db.
 type Store struct {
@@ -168,8 +190,8 @@ func (s *Store) CreateAdmin(username, password string, role Role, createdBy *int
 	if username == "" {
 		return nil, errors.New("username is required")
 	}
-	if password == "" {
-		return nil, errors.New("password is required")
+	if err := validatePassword(password); err != nil {
+		return nil, err
 	}
 	if !role.Valid() {
 		return nil, fmt.Errorf("invalid role %q", role)
@@ -213,6 +235,9 @@ func (s *Store) Authenticate(username, password string) (*Admin, error) {
 	)
 	if err := row.Scan(&a.ID, &a.Username, &hash, &a.Role, &disabled, &createdAt, &createdBy); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			// Deliberately discard the result: this comparison equalizes the
+			// dominant work with the known-user wrong-password path.
+			_ = bcrypt.CompareHashAndPassword([]byte(invalidCredentialHash), []byte(password))
 			return nil, ErrInvalidCredentials
 		}
 		return nil, fmt.Errorf("query admin: %w", err)
@@ -240,11 +265,11 @@ func (s *Store) Authenticate(username, password string) (*Admin, error) {
 // a stolen or idle session cookie alone must not be enough to change
 // (and thereby lock out) the account. Returns ErrInvalidCredentials if
 // oldPassword doesn't match (never distinguishes that from "unknown
-// admin", consistent with Authenticate), or ErrPasswordTooShort if
-// newPassword is under the minimum length.
+// admin", consistent with Authenticate), or a password-policy error if
+// newPassword is outside the accepted length range.
 func (s *Store) ChangePassword(adminID int64, oldPassword, newPassword string) error {
-	if len(newPassword) < minPasswordLen {
-		return ErrPasswordTooShort
+	if err := validatePassword(newPassword); err != nil {
+		return err
 	}
 	var hash string
 	if err := s.db.QueryRow(`SELECT password_hash FROM admins WHERE id = ?`, adminID).Scan(&hash); err != nil {
