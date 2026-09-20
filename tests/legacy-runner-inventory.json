@@ -266,6 +266,7 @@
     "test-coverage-gate.js": "tests/unit/test-coverage-gate.js",
     "test-customizer-v2.js": "tests/unit/test-customizer-v2.js",
     "test-drag-manager.js": "tests/unit/test-drag-manager.js",
+    "test-e2e-badge-aggregate.sh": "tests/integration/test-e2e-badge-aggregate.sh",
     "test-embed-mode-1369.js": "tests/unit/test-embed-mode-1369.js",
     "test-fetch-all-nodes-pagination.js": "tests/unit/test-fetch-all-nodes-pagination.js",
     "test-fluid-scaffolding.js": "tests/unit/test-fluid-scaffolding.js",

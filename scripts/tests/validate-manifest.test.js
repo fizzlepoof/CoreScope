@@ -674,9 +674,9 @@ test('requires repository integration runners to retain behavior-based classific
       activeContent: JSON.stringify({ scripts: { test: 'sh test-all.sh' } }),
     },
     {
-      path: 'test-e2e-badge-aggregate.sh',
+      path: 'tests/integration/test-e2e-badge-aggregate.sh',
       source: '#!/bin/sh\naggregator="scripts/aggregate-e2e-pass.sh"\n"$aggregator" test-fixtures/e2e-output-sample.txt\n',
-      command: ['sh', 'test-e2e-badge-aggregate.sh'],
+      command: ['sh', 'tests/integration/test-e2e-badge-aggregate.sh'],
     },
     {
       path: 'tests/integration/test-preflight-xss-gate.js',
