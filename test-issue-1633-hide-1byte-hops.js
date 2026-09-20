@@ -72,7 +72,7 @@ function freshSandbox() {
   return ctx;
 }
 
-// === Heavier sandbox that loads live.js (mirrors test-live.js pattern) ===
+// === Heavier sandbox that loads live.js (mirrors tests/unit/test-live.js pattern) ===
 function makeLiveSandbox() {
   const ctx = {
     window: {

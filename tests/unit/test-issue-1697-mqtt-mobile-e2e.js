@@ -4,7 +4,7 @@
  * mobile viewports (≤640px) instead of the 7-column desktop table that
  * overflows 375px screens with cells running into each other.
  *
- * VM-sandbox unit test (matches the style of test-mqtt-status-panel.js)
+ * VM-sandbox unit test (matches the style of tests/unit/test-mqtt-status-panel.js)
  * — no jsdom, no playwright. window.innerWidth is stubbed and the
  * panel's renderPanel() is driven directly with a fixed payload.
  *

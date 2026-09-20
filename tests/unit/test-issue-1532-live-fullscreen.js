@@ -14,10 +14,11 @@
  * guard so it doesn't fire while typing in the node-filter.
  *
  * Source-invariant assertions on public/live.js + public/live.css. Same
- * approach as test-issue-1485-live-anim-z.js so the test runs in the JS
+ * approach as tests/unit/test-issue-1485-live-anim-z.js so the test runs in the JS
  * unit-test gate (no playwright/server needed).
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -28,8 +29,8 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const liveJs  = fs.readFileSync(path.join(__dirname, 'public', 'live.js'),  'utf8');
-const liveCss = fs.readFileSync(path.join(__dirname, 'public', 'live.css'), 'utf8');
+const liveJs  = fs.readFileSync(path.join(repositoryRoot, 'public', 'live.js'),  'utf8');
+const liveCss = fs.readFileSync(path.join(repositoryRoot, 'public', 'live.css'), 'utf8');
 
 // ─────────────────────────────────────────────────────────────────────
 console.log('\n=== #1532 A: #liveFullscreenToggle button declared ===');

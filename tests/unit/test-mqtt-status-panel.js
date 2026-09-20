@@ -1,4 +1,4 @@
-/* test-mqtt-status-panel.js (#1043)
+/* tests/unit/test-mqtt-status-panel.js (#1043)
  *
  * DOM-grep test for public/mqtt-status-panel.js. Loads the module into a
  * VM sandbox (no jsdom), stubs the fetch + container, drives renderPanel
@@ -12,6 +12,7 @@
  *   - no plaintext password appears in the rendered HTML
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const vm = require('vm');
 const fs = require('fs');
@@ -23,7 +24,7 @@ function test(name, fn) {
   catch (e) { failed++; console.log(`  ❌ ${name}: ${e.message}`); }
 }
 
-const src = fs.readFileSync(require('path').resolve(__dirname, 'public/mqtt-status-panel.js'), 'utf8');
+const src = fs.readFileSync(require('path').resolve(repositoryRoot, 'public/mqtt-status-panel.js'), 'utf8');
 const ctx = {
   window: {},
   module: { exports: {} },

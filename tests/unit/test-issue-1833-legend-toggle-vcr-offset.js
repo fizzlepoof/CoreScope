@@ -8,13 +8,14 @@
  * uses --vcr-bar-height so bottom-pinned Live overlays stay pinned above the
  * VCR bar. Grep-based per AGENTS.md E2E-DOM-grep exemption.
  *
- * Run: node test-issue-1833-legend-toggle-vcr-offset.js
+ * Run: node tests/unit/test-issue-1833-legend-toggle-vcr-offset.js
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const path = require('path');
 
-const cssPath = path.join(__dirname, 'public', 'live.css');
+const cssPath = path.join(repositoryRoot, 'public', 'live.css');
 const css = fs.readFileSync(cssPath, 'utf8');
 
 let passed = 0, failed = 0;
