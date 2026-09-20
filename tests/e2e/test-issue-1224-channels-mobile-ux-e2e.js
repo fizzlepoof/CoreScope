@@ -11,7 +11,7 @@
  *  - Render the "Select a channel" empty state container occupying < 40% of
  *    the viewport height (no desktop-thinking empty state on mobile).
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1224-channels-mobile-ux-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1224-channels-mobile-ux-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

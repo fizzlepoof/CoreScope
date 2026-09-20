@@ -17,7 +17,7 @@
  *      (`chShareModal`) — not reuse the Add Channel modal
  *      (`chAddChannelModal`).
  *
- * Companion E2E coverage: test-channel-issue-1087-e2e.js
+ * Companion E2E coverage: tests/e2e/test-channel-issue-1087-e2e.js
  */
 'use strict';
 const { repositoryRoot } = require('../helpers/repository-root');

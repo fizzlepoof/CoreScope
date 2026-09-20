@@ -17,11 +17,11 @@ Running test-filter-ux-e2e.js
   ✓ negation works
 
 === Results: 5 passed, 0 failed ===
-Running test-channel-issue-1087-e2e.js
+Running tests/e2e/test-channel-issue-1087-e2e.js
   ✓ tab renders
   ✓ message list loads
 === Results: 2 passed, 0 failed ===
-Running test-channel-issue-1111-e2e.js
+Running tests/e2e/test-channel-issue-1111-e2e.js
   ✓ count badge updates
   ✓ filter clears
   ✓ scroll restores
@@ -83,7 +83,7 @@ Running test-gesture-hints-1065-e2e.js
   PASS: localStorage stored
 
 test-gesture-hints-1065-e2e.js: 3 passed, 0 failed
-Running test-channel-fluid-e2e.js
+Running tests/e2e/test-channel-fluid-e2e.js
   ✓ fluid layout 1
   ✓ fluid layout 2
 
@@ -205,7 +205,7 @@ Running test-issue-1244-live-vcr-row-hints-e2e.js
   ✓ row hints
 
 === Results: 1 passed, 0 failed ===
-Running test-issue-1224-channels-mobile-ux-e2e.js
+Running tests/e2e/test-issue-1224-channels-mobile-ux-e2e.js
   ✓ mobile UX 1
   ✓ mobile UX 2
   ✓ mobile UX 3
@@ -216,7 +216,7 @@ Running test-issue-1236-map-mobile-e2e.js
   ✓ map mobile 2
 
 2/2 tests passed
-Running test-issue-1273-qr-overlay-height-e2e.js
+Running tests/e2e/test-issue-1273-qr-overlay-height-e2e.js
   ✓ qr overlay
 
 1/1 tests passed

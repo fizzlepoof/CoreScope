@@ -11,7 +11,7 @@
  *   4. Clicking Share opens a DEDICATED share modal — distinct DOM id
  *      and title from the Add Channel modal
  *
- * Usage: BASE_URL=http://localhost:13581 node test-channel-issue-1087-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-channel-issue-1087-e2e.js
  */
 'use strict';
 

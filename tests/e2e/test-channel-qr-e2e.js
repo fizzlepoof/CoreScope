@@ -11,7 +11,7 @@
  *   - scan() returns null when navigator.mediaDevices is unavailable
  *     (browser-context shim) and shows the inline fallback
  *
- * Usage: BASE_URL=http://localhost:13581 node test-channel-qr-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-channel-qr-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

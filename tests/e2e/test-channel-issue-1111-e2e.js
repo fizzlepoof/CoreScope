@@ -7,7 +7,7 @@
  *   - PSK key stored in localStorage → `.ch-section-mychannels` exists
  *     with the header
  *
- * Usage: BASE_URL=http://localhost:13581 node test-channel-issue-1111-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-channel-issue-1111-e2e.js
  */
 'use strict';
 

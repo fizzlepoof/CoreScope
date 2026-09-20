@@ -7,7 +7,7 @@
  *   - Escape closes share modal + focus restore
  *   - Channel color dot click triggers ChannelColorPicker.show (stubbed)
  *
- * Usage: BASE_URL=http://localhost:13581 node test-channels-share-color-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-channels-share-color-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

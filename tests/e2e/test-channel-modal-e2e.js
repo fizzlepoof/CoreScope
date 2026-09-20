@@ -9,7 +9,7 @@
  *   - sectioned sidebar renders My Channels / Network / Encrypted sections
  *   - PSK add flow: invalid hex → error; valid hex → modal closes
  *
- * Usage: BASE_URL=http://localhost:38201 node test-channel-modal-e2e.js
+ * Usage: BASE_URL=http://localhost:38201 node tests/e2e/test-channel-modal-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

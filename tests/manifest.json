@@ -619,11 +619,11 @@
       ]
     },
     {
-      "path": "test-channel-color-picker-e2e.js",
+      "path": "tests/e2e/test-channel-color-picker-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-channel-color-picker-e2e.js"
+        "tests/e2e/test-channel-color-picker-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -649,7 +649,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-color-picker-e2e.js",
+          "source": "tests/e2e/test-channel-color-picker-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -705,11 +705,11 @@
       ]
     },
     {
-      "path": "test-channel-decrypt-e2e.js",
+      "path": "tests/e2e/test-channel-decrypt-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-channel-decrypt-e2e.js"
+        "tests/e2e/test-channel-decrypt-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -735,7 +735,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-decrypt-e2e.js",
+          "source": "tests/e2e/test-channel-decrypt-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -820,11 +820,11 @@
       ]
     },
     {
-      "path": "test-channel-fluid-e2e.js",
+      "path": "tests/e2e/test-channel-fluid-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-channel-fluid-e2e.js"
+        "tests/e2e/test-channel-fluid-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -850,7 +850,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-fluid-e2e.js",
+          "source": "tests/e2e/test-channel-fluid-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -885,11 +885,11 @@
       ]
     },
     {
-      "path": "test-channel-issue-1087-e2e.js",
+      "path": "tests/e2e/test-channel-issue-1087-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-channel-issue-1087-e2e.js"
+        "tests/e2e/test-channel-issue-1087-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -915,7 +915,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-issue-1087-e2e.js",
+          "source": "tests/e2e/test-channel-issue-1087-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -975,11 +975,11 @@
       ]
     },
     {
-      "path": "test-channel-issue-1111-e2e.js",
+      "path": "tests/e2e/test-channel-issue-1111-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-channel-issue-1111-e2e.js"
+        "tests/e2e/test-channel-issue-1111-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1005,7 +1005,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-issue-1111-e2e.js",
+          "source": "tests/e2e/test-channel-issue-1111-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -1061,11 +1061,11 @@
       ]
     },
     {
-      "path": "test-channel-modal-e2e.js",
+      "path": "tests/e2e/test-channel-modal-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-channel-modal-e2e.js"
+        "tests/e2e/test-channel-modal-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1091,7 +1091,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-modal-e2e.js",
+          "source": "tests/e2e/test-channel-modal-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -1151,11 +1151,11 @@
       ]
     },
     {
-      "path": "test-channel-qr-e2e.js",
+      "path": "tests/e2e/test-channel-qr-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-channel-qr-e2e.js"
+        "tests/e2e/test-channel-qr-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1181,7 +1181,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-qr-e2e.js",
+          "source": "tests/e2e/test-channel-qr-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -1320,11 +1320,11 @@
       ]
     },
     {
-      "path": "test-channels-add-modal-e2e.js",
+      "path": "tests/e2e/test-channels-add-modal-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-channels-add-modal-e2e.js"
+        "tests/e2e/test-channels-add-modal-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1357,7 +1357,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channels-add-modal-e2e.js",
+          "source": "tests/e2e/test-channels-add-modal-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -1431,11 +1431,11 @@
       ]
     },
     {
-      "path": "test-channels-selection-flow-e2e.js",
+      "path": "tests/e2e/test-channels-selection-flow-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-channels-selection-flow-e2e.js"
+        "tests/e2e/test-channels-selection-flow-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1468,17 +1468,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channels-selection-flow-e2e.js",
+          "source": "tests/e2e/test-channels-selection-flow-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-channels-share-color-e2e.js",
+      "path": "tests/e2e/test-channels-share-color-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-channels-share-color-e2e.js"
+        "tests/e2e/test-channels-share-color-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1511,17 +1511,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channels-share-color-e2e.js",
+          "source": "tests/e2e/test-channels-share-color-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-channels-ws-batch-e2e.js",
+      "path": "tests/e2e/test-channels-ws-batch-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-channels-ws-batch-e2e.js"
+        "tests/e2e/test-channels-ws-batch-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1554,17 +1554,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channels-ws-batch-e2e.js",
+          "source": "tests/e2e/test-channels-ws-batch-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-channels-ws-race-1498-e2e.js",
+      "path": "tests/e2e/test-channels-ws-race-1498-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-channels-ws-race-1498-e2e.js"
+        "tests/e2e/test-channels-ws-race-1498-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1597,7 +1597,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channels-ws-race-1498-e2e.js",
+          "source": "tests/e2e/test-channels-ws-race-1498-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -3212,11 +3212,11 @@
       ]
     },
     {
-      "path": "test-issue-1224-channels-mobile-ux-e2e.js",
+      "path": "tests/e2e/test-issue-1224-channels-mobile-ux-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1224-channels-mobile-ux-e2e.js"
+        "tests/e2e/test-issue-1224-channels-mobile-ux-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -3242,7 +3242,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1224-channels-mobile-ux-e2e.js",
+          "source": "tests/e2e/test-issue-1224-channels-mobile-ux-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -3370,11 +3370,11 @@
       ]
     },
     {
-      "path": "test-issue-1273-qr-overlay-height-e2e.js",
+      "path": "tests/e2e/test-issue-1273-qr-overlay-height-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1273-qr-overlay-height-e2e.js"
+        "tests/e2e/test-issue-1273-qr-overlay-height-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -3400,7 +3400,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1273-qr-overlay-height-e2e.js",
+          "source": "tests/e2e/test-issue-1273-qr-overlay-height-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -3743,11 +3743,11 @@
       ]
     },
     {
-      "path": "test-issue-1367-channels-chat-app-e2e.js",
+      "path": "tests/e2e/test-issue-1367-channels-chat-app-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1367-channels-chat-app-e2e.js"
+        "tests/e2e/test-issue-1367-channels-chat-app-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -3773,7 +3773,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1367-channels-chat-app-e2e.js",
+          "source": "tests/e2e/test-issue-1367-channels-chat-app-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]

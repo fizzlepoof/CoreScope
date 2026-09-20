@@ -6,7 +6,7 @@
  * detail panel open/close (showNodeDetail / closeNodeDetail), and the
  * scroll-to-bottom button.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-channels-selection-flow-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-channels-selection-flow-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');
