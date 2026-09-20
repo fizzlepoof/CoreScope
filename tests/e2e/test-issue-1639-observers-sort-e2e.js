@@ -17,7 +17,7 @@
  *     testability) — finding #8 dropped the broader data-col-key on
  *     <td>s, and data-testid is the less-invasive replacement.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1639-observers-sort-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1639-observers-sort-e2e.js
  */
 const { chromium } = require('playwright');
 

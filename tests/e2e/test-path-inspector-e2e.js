@@ -1,5 +1,5 @@
 // E2E tests for Path Inspector (spec §5 — Playwright).
-// Run: npx playwright test test-path-inspector-e2e.js
+// Run: npx playwright test tests/e2e/test-path-inspector-e2e.js
 // Requires: running server on BASE_URL (default http://localhost:3000).
 'use strict';
 
