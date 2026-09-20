@@ -608,6 +608,33 @@ type cachedResult struct {
 	expiresAt time.Time
 }
 
+// analyticsCacheMaxEntries bounds each analytics response-cache map.
+const analyticsCacheMaxEntries = 32
+
+// insertAnalyticsCache inserts a result while the caller holds cacheMu. It
+// prunes expired entries first, then evicts the entry that expires first when
+// the cache is still full and a new key needs space.
+func insertAnalyticsCache(cache map[string]*cachedResult, key string, result *cachedResult) {
+	now := time.Now()
+	for candidateKey, candidate := range cache {
+		if !now.Before(candidate.expiresAt) {
+			delete(cache, candidateKey)
+		}
+	}
+	if _, exists := cache[key]; !exists && len(cache) >= analyticsCacheMaxEntries {
+		var earliestKey string
+		var earliest time.Time
+		for candidateKey, candidate := range cache {
+			if earliestKey == "" || candidate.expiresAt.Before(earliest) {
+				earliestKey = candidateKey
+				earliest = candidate.expiresAt
+			}
+		}
+		delete(cache, earliestKey)
+	}
+	cache[key] = result
+}
+
 // cacheTTLSec extracts a duration from the cacheTTL config map.
 // Values may be float64 (from JSON) or int. Returns false if key is missing or non-positive.
 func cacheTTLSec(m map[string]interface{}, key string) (time.Duration, bool) {
@@ -5596,7 +5623,7 @@ func (s *PacketStore) GetAnalyticsChannelsWithWindow(region, area string, window
 	result := s.computeAnalyticsChannels(region, area, window)
 
 	s.cacheMu.Lock()
-	s.chanCache[cacheKey] = &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)}
+	insertAnalyticsCache(s.chanCache, cacheKey, &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)})
 	s.cacheMu.Unlock()
 
 	return result
@@ -5882,7 +5909,7 @@ func (s *PacketStore) GetAnalyticsRFWithWindow(region, area string, window TimeW
 	result := s.computeAnalyticsRF(region, area, window)
 
 	s.cacheMu.Lock()
-	s.rfCache[cacheKey] = &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)}
+	insertAnalyticsCache(s.rfCache, cacheKey, &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)})
 	s.cacheMu.Unlock()
 
 	return result
@@ -6983,7 +7010,7 @@ func (s *PacketStore) GetAnalyticsTopologyWithWindow(region, area string, window
 	result := s.computeAnalyticsTopology(region, area, window)
 
 	s.cacheMu.Lock()
-	s.topoCache[cacheKey] = &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)}
+	insertAnalyticsCache(s.topoCache, cacheKey, &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)})
 	s.cacheMu.Unlock()
 
 	return result
@@ -7550,7 +7577,7 @@ func (s *PacketStore) GetAnalyticsDistance(region, area string) map[string]inter
 	result := s.computeAnalyticsDistance(region, area)
 
 	s.cacheMu.Lock()
-	s.distCache[cacheKey] = &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)}
+	insertAnalyticsCache(s.distCache, cacheKey, &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)})
 	s.cacheMu.Unlock()
 
 	return result
@@ -7890,7 +7917,7 @@ func (s *PacketStore) GetAnalyticsHashSizes(region, area string) map[string]inte
 	result := s.computeAnalyticsHashSizesWithCapability(region, area)
 
 	s.cacheMu.Lock()
-	s.hashCache[cacheKey] = &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)}
+	insertAnalyticsCache(s.hashCache, cacheKey, &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)})
 	s.cacheMu.Unlock()
 
 	return result
@@ -8276,7 +8303,7 @@ func (s *PacketStore) GetAnalyticsHashCollisions(region, area string) map[string
 	result := s.computeHashCollisions(region, area)
 
 	s.cacheMu.Lock()
-	s.collisionCache[cacheKey] = &cachedResult{data: result, expiresAt: time.Now().Add(s.collisionCacheTTL)}
+	insertAnalyticsCache(s.collisionCache, cacheKey, &cachedResult{data: result, expiresAt: time.Now().Add(s.collisionCacheTTL)})
 	s.cacheMu.Unlock()
 
 	return result
@@ -9888,7 +9915,7 @@ func (s *PacketStore) GetAnalyticsSubpathsWithWindow(region string, minLen, maxL
 	result := s.computeAnalyticsSubpathsWindowed(region, minLen, maxLen, limit, window)
 
 	s.cacheMu.Lock()
-	s.subpathCache[cacheKey] = &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)}
+	insertAnalyticsCache(s.subpathCache, cacheKey, &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)})
 	s.cacheMu.Unlock()
 
 	return result
@@ -9988,7 +10015,7 @@ func (s *PacketStore) GetAnalyticsSubpaths(region string, minLen, maxLen, limit 
 	result := s.computeAnalyticsSubpaths(region, minLen, maxLen, limit)
 
 	s.cacheMu.Lock()
-	s.subpathCache[cacheKey] = &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)}
+	insertAnalyticsCache(s.subpathCache, cacheKey, &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)})
 	s.cacheMu.Unlock()
 
 	return result
@@ -10112,7 +10139,7 @@ func (s *PacketStore) GetAnalyticsSubpathsBulk(region string, groups []subpathGr
 	s.cacheMu.Lock()
 	for i, g := range groups {
 		cacheKey := fmt.Sprintf("|%d|%d|%d", g.MinLen, g.MaxLen, g.Limit)
-		s.subpathCache[cacheKey] = &cachedResult{data: results[i], expiresAt: time.Now().Add(s.rfCacheTTL)}
+		insertAnalyticsCache(s.subpathCache, cacheKey, &cachedResult{data: results[i], expiresAt: time.Now().Add(s.rfCacheTTL)})
 	}
 	s.cacheMu.Unlock()
 
