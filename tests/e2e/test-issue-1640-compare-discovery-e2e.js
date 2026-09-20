@@ -16,7 +16,7 @@
  *     detail pages.
  *   - The legacy deep-link `#/compare?a=...&b=...` continues to work.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1640-compare-discovery-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1640-compare-discovery-e2e.js
  */
 const { chromium } = require('playwright');
 

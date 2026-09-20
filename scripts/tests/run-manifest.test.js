@@ -383,11 +383,15 @@ test('frozen profile execution environments preserve legacy strict-flag behavior
       return { status: 0 };
     },
   }), 0);
+  const originalIdentityByPath = new Map(
+    Object.entries(inventory.relocations).map(([source, destination]) => [destination, source])
+  );
   for (const item of selected) {
+    const frozenIdentity = originalIdentityByPath.get(item.path) || item.path;
     const commandLine = frozenWorkflow.split(/\r?\n/).find(line =>
-      line.includes(`node ${item.path}`)
+      line.includes(`node ${frozenIdentity}`)
     );
-    assert(commandLine, `missing frozen command for ${item.path}`);
+    assert(commandLine, `missing frozen command for ${frozenIdentity}`);
     const expected = Object.fromEntries([...commandLine.matchAll(/\b([A-Z][A-Z0-9_]*)=([^\s\\]+)/g)]
       .filter(match => match[1].endsWith('_REQUIRE') || match[1].includes('_STRICT'))
       .map(match => [match[1], match[2]]));

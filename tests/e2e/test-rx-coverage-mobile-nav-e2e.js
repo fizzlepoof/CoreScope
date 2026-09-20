@@ -47,17 +47,17 @@ function assert(c, m) { if (!c) throw new Error(m || 'assertion failed'); }
     });
   } catch (err) {
     if (requireChromium) {
-      console.error(`test-rx-coverage-mobile-nav-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-rx-coverage-mobile-nav-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
       process.exit(1);
     }
-    console.log(`test-rx-coverage-mobile-nav-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-rx-coverage-mobile-nav-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 
   console.log(`\n=== Coverage mobile-nav reachability E2E against ${BASE} ===`);
 
   // Coverage is opt-in (config flag, default off). Skip when the deployment
-  // under test has it disabled — mirrors test-node-reach-coverage-e2e.js.
+  // under test has it disabled — mirrors tests/e2e/test-node-reach-coverage-e2e.js.
   const probeCtx = await browser.newContext();
   const probe = await probeCtx.newPage();
   let enabled = false;
@@ -65,13 +65,13 @@ function assert(c, m) { if (!c) throw new Error(m || 'assertion failed'); }
     const cfg = await (await probe.request.get(BASE + '/api/config/client')).json();
     enabled = cfg.clientRxCoverage === true;
   } catch (e) {
-    console.log(`test-rx-coverage-mobile-nav-e2e.js: SKIP (could not read /api/config/client: ${e.message})`);
+    console.log(`tests/e2e/test-rx-coverage-mobile-nav-e2e.js: SKIP (could not read /api/config/client: ${e.message})`);
     await browser.close();
     process.exit(0);
   }
   await probeCtx.close();
   if (!enabled) {
-    console.log('test-rx-coverage-mobile-nav-e2e.js: SKIP (clientRxCoverage disabled on this deployment)');
+    console.log('tests/e2e/test-rx-coverage-mobile-nav-e2e.js: SKIP (clientRxCoverage disabled on this deployment)');
     await browser.close();
     process.exit(0);
   }

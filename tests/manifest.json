@@ -409,11 +409,11 @@
       ]
     },
     {
-      "path": "test-analytics-fluid-charts.js",
+      "path": "tests/e2e/test-analytics-fluid-charts.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-analytics-fluid-charts.js"
+        "tests/e2e/test-analytics-fluid-charts.js"
       ],
       "requirements": {
         "environment": [
@@ -434,7 +434,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-analytics-fluid-charts.js",
+          "source": "tests/e2e/test-analytics-fluid-charts.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -1363,11 +1363,11 @@
       ]
     },
     {
-      "path": "test-channels-list-render-e2e.js",
+      "path": "tests/e2e/test-channels-list-render-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-channels-list-render-e2e.js"
+        "tests/e2e/test-channels-list-render-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -1400,7 +1400,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channels-list-render-e2e.js",
+          "source": "tests/e2e/test-channels-list-render-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -2466,11 +2466,11 @@
       ]
     },
     {
-      "path": "test-home-coverage-e2e.js",
+      "path": "tests/e2e/test-home-coverage-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-home-coverage-e2e.js"
+        "tests/e2e/test-home-coverage-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -2503,7 +2503,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-home-coverage-e2e.js",
+          "source": "tests/e2e/test-home-coverage-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -3406,11 +3406,11 @@
       ]
     },
     {
-      "path": "test-issue-1274-legend-coverage-e2e.js",
+      "path": "tests/e2e/test-issue-1274-legend-coverage-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1274-legend-coverage-e2e.js"
+        "tests/e2e/test-issue-1274-legend-coverage-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -3436,7 +3436,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1274-legend-coverage-e2e.js",
+          "source": "tests/e2e/test-issue-1274-legend-coverage-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -5262,11 +5262,11 @@
       ]
     },
     {
-      "path": "test-issue-1640-compare-discovery-e2e.js",
+      "path": "tests/e2e/test-issue-1640-compare-discovery-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1640-compare-discovery-e2e.js"
+        "tests/e2e/test-issue-1640-compare-discovery-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -5299,7 +5299,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1640-compare-discovery-e2e.js",
+          "source": "tests/e2e/test-issue-1640-compare-discovery-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -5770,11 +5770,11 @@
       ]
     },
     {
-      "path": "test-issue-1657-analytics-channels-group-sprites-e2e.js",
+      "path": "tests/e2e/test-issue-1657-analytics-channels-group-sprites-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1657-analytics-channels-group-sprites-e2e.js"
+        "tests/e2e/test-issue-1657-analytics-channels-group-sprites-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -5802,7 +5802,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1657-analytics-channels-group-sprites-e2e.js",
+          "source": "tests/e2e/test-issue-1657-analytics-channels-group-sprites-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -6032,11 +6032,11 @@
       ]
     },
     {
-      "path": "test-issue-1758-ng-filter-rerenders-e2e.js",
+      "path": "tests/e2e/test-issue-1758-ng-filter-rerenders-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1758-ng-filter-rerenders-e2e.js"
+        "tests/e2e/test-issue-1758-ng-filter-rerenders-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -6069,7 +6069,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1758-ng-filter-rerenders-e2e.js",
+          "source": "tests/e2e/test-issue-1758-ng-filter-rerenders-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -6315,11 +6315,11 @@
       ]
     },
     {
-      "path": "test-live-dedup.js",
+      "path": "tests/e2e/test-live-dedup.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-live-dedup.js"
+        "tests/e2e/test-live-dedup.js"
       ],
       "requirements": {
         "environment": [
@@ -6345,7 +6345,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-live-dedup.js",
+          "source": "tests/e2e/test-live-dedup.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -7439,11 +7439,11 @@
       ]
     },
     {
-      "path": "test-node-reach-coverage-e2e.js",
+      "path": "tests/e2e/test-node-reach-coverage-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-node-reach-coverage-e2e.js"
+        "tests/e2e/test-node-reach-coverage-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -7471,7 +7471,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-node-reach-coverage-e2e.js",
+          "source": "tests/e2e/test-node-reach-coverage-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -7781,11 +7781,11 @@
       ]
     },
     {
-      "path": "test-path-inspector-coverage-e2e.js",
+      "path": "tests/e2e/test-path-inspector-coverage-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-path-inspector-coverage-e2e.js"
+        "tests/e2e/test-path-inspector-coverage-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -7818,7 +7818,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-path-inspector-coverage-e2e.js",
+          "source": "tests/e2e/test-path-inspector-coverage-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -8198,11 +8198,11 @@
       ]
     },
     {
-      "path": "test-rx-coverage-mobile-nav-e2e.js",
+      "path": "tests/e2e/test-rx-coverage-mobile-nav-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-rx-coverage-mobile-nav-e2e.js"
+        "tests/e2e/test-rx-coverage-mobile-nav-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -8235,7 +8235,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-rx-coverage-mobile-nav-e2e.js",
+          "source": "tests/e2e/test-rx-coverage-mobile-nav-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -8442,11 +8442,11 @@
       ]
     },
     {
-      "path": "test-touch-gestures-coverage-e2e.js",
+      "path": "tests/e2e/test-touch-gestures-coverage-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-touch-gestures-coverage-e2e.js"
+        "tests/e2e/test-touch-gestures-coverage-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -8479,7 +8479,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-touch-gestures-coverage-e2e.js",
+          "source": "tests/e2e/test-touch-gestures-coverage-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]

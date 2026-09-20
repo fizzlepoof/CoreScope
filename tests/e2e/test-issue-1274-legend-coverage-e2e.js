@@ -3,7 +3,7 @@
  * payload types), the RESPONSE and PATH colors, AND the white-ring
  * repeater convention. See issue #1274 acceptance criteria.
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1274-legend-coverage-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1274-legend-coverage-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

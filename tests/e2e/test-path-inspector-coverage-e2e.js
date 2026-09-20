@@ -24,7 +24,7 @@
  * init/parsePrefixes/validatePrefixes/submit/renderResults/showOnMap
  * branches.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-path-inspector-coverage-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-path-inspector-coverage-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');
@@ -55,10 +55,10 @@ async function goPI(page, qs) {
     });
   } catch (err) {
     if (requireChromium) {
-      console.error('test-path-inspector-coverage-e2e.js: FAIL — Chromium required but unavailable: ' + err.message);
+      console.error('tests/e2e/test-path-inspector-coverage-e2e.js: FAIL — Chromium required but unavailable: ' + err.message);
       process.exit(1);
     }
-    console.log('test-path-inspector-coverage-e2e.js: SKIP (Chromium unavailable: ' + err.message.split('\n')[0] + ')');
+    console.log('tests/e2e/test-path-inspector-coverage-e2e.js: SKIP (Chromium unavailable: ' + err.message.split('\n')[0] + ')');
     process.exit(0);
   }
 
