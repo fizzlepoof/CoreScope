@@ -237,6 +237,9 @@
     if (utf8ByteLength(name) > 30) {
       throw new Error('MeshCore region names used in commands cannot exceed 30 UTF-8 bytes.');
     }
+    if (String(name).indexOf('|') >= 0) {
+      throw new Error('MeshCore region names used in region def commands cannot contain the | region def delimiter.');
+    }
     for (var character of String(name)) {
       var codePoint = character.codePointAt(0);
       if (codePoint <= 0x7f && character !== '-' && character !== '$' && character !== '#' &&
@@ -277,12 +280,36 @@
     if (ordered.length > 32) {
       throw new Error('MeshCore firmware stores at most 32 regions. Reduce the selection before generating commands.');
     }
-    var mutationCommands = ordered.map(function (definition) {
-      var name = commandName(definition.name);
+    var children = new Map();
+    ordered.forEach(function (definition) {
       var parent = definition.parentName && closure.included.has(definition.parentName)
-        ? ' ' + commandName(definition.parentName) : '';
-      return 'region put ' + name + parent;
+        ? definition.parentName : '';
+      if (!children.has(parent)) children.set(parent, []);
+      children.get(parent).push(definition.name);
     });
+    function subtreeTokens(name) {
+      var tokens = [commandName(name)];
+      var childNames = children.get(name) || [];
+      childNames.forEach(function (childName, index) {
+        var childTokens = subtreeTokens(childName);
+        if (index < childNames.length - 1) {
+          childTokens[childTokens.length - 1] += '|' + commandName(name);
+        }
+        tokens = tokens.concat(childTokens);
+      });
+      return tokens;
+    }
+    var roots = children.get('') || [];
+    var allTokens = [];
+    roots.forEach(function (rootName, index) {
+      var tokens = subtreeTokens(rootName);
+      if (index < roots.length - 1) tokens[tokens.length - 1] += '|*';
+      allTokens = allTokens.concat(tokens);
+    });
+    var mutationCommands = allTokens.length ? ['region def ' + allTokens.join(' ')] : [];
+    if (mutationCommands.length && utf8ByteLength(mutationCommands[0]) > 158) {
+      throw new Error('The selected hierarchy cannot fit one region def command within the repeater serial limit of 158 UTF-8 bytes. Reduce the selection.');
+    }
     function optionalCommand(value, prefix) {
       if (!value) return [];
       if (!closure.included.has(value)) throw new Error(prefix + ' region must be selected.');
