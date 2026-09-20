@@ -1,4 +1,4 @@
-/* test-issue-1753-copy-url-slash.js — regression test for issue #1753.
+/* tests/unit/test-issue-1753-copy-url-slash.js — regression test for issue #1753.
  *
  * Bug: Copy URL / Copy short URL buttons on the node detail page built URLs as
  *   location.origin + '#/nodes/...'  ->  https://analyzer.00id.net#/nodes/...
@@ -14,6 +14,7 @@
  * Reverting the fix (dropping the leading '/') re-introduces the failure.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
@@ -24,7 +25,7 @@ function test(name, fn) {
   catch (e) { failed++; console.log('  ❌ ' + name + ': ' + e.message); }
 }
 
-const src = fs.readFileSync(path.join(__dirname, 'public/nodes.js'), 'utf8');
+const src = fs.readFileSync(path.join(repositoryRoot, 'public/nodes.js'), 'utf8');
 
 // Match: location.origin + '<literal>'  (single or double quotes)
 const re = /location\.origin\s*\+\s*(['"])([^'"]*)\1/g;

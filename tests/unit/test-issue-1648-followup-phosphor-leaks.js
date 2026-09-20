@@ -13,6 +13,7 @@
  * is a sprite swap; same playbook.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
@@ -53,7 +54,7 @@ console.log('\n=== v384-1.2 — /observers .obs-clock-naive-chip sprite ===');
     debouncedOnWS: (fn) => fn,
   };
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, 'public/observers.js'), 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync(path.join(repositoryRoot, 'public/observers.js'), 'utf8'), ctx);
 
   const html = ctx.window.ObserversNaiveChip.render({
     id: 'x', clock_naive: true, clock_skew_seconds: -28800,
@@ -108,7 +109,7 @@ console.log('\n=== v384-12.18 — /analytics Channels encrypted group labels ===
   global.histogram = () => ({ svg: '' });
 
   // eslint-disable-next-line no-eval
-  eval(fs.readFileSync(path.join(__dirname, 'public/analytics.js'), 'utf8'));
+  eval(fs.readFileSync(path.join(repositoryRoot, 'public/analytics.js'), 'utf8'));
 
   const decorate = global._analyticsDecorateChannels;
   const tbodyFn = global._analyticsChannelTbodyHtml;

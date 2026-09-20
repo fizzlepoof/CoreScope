@@ -23,16 +23,17 @@
  *   path:line:U+XXXX
  *   /regex/  (matches lines whose CONTENT matches the regex, in any file)
  *
- * Anti-tautology: tested by `test-issue-1648-m6-lint-self.js`, which
+ * Anti-tautology: tested by `tests/unit/test-issue-1648-m6-lint-self.js`, which
  * feeds a known-bad fixture and asserts this lint script flags it.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-const ROOT = path.resolve(__dirname);
+const ROOT = path.resolve(repositoryRoot);
 
 // Exposed for unit tests.
 const EMOJI_RANGES = [

@@ -5305,11 +5305,11 @@
       ]
     },
     {
-      "path": "test-issue-1644-redesign.js",
+      "path": "tests/unit/test-issue-1644-redesign.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1644-redesign.js"
+        "tests/unit/test-issue-1644-redesign.js"
       ],
       "requirements": {
         "environment": [],
@@ -5324,7 +5324,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1644-redesign.js",
+          "source": "tests/unit/test-issue-1644-redesign.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -5355,11 +5355,11 @@
       ]
     },
     {
-      "path": "test-issue-1648-followup-phosphor-leaks.js",
+      "path": "tests/unit/test-issue-1648-followup-phosphor-leaks.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1648-followup-phosphor-leaks.js"
+        "tests/unit/test-issue-1648-followup-phosphor-leaks.js"
       ],
       "requirements": {
         "environment": [],
@@ -5374,7 +5374,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1648-followup-phosphor-leaks.js",
+          "source": "tests/unit/test-issue-1648-followup-phosphor-leaks.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -5720,11 +5720,11 @@
       ]
     },
     {
-      "path": "test-issue-1648-m6-final-sweep.js",
+      "path": "tests/unit/test-issue-1648-m6-final-sweep.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1648-m6-final-sweep.js"
+        "tests/unit/test-issue-1648-m6-final-sweep.js"
       ],
       "requirements": {
         "environment": [],
@@ -5739,17 +5739,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1648-m6-final-sweep.js",
+          "source": "tests/unit/test-issue-1648-m6-final-sweep.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-issue-1648-m6-lint-self.js",
+      "path": "tests/unit/test-issue-1648-m6-lint-self.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1648-m6-lint-self.js"
+        "tests/unit/test-issue-1648-m6-lint-self.js"
       ],
       "requirements": {
         "environment": [],
@@ -5764,7 +5764,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1648-m6-lint-self.js",
+          "source": "tests/unit/test-issue-1648-m6-lint-self.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -5833,11 +5833,11 @@
       ]
     },
     {
-      "path": "test-issue-1668-m3-typography.js",
+      "path": "tests/unit/test-issue-1668-m3-typography.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1668-m3-typography.js"
+        "tests/unit/test-issue-1668-m3-typography.js"
       ],
       "requirements": {
         "environment": [],
@@ -5852,17 +5852,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1668-m3-typography.js",
+          "source": "tests/unit/test-issue-1668-m3-typography.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-issue-1668-m4-per-route.js",
+      "path": "tests/unit/test-issue-1668-m4-per-route.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1668-m4-per-route.js"
+        "tests/unit/test-issue-1668-m4-per-route.js"
       ],
       "requirements": {
         "environment": [],
@@ -5877,7 +5877,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1668-m4-per-route.js",
+          "source": "tests/unit/test-issue-1668-m4-per-route.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -6007,11 +6007,11 @@
       ]
     },
     {
-      "path": "test-issue-1753-copy-url-slash.js",
+      "path": "tests/unit/test-issue-1753-copy-url-slash.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1753-copy-url-slash.js"
+        "tests/unit/test-issue-1753-copy-url-slash.js"
       ],
       "requirements": {
         "environment": [],
@@ -6026,7 +6026,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1753-copy-url-slash.js",
+          "source": "tests/unit/test-issue-1753-copy-url-slash.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -7125,11 +7125,11 @@
       ]
     },
     {
-      "path": "test-naive-banner-tone.js",
+      "path": "tests/unit/test-naive-banner-tone.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-naive-banner-tone.js"
+        "tests/unit/test-naive-banner-tone.js"
       ],
       "requirements": {
         "environment": [],
@@ -7144,7 +7144,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-naive-banner-tone.js",
+          "source": "tests/unit/test-naive-banner-tone.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -8552,11 +8552,11 @@
       ]
     },
     {
-      "path": "test-url-state.js",
+      "path": "tests/unit/test-url-state.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-url-state.js"
+        "tests/unit/test-url-state.js"
       ],
       "requirements": {
         "environment": [],
@@ -8571,7 +8571,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-url-state.js",
+          "source": "tests/unit/test-url-state.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]

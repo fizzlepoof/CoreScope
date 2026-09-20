@@ -19,13 +19,14 @@
  * verification (looks Tufte-grade) is screenshot-based, not asserted here.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const CSS = fs.readFileSync(path.join(__dirname, 'public/style.css'), 'utf8');
-const OBS_JS = fs.readFileSync(path.join(__dirname, 'public/observers.js'), 'utf8');
-const COMPARE_JS = fs.readFileSync(path.join(__dirname, 'public/compare.js'), 'utf8');
+const CSS = fs.readFileSync(path.join(repositoryRoot, 'public/style.css'), 'utf8');
+const OBS_JS = fs.readFileSync(path.join(repositoryRoot, 'public/observers.js'), 'utf8');
+const COMPARE_JS = fs.readFileSync(path.join(repositoryRoot, 'public/compare.js'), 'utf8');
 
 let passed = 0, failed = 0;
 function test(name, fn) {

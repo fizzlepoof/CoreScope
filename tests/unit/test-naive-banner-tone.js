@@ -1,5 +1,6 @@
 /* Test: naive-clock banner should be a small neutral notice, not a scary alert card */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
@@ -11,7 +12,7 @@ function test(name, fn) {
 }
 
 // Load observer-detail.js in a VM sandbox
-const src = fs.readFileSync(__dirname + '/public/observer-detail.js', 'utf8');
+const src = fs.readFileSync(repositoryRoot + '/public/observer-detail.js', 'utf8');
 const window = {};
 const ctx = vm.createContext({ window, document: { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [], createElement: () => ({ style: {}, classList: { add(){}, remove(){} }, appendChild(){}, setAttribute(){} }), createDocumentFragment: () => ({ appendChild(){} }) }, console, setTimeout, setInterval, clearInterval, fetch: () => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }), location: { hash: '' }, history: { replaceState() {} }, Chart: function() { return { destroy(){}, update(){} }; }, registerPage() {}, L: { map(){ return { setView(){ return this; }, on(){ return this; }, remove(){} }; }, tileLayer(){ return { addTo(){} }; } } });
 vm.runInContext(src, ctx);

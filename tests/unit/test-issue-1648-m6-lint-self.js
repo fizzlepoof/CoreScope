@@ -2,7 +2,7 @@
 /* Issue #1648 — M6: anti-tautology + unit test for the lint gate itself.
  *
  * If the lint script is broken (e.g. always returns []), the main test
- * `test-issue-1648-m6-final-sweep.js` becomes a no-op rubber-stamp.
+ * `tests/unit/test-issue-1648-m6-final-sweep.js` becomes a no-op rubber-stamp.
  * This file:
  *   1. exercises the lint engine against synthetic fixtures and asserts
  *      it flags / allows the expected things;
@@ -10,13 +10,14 @@
  *      emoji injection.
  */
 'use strict';
+const { repositoryRoot, fromRepositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const assert = require('assert');
 
-const lint = require('./test-issue-1648-m6-final-sweep.js');
+const lint = require(fromRepositoryRoot('tests', 'unit', 'test-issue-1648-m6-final-sweep.js'));
 
 // 1. Codepoint classifier ------------------------------------------------
 assert.strictEqual(lint.isEmojiCodepoint(0x1F600), true,  'emoji 😀 detected');
@@ -65,7 +66,7 @@ var ROOT = tmp;
 function relativise(files) { return files.map(function (f) { return path.relative(ROOT, f); }); }
 
 // Wrap lintFiles to use synthetic ROOT (the published lintFiles resolves
-// paths relative to its own __dirname; we hack by replacing the path
+// paths relative to its own repositoryRoot; we hack by replacing the path
 // resolver via cwd). Simpler: read each fixture via the same scanner.
 var allFixtures = [
   'public/bad.js',
@@ -114,7 +115,7 @@ var beforeViolations = lint.runLint();
 assert.strictEqual(beforeViolations.length, 0,
   'repo MUST be clean before anti-tautology probe');
 
-var probeFile = path.join(__dirname, 'public', '__m6_lint_probe.js');
+var probeFile = path.join(repositoryRoot, 'public', '__m6_lint_probe.js');
 fs.writeFileSync(probeFile, '/* synthetic probe — emoji should be flagged: ⭐ */\n');
 try {
   var afterViolations = lint.runLint();
