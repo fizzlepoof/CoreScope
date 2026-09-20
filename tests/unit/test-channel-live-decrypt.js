@@ -18,6 +18,7 @@
  *     channels the user is not currently viewing.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const vm = require('vm');
 const fs = require('fs');
@@ -87,8 +88,8 @@ function buildEncryptedGrpTxt(channelName, sender, message) {
 async function run() {
   console.log('\n=== Live PSK decrypt: ChannelDecrypt helpers ===');
 
-  const cdSrc = fs.readFileSync(path.join(__dirname, 'public/channel-decrypt.js'), 'utf8');
-  const aesSrc = fs.readFileSync(path.join(__dirname, 'public/vendor/aes-ecb.js'), 'utf8');
+  const cdSrc = fs.readFileSync(path.join(repositoryRoot, 'public/channel-decrypt.js'), 'utf8');
+  const aesSrc = fs.readFileSync(path.join(repositoryRoot, 'public/vendor/aes-ecb.js'), 'utf8');
   const sandbox = createSandbox();
   const ctx = vm.createContext(sandbox);
   vm.runInContext(aesSrc, ctx);
@@ -143,7 +144,7 @@ async function run() {
     'tryDecryptLive returns null when encryptedData/mac missing');
 
   console.log('\n=== Live PSK decrypt: channels.js integration contract ===');
-  const chSrc = fs.readFileSync(path.join(__dirname, 'public/channels.js'), 'utf8');
+  const chSrc = fs.readFileSync(path.join(repositoryRoot, 'public/channels.js'), 'utf8');
   assert(/tryDecryptLive\s*\(/.test(chSrc),
     'channels.js calls ChannelDecrypt.tryDecryptLive() in the WS path');
   assert(/buildKeyMap\s*\(/.test(chSrc),

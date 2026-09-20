@@ -655,11 +655,11 @@
       ]
     },
     {
-      "path": "test-channel-color-picker.js",
+      "path": "tests/unit/test-channel-color-picker.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-color-picker.js"
+        "tests/unit/test-channel-color-picker.js"
       ],
       "requirements": {
         "environment": [],
@@ -674,17 +674,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-color-picker.js",
+          "source": "tests/unit/test-channel-color-picker.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-channel-colors.js",
+      "path": "tests/unit/test-channel-colors.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-colors.js"
+        "tests/unit/test-channel-colors.js"
       ],
       "requirements": {
         "environment": [],
@@ -699,7 +699,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-colors.js",
+          "source": "tests/unit/test-channel-colors.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -741,11 +741,11 @@
       ]
     },
     {
-      "path": "test-channel-decrypt-ecb.js",
+      "path": "tests/unit/test-channel-decrypt-ecb.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-decrypt-ecb.js"
+        "tests/unit/test-channel-decrypt-ecb.js"
       ],
       "requirements": {
         "environment": [],
@@ -760,17 +760,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-decrypt-ecb.js",
+          "source": "tests/unit/test-channel-decrypt-ecb.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-channel-decrypt-insecure-context.js",
+      "path": "tests/unit/test-channel-decrypt-insecure-context.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-decrypt-insecure-context.js"
+        "tests/unit/test-channel-decrypt-insecure-context.js"
       ],
       "requirements": {
         "environment": [],
@@ -789,17 +789,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-decrypt-insecure-context.js",
+          "source": "tests/unit/test-channel-decrypt-insecure-context.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-channel-decrypt-m345.js",
+      "path": "tests/unit/test-channel-decrypt-m345.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-decrypt-m345.js"
+        "tests/unit/test-channel-decrypt-m345.js"
       ],
       "requirements": {
         "environment": [],
@@ -814,7 +814,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-decrypt-m345.js",
+          "source": "tests/unit/test-channel-decrypt-m345.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -856,11 +856,11 @@
       ]
     },
     {
-      "path": "test-channel-fluid-layout.js",
+      "path": "tests/unit/test-channel-fluid-layout.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-fluid-layout.js"
+        "tests/unit/test-channel-fluid-layout.js"
       ],
       "requirements": {
         "environment": [],
@@ -879,7 +879,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-fluid-layout.js",
+          "source": "tests/unit/test-channel-fluid-layout.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -921,11 +921,11 @@
       ]
     },
     {
-      "path": "test-channel-issue-1087.js",
+      "path": "tests/unit/test-channel-issue-1087.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-issue-1087.js"
+        "tests/unit/test-channel-issue-1087.js"
       ],
       "requirements": {
         "environment": [],
@@ -944,17 +944,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-issue-1087.js",
+          "source": "tests/unit/test-channel-issue-1087.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-channel-issue-1101.js",
+      "path": "tests/unit/test-channel-issue-1101.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-issue-1101.js"
+        "tests/unit/test-channel-issue-1101.js"
       ],
       "requirements": {
         "environment": [],
@@ -969,7 +969,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-issue-1101.js",
+          "source": "tests/unit/test-channel-issue-1101.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -1011,11 +1011,11 @@
       ]
     },
     {
-      "path": "test-channel-live-decrypt-userprefix.js",
+      "path": "tests/unit/test-channel-live-decrypt-userprefix.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-live-decrypt-userprefix.js"
+        "tests/unit/test-channel-live-decrypt-userprefix.js"
       ],
       "requirements": {
         "environment": [],
@@ -1030,17 +1030,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-live-decrypt-userprefix.js",
+          "source": "tests/unit/test-channel-live-decrypt-userprefix.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-channel-live-decrypt.js",
+      "path": "tests/unit/test-channel-live-decrypt.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-live-decrypt.js"
+        "tests/unit/test-channel-live-decrypt.js"
       ],
       "requirements": {
         "environment": [],
@@ -1055,7 +1055,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-live-decrypt.js",
+          "source": "tests/unit/test-channel-live-decrypt.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -1097,11 +1097,11 @@
       ]
     },
     {
-      "path": "test-channel-modal-ux.js",
+      "path": "tests/unit/test-channel-modal-ux.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-modal-ux.js"
+        "tests/unit/test-channel-modal-ux.js"
       ],
       "requirements": {
         "environment": [],
@@ -1120,17 +1120,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-modal-ux.js",
+          "source": "tests/unit/test-channel-modal-ux.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-channel-psk-ux.js",
+      "path": "tests/unit/test-channel-psk-ux.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-psk-ux.js"
+        "tests/unit/test-channel-psk-ux.js"
       ],
       "requirements": {
         "environment": [],
@@ -1145,7 +1145,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-psk-ux.js",
+          "source": "tests/unit/test-channel-psk-ux.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -1187,11 +1187,11 @@
       ]
     },
     {
-      "path": "test-channel-qr-wiring.js",
+      "path": "tests/unit/test-channel-qr-wiring.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-qr-wiring.js"
+        "tests/unit/test-channel-qr-wiring.js"
       ],
       "requirements": {
         "environment": [],
@@ -1210,17 +1210,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-qr-wiring.js",
+          "source": "tests/unit/test-channel-qr-wiring.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-channel-qr.js",
+      "path": "tests/unit/test-channel-qr.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-qr.js"
+        "tests/unit/test-channel-qr.js"
       ],
       "requirements": {
         "environment": [],
@@ -1239,17 +1239,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-qr.js",
+          "source": "tests/unit/test-channel-qr.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-channel-sidebar-layout.js",
+      "path": "tests/unit/test-channel-sidebar-layout.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-sidebar-layout.js"
+        "tests/unit/test-channel-sidebar-layout.js"
       ],
       "requirements": {
         "environment": [],
@@ -1264,17 +1264,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-sidebar-layout.js",
+          "source": "tests/unit/test-channel-sidebar-layout.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-channel-ux-followup.js",
+      "path": "tests/unit/test-channel-ux-followup.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-ux-followup.js"
+        "tests/unit/test-channel-ux-followup.js"
       ],
       "requirements": {
         "environment": [],
@@ -1289,17 +1289,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-ux-followup.js",
+          "source": "tests/unit/test-channel-ux-followup.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-channel-ux-round2.js",
+      "path": "tests/unit/test-channel-ux-round2.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channel-ux-round2.js"
+        "tests/unit/test-channel-ux-round2.js"
       ],
       "requirements": {
         "environment": [],
@@ -1314,7 +1314,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channel-ux-round2.js",
+          "source": "tests/unit/test-channel-ux-round2.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -1406,11 +1406,11 @@
       ]
     },
     {
-      "path": "test-channels-merge-1498-unit.js",
+      "path": "tests/unit/test-channels-merge-1498-unit.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-channels-merge-1498-unit.js"
+        "tests/unit/test-channels-merge-1498-unit.js"
       ],
       "requirements": {
         "environment": [],
@@ -1425,7 +1425,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-channels-merge-1498-unit.js",
+          "source": "tests/unit/test-channels-merge-1498-unit.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4124,11 +4124,11 @@
       ]
     },
     {
-      "path": "test-issue-1418-deeplink-hops-channels.js",
+      "path": "tests/unit/test-issue-1418-deeplink-hops-channels.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1418-deeplink-hops-channels.js"
+        "tests/unit/test-issue-1418-deeplink-hops-channels.js"
       ],
       "requirements": {
         "environment": [],
@@ -4147,7 +4147,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1418-deeplink-hops-channels.js",
+          "source": "tests/unit/test-issue-1418-deeplink-hops-channels.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4402,11 +4402,11 @@
       ]
     },
     {
-      "path": "test-issue-1454-channels-toggle.js",
+      "path": "tests/unit/test-issue-1454-channels-toggle.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1454-channels-toggle.js"
+        "tests/unit/test-issue-1454-channels-toggle.js"
       ],
       "requirements": {
         "environment": [],
@@ -4421,7 +4421,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1454-channels-toggle.js",
+          "source": "tests/unit/test-issue-1454-channels-toggle.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -6240,11 +6240,11 @@
       ]
     },
     {
-      "path": "test-issue-1843-node-qr-quiet-zone.js",
+      "path": "tests/unit/test-issue-1843-node-qr-quiet-zone.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1843-node-qr-quiet-zone.js"
+        "tests/unit/test-issue-1843-node-qr-quiet-zone.js"
       ],
       "requirements": {
         "environment": [],
@@ -6259,7 +6259,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1843-node-qr-quiet-zone.js",
+          "source": "tests/unit/test-issue-1843-node-qr-quiet-zone.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]

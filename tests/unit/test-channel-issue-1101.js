@@ -11,6 +11,7 @@
  *     text, no Copy Key button overlapping it.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -21,8 +22,8 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const channelsSrc = fs.readFileSync(path.join(__dirname, 'public', 'channels.js'), 'utf8');
-const qrSrc = fs.readFileSync(path.join(__dirname, 'public', 'channel-qr.js'), 'utf8');
+const channelsSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'channels.js'), 'utf8');
+const qrSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'channel-qr.js'), 'utf8');
 
 console.log('\n=== #1101: Share modal markup ===');
 

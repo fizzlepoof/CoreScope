@@ -12,6 +12,7 @@
  * code must break these.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -23,9 +24,9 @@ function assert(cond, msg) {
 }
 
 const customizeSrc = fs.readFileSync(
-  path.join(__dirname, 'public', 'customize-v2.js'), 'utf8');
+  path.join(repositoryRoot, 'public', 'customize-v2.js'), 'utf8');
 const channelsSrc = fs.readFileSync(
-  path.join(__dirname, 'public', 'channels.js'), 'utf8');
+  path.join(repositoryRoot, 'public', 'channels.js'), 'utf8');
 
 console.log('\n=== #1454 A: read gate in channels.js unchanged ===');
 // The localStorage read-gate stays as the source-of-truth contract.

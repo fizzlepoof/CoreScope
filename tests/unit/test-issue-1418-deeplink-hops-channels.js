@@ -13,6 +13,7 @@
  *      reproduced via node's built-in crypto.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -24,7 +25,7 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const mapSrc = fs.readFileSync(path.join(__dirname, 'public', 'map.js'), 'utf8');
+const mapSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'map.js'), 'utf8');
 
 console.log('\n=== #1418 hop-priority A: source invariants (3-tier priority) ===');
 // Priority comment is documented; assert the structural keywords are in order.

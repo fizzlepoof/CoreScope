@@ -10,12 +10,13 @@
  *      styling — looks like a destructive action.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 
-const chSrc = fs.readFileSync(path.join(__dirname, 'public/channels.js'), 'utf8');
-const cssSrc = fs.readFileSync(path.join(__dirname, 'public/style.css'), 'utf8');
+const chSrc = fs.readFileSync(path.join(repositoryRoot, 'public/channels.js'), 'utf8');
+const cssSrc = fs.readFileSync(path.join(repositoryRoot, 'public/style.css'), 'utf8');
 
 let passed = 0, failed = 0;
 function assert(cond, msg) {

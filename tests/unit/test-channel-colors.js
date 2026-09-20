@@ -1,5 +1,6 @@
 /* Unit tests for channel color highlighting (M1) — #271 */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
@@ -33,7 +34,7 @@ function makeSandbox() {
   };
   ctx.window.ChannelColors = undefined;
   vm.createContext(ctx);
-  const src = fs.readFileSync(__dirname + '/public/channel-colors.js', 'utf8');
+  const src = fs.readFileSync(repositoryRoot + '/public/channel-colors.js', 'utf8');
   vm.runInContext(src, ctx);
   return ctx;
 }
@@ -217,7 +218,7 @@ test('channel-color-picker.js loads without error in sandbox', function() {
   ctx.setTimeout = function(fn) { fn(); };
   ctx.window.innerWidth = 1024;
   ctx.window.innerHeight = 768;
-  const pickerSrc = fs.readFileSync(__dirname + '/public/channel-color-picker.js', 'utf8');
+  const pickerSrc = fs.readFileSync(repositoryRoot + '/public/channel-color-picker.js', 'utf8');
   vm.runInContext(pickerSrc, ctx);
   assert.ok(ctx.window.ChannelColorPicker, 'ChannelColorPicker should be exported');
   assert.strictEqual(typeof ctx.window.ChannelColorPicker.install, 'function');
@@ -247,7 +248,7 @@ test('ChannelColorPicker.install does not throw when elements missing', function
   ctx.setTimeout = function(fn) { fn(); };
   ctx.window.innerWidth = 1024;
   ctx.window.innerHeight = 768;
-  const pickerSrc = fs.readFileSync(__dirname + '/public/channel-color-picker.js', 'utf8');
+  const pickerSrc = fs.readFileSync(repositoryRoot + '/public/channel-color-picker.js', 'utf8');
   vm.runInContext(pickerSrc, ctx);
   // Should not throw when feed/table elements don't exist
   ctx.window.ChannelColorPicker.install();

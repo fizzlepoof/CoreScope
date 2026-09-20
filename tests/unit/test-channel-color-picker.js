@@ -9,6 +9,7 @@
  */
 
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
@@ -113,7 +114,7 @@ assert(
 // --- Test 3: channel-colors.js getRowStyle uses border-left only ---
 console.log('\n=== channel-colors.js getRowStyle ===');
 
-const ccSource = fs.readFileSync(path.join(__dirname, 'public', 'channel-colors.js'), 'utf8');
+const ccSource = fs.readFileSync(path.join(repositoryRoot, 'public', 'channel-colors.js'), 'utf8');
 const ccCtx = {
   window: {},
   localStorage: {
@@ -140,7 +141,7 @@ assert(advertStyle === '', 'getRowStyle returns empty for non-GRP_TXT type');
 // --- Test 4: channel-color-picker.js palette ---
 console.log('\n=== channel-color-picker.js palette ===');
 
-const pickerSource = fs.readFileSync(path.join(__dirname, 'public', 'channel-color-picker.js'), 'utf8');
+const pickerSource = fs.readFileSync(path.join(repositoryRoot, 'public', 'channel-color-picker.js'), 'utf8');
 const pickerCtx = {
   window: { ChannelColors: ccCtx.window.ChannelColors, matchMedia: () => ({ matches: false }) },
   document: {

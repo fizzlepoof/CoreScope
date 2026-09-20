@@ -38,6 +38,7 @@
  *   4. unread is NOT bumped on the channel currently being viewed
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const vm = require('vm');
 const fs = require('fs');
@@ -150,7 +151,7 @@ function makeBrowserLikeSandbox() {
 }
 
 function loadInCtx(ctx, file) {
-  const src = fs.readFileSync(path.join(__dirname, file), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, file), 'utf8');
   vm.runInContext(src, ctx, { filename: file });
   for (const k of Object.keys(ctx.window)) ctx[k] = ctx.window[k];
 }

@@ -19,6 +19,7 @@
  * clearer copy and stays grouped with the channel controls.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -29,8 +30,8 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const chSrc = fs.readFileSync(path.join(__dirname, 'public/channels.js'), 'utf8');
-const cssSrc = fs.readFileSync(path.join(__dirname, 'public/style.css'), 'utf8');
+const chSrc = fs.readFileSync(path.join(repositoryRoot, 'public/channels.js'), 'utf8');
+const cssSrc = fs.readFileSync(path.join(repositoryRoot, 'public/style.css'), 'utf8');
 
 console.log('\n=== Sidebar layout: no nested <button> inside .ch-item ===');
 

@@ -8,6 +8,7 @@
  * E2E behavior is covered by test-channel-modal-e2e.js extensions.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -20,7 +21,7 @@ function assert(cond, msg) {
 }
 
 const src = fs.readFileSync(
-  path.join(__dirname, 'public/channels.js'),
+  path.join(repositoryRoot, 'public/channels.js'),
   'utf8'
 );
 

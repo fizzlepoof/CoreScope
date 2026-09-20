@@ -1,7 +1,7 @@
 /**
  * Tests for #1034 — Channel UX redesign PR1: Modal + sectioned sidebar.
  *
- * Pattern follows test-channel-psk-ux.js: string-contract assertions over
+ * Pattern follows tests/unit/test-channel-psk-ux.js: string-contract assertions over
  * public/channels.js + DOM render harness via vm sandbox.
  *
  *   - [+ Add Channel] button in sidebar (replaces inline form)
@@ -16,6 +16,7 @@
  * Runs in Node.js — no browser.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -27,8 +28,8 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const chSrc = fs.readFileSync(path.join(__dirname, 'public/channels.js'), 'utf8');
-const cssSrc = fs.readFileSync(path.join(__dirname, 'public/style.css'), 'utf8');
+const chSrc = fs.readFileSync(path.join(repositoryRoot, 'public/channels.js'), 'utf8');
+const cssSrc = fs.readFileSync(path.join(repositoryRoot, 'public/style.css'), 'utf8');
 
 console.log('\n=== #1034 PR1: [+ Add Channel] sidebar button ===');
 assert(/id="chAddChannelBtn"/.test(chSrc),
@@ -75,7 +76,7 @@ assert(/id="chPskName"/.test(chSrc),
 assert(/id="chPskAddBtn"/.test(chSrc),
   'PSK section has #chPskAddBtn');
 assert(/id="scan-qr-btn"/.test(chSrc),
-  '#scan-qr-btn present (wired in PR3 — see test-channel-qr-wiring.js)');
+  '#scan-qr-btn present (wired in PR3 — see tests/unit/test-channel-qr-wiring.js)');
 assert(/\[0-9a-fA-F\]\{32\}|isHexKey/.test(chSrc),
   'PSK section validates 32-hex format');
 
