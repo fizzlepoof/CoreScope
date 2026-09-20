@@ -9,7 +9,7 @@
  *     and clicking populates the filter input
  *   - Saved-filter dropdown lists default starter filters
  *
- * Usage: BASE_URL=http://localhost:39966 node test-filter-ux-e2e.js
+ * Usage: BASE_URL=http://localhost:39966 node tests/e2e/test-filter-ux-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

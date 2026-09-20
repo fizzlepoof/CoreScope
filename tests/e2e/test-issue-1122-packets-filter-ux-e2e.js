@@ -13,7 +13,7 @@
  *  4. Focus management: opening the help moves focus to the close button;
  *     closing returns focus to the trigger.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1122-packets-filter-ux-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1122-packets-filter-ux-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

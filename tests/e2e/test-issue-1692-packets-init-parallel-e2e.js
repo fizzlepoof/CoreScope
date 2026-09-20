@@ -16,7 +16,7 @@
  * observers-stub delay so a serial implementation reliably trips the gate
  * even with timing jitter, and a parallel implementation comfortably passes.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1692-packets-init-parallel-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1692-packets-init-parallel-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

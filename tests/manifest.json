@@ -2193,11 +2193,11 @@
       ]
     },
     {
-      "path": "test-filter-ux-e2e.js",
+      "path": "tests/e2e/test-filter-ux-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-filter-ux-e2e.js"
+        "tests/e2e/test-filter-ux-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -2223,7 +2223,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-filter-ux-e2e.js",
+          "source": "tests/e2e/test-filter-ux-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -2652,11 +2652,11 @@
       ]
     },
     {
-      "path": "test-issue-1122-packets-filter-ux-e2e.js",
+      "path": "tests/e2e/test-issue-1122-packets-filter-ux-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1122-packets-filter-ux-e2e.js"
+        "tests/e2e/test-issue-1122-packets-filter-ux-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -2682,7 +2682,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1122-packets-filter-ux-e2e.js",
+          "source": "tests/e2e/test-issue-1122-packets-filter-ux-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -4849,13 +4849,13 @@
       ]
     },
     {
-      "path": "test-issue-1522-trace-url-sync-e2e.js",
+      "path": "tests/e2e/test-issue-1522-trace-url-sync-e2e.js",
       "suite": "e2e",
       "command": [
         "npx",
         "playwright",
         "test",
-        "test-issue-1522-trace-url-sync-e2e.js"
+        "tests/e2e/test-issue-1522-trace-url-sync-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -4883,7 +4883,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1522-trace-url-sync-e2e.js",
+          "source": "tests/e2e/test-issue-1522-trace-url-sync-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -5883,11 +5883,11 @@
       ]
     },
     {
-      "path": "test-issue-1692-packets-init-parallel-e2e.js",
+      "path": "tests/e2e/test-issue-1692-packets-init-parallel-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1692-packets-init-parallel-e2e.js"
+        "tests/e2e/test-issue-1692-packets-init-parallel-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -5913,7 +5913,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1692-packets-init-parallel-e2e.js",
+          "source": "tests/e2e/test-issue-1692-packets-init-parallel-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]

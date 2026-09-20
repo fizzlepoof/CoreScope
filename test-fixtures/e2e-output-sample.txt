@@ -9,7 +9,7 @@ Running tests/e2e/test-e2e-playwright.js against http://localhost:13581
   ✓ customizer opens
 
 8/8 tests passed
-Running test-filter-ux-e2e.js
+Running tests/e2e/test-filter-ux-e2e.js
   ✓ filter compiles
   ✓ filter evaluates equality
   ✓ filter evaluates AND/OR
@@ -115,7 +115,7 @@ Running tests/e2e/test-logo-pulse-1173-e2e.js
   ✓ pulse respects reduced motion
 
 === #1173 logo-pulse E2E: 2 passed, 0 failed ===
-Running test-issue-1122-packets-filter-ux-e2e.js
+Running tests/e2e/test-issue-1122-packets-filter-ux-e2e.js
   ✓ packets filter UX 1
   ✓ packets filter UX 2
   ✓ packets filter UX 3
