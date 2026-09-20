@@ -28,7 +28,7 @@ const http = require('http');
 const BASE = process.env.BASE_URL || 'http://localhost:13581';
 
 function fail(msg) {
-  console.error(`test-logo-rebrand-e2e.js: FAIL — ${msg}`);
+  console.error(`tests/e2e/test-logo-rebrand-e2e.js: FAIL — ${msg}`);
   process.exit(1);
 }
 function assert(cond, msg) { if (!cond) fail(msg || 'assertion failed'); }
@@ -62,10 +62,10 @@ async function main() {
     });
   } catch (err) {
     if (requireChromium) {
-      console.error(`test-logo-rebrand-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-logo-rebrand-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
       process.exit(1);
     }
-    console.log(`test-logo-rebrand-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-logo-rebrand-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 
@@ -251,10 +251,10 @@ async function main() {
     await page.evaluate(() => { try { localStorage.removeItem('cs-theme-overrides'); } catch (_) {} });
 
     await browser.close();
-    console.log(`\ntest-logo-rebrand-e2e.js: ${passed}/${total} PASS`);
+    console.log(`\ntests/e2e/test-logo-rebrand-e2e.js: ${passed}/${total} PASS`);
   } catch (err) {
     try { await browser.close(); } catch (_) {}
-    console.error(`test-logo-rebrand-e2e.js: FAIL — ${err.message}`);
+    console.error(`tests/e2e/test-logo-rebrand-e2e.js: FAIL — ${err.message}`);
     process.exit(1);
   }
 }

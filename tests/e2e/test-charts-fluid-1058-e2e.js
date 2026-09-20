@@ -38,7 +38,7 @@
  *   - Each chart card matched with `.analytics-row > .analytics-card.flex-1`.
  *   - This avoids virtual-scroll-spacer / utility wrappers.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-charts-fluid-1058-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-charts-fluid-1058-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

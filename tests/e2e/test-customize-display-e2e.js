@@ -7,7 +7,7 @@
  *  - Heatmap opacity slider writes scalar override (cs-theme-overrides.heatmapOpacity)
  *  - Reload preserves the values
  *
- * Usage: BASE_URL=http://localhost:13581 node test-customize-display-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-customize-display-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

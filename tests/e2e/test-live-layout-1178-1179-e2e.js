@@ -2,7 +2,7 @@
  * E2E tests for #1178 (Live header compactness + collapse toggle)
  * and #1179 (Live controls pinned bottom-right + collapse toggle).
  *
- * Run: BASE_URL=http://localhost:13581 node test-live-layout-1178-1179-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-live-layout-1178-1179-e2e.js
  *
  * Assertions:
  *   Desktop (1440x900):

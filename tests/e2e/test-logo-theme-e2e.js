@@ -33,7 +33,7 @@ const { chromium } = require('playwright');
 
 const BASE = process.env.BASE_URL || 'http://localhost:13581';
 // Note: rgb(207, 217, 201) is the brand sage default for --logo-accent
-// (see test-logo-default-sage-teal-e2e.js). It is NO LONGER a failure
+// (see tests/e2e/test-logo-default-sage-teal-e2e.js). It is NO LONGER a failure
 // signal here; the original "must not be sage" assertion was written
 // when sage meant "baked-into-SVG-attr regression" and the wordmark was
 // supposed to follow --accent (then blue). Now sage is the intentional
@@ -41,7 +41,7 @@ const BASE = process.env.BASE_URL || 'http://localhost:13581';
 // --logo-accent directly and observing the fill change instead.
 
 function fail(msg) {
-  console.error(`test-logo-theme-e2e.js: FAIL — ${msg}`);
+  console.error(`tests/e2e/test-logo-theme-e2e.js: FAIL — ${msg}`);
   process.exit(1);
 }
 
@@ -56,10 +56,10 @@ async function main() {
     });
   } catch (err) {
     if (requireChromium) {
-      console.error(`test-logo-theme-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-logo-theme-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
       process.exit(1);
     }
-    console.log(`test-logo-theme-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-logo-theme-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 
@@ -101,7 +101,7 @@ async function main() {
     }
     // Theme-reactivity probe: override --logo-accent / --logo-accent-hi and
     // confirm fills change. This replaces the old "must not be legacy sage"
-    // assertion (sage is now the brand default — see test-logo-default-sage-teal-e2e.js).
+    // assertion (sage is now the brand default — see tests/e2e/test-logo-default-sage-teal-e2e.js).
     const navReact = await page.evaluate(() => {
       const root = document.querySelector('.nav-brand');
       const before = {};
@@ -369,10 +369,10 @@ async function main() {
     passed++;
 
     await browser.close();
-    console.log(`\ntest-logo-theme-e2e.js: ${passed}/${total} PASS`);
+    console.log(`\ntests/e2e/test-logo-theme-e2e.js: ${passed}/${total} PASS`);
   } catch (err) {
     try { await browser.close(); } catch (_) {}
-    console.error(`test-logo-theme-e2e.js: FAIL — ${err.message}`);
+    console.error(`tests/e2e/test-logo-theme-e2e.js: FAIL — ${err.message}`);
     process.exit(1);
   }
 }

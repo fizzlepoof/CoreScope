@@ -27,7 +27,7 @@
  *     bottom edge — i.e. no visual occlusion.
  *   - The textarea and Decode button are fully within the modal client rect.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1487-byop-modal-layout-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1487-byop-modal-layout-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

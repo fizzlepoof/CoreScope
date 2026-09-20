@@ -30,7 +30,7 @@
  *
  * This test is CSS-driven (parses public/style.css + scans the customizer
  * defaults) so it runs without a browser. The umbrella axe gate
- * (test-a11y-axe-1668.js) is the live-browser net; this test exists so the
+ * (tests/e2e/test-a11y-axe-1668.js) is the live-browser net; this test exists so the
  * four patterns above stay tracked even when CI chromium is broken in the
  * sandbox.
  *

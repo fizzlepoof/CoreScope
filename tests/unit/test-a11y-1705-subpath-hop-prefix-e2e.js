@@ -6,7 +6,7 @@
  * subpath-detail table row in /#/analytics?tab=subpaths) meets WCAG AA
  * color-contrast (≥ 4.5:1) in BOTH dark and light themes.
  *
- * Why a dedicated test (the umbrella test-a11y-axe-1668.js does NOT catch this):
+ * Why a dedicated test (the umbrella tests/e2e/test-a11y-axe-1668.js does NOT catch this):
  *   The umbrella axe gate scans every page in its initial paint. The
  *   `.subpath-selected` class is only applied AFTER a user clicks a row,
  *   so axe never sees it during the umbrella run. Issue #1705 is the

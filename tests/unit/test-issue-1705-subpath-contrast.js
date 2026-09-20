@@ -217,7 +217,7 @@ for (const theme of THEMES) {
   // #fff to something else and the test still saw white-on-blue and
   // passed. Walk the declared cascade: child → parent → throw if neither
   // declares a color. If the user wants browser-cascade semantics,
-  // they can use the Playwright variant (test-issue-1705-subpath-contrast-e2e.js).
+  // they can use the Playwright variant (tests/e2e/test-issue-1705-subpath-contrast-e2e.js).
   let childRaw = resolveCssValue(childColor, theme);
   if (/^inherit$/i.test(childRaw)) {
     if (!parentColor) {

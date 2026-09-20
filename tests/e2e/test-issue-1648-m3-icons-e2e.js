@@ -68,7 +68,7 @@ async function main() {
     });
   } catch (err) {
     if (requireChromium) {
-      console.error(`test-issue-1648-m3-icons-e2e.js: HARD FAIL — Chromium unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-issue-1648-m3-icons-e2e.js: HARD FAIL — Chromium unavailable: ${err.message}`);
       process.exit(1);
     }
     console.warn(`SKIP — Chromium unavailable: ${err.message}`);
@@ -177,12 +177,12 @@ async function main() {
   else pass(`(g) .status-ok resolves to ${status} (currentColor token threaded)`);
 
   await browser.close();
-  console.log(`\ntest-issue-1648-m3-icons-e2e.js: ${passes} passed, ${failures} failed`);
+  console.log(`\ntests/e2e/test-issue-1648-m3-icons-e2e.js: ${passes} passed, ${failures} failed`);
   assert.strictEqual(failures, 0, `${failures} M3 icon-render assertions failed`);
   process.exit(0);
 }
 
 main().catch((err) => {
-  console.error('test-issue-1648-m3-icons-e2e.js: FAIL —', err);
+  console.error('tests/e2e/test-issue-1648-m3-icons-e2e.js: FAIL —', err);
   process.exit(1);
 });

@@ -11,7 +11,7 @@
  * Desktop guard (≥768px / 1440×900): map height must remain the original
  * 420px and the table must still render 6 visible columns — no regression.
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1630-reach-mobile-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1630-reach-mobile-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

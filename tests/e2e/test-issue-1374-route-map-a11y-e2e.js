@@ -16,7 +16,7 @@
  * drives directly with synthetic positions, so no DB is required. The
  * production `drawPacketRoute` resolves hops then calls the same function.
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1374-route-map-a11y-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1374-route-map-a11y-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

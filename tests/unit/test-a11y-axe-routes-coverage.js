@@ -21,7 +21,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-const mod = require(fromRepositoryRoot('test-a11y-axe-1668.js'));
+const mod = require(fromRepositoryRoot('tests/e2e/test-a11y-axe-1668.js'));
 
 const analyticsSrc = fs.readFileSync(
   fromRepositoryRoot('public', 'analytics.js'),
