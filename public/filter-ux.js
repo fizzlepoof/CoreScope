@@ -8,7 +8,7 @@
  *
  * Pure-logic helpers (SavedFilters, buildCellFilterClause, appendClauseToExpr)
  * are unit-tested in tests/unit/test-packet-filter-ux.js. DOM glue is exercised by
- * test-filter-ux-e2e.js (Playwright).
+ * tests/e2e/test-filter-ux-e2e.js (Playwright).
  */
 (function() {
   'use strict';

@@ -1,5 +1,5 @@
 // E2E test for issue #1522 — trace hash written into URL after doTrace().
-// Run: npx playwright test test-issue-1522-trace-url-sync-e2e.js
+// Run: npx playwright test tests/e2e/test-issue-1522-trace-url-sync-e2e.js
 // Requires: running server on BASE_URL (default http://localhost:3000).
 'use strict';
 
