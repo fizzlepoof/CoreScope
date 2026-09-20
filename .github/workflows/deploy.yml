@@ -5,6 +5,7 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_call:
   workflow_dispatch:
 
 permissions:
@@ -597,17 +598,19 @@ jobs:
           echo "Build: version=$APP_VERSION commit=$GIT_COMMIT time=$BUILD_TIME"
 
       - name: Build Go Docker image (local staging)
+        env:
+          GIT_COMMIT: ${{ steps.meta.outputs.git_commit }}
+          APP_VERSION: ${{ steps.meta.outputs.app_version }}
+          BUILD_TIME: ${{ steps.meta.outputs.build_time }}
         run: |
-          GIT_COMMIT="${{ steps.meta.outputs.git_commit }}" \
-          APP_VERSION="${{ steps.meta.outputs.app_version }}" \
-          BUILD_TIME="${{ steps.meta.outputs.build_time }}" \
+          export GIT_COMMIT APP_VERSION BUILD_TIME
           docker compose -f "$STAGING_COMPOSE_FILE" -p corescope-staging build "$STAGING_SERVICE"
           echo "Built Go staging image ✅"
 
       - name: Set up Docker Buildx
-        # Publish on push AND workflow_dispatch — the release fast-path
-        # fallback dispatches this workflow against tag refs, and gating on
-        # push-only silently skipped every GHCR step (v4.0.2 released nothing).
+        # Publish on push, workflow_dispatch, and synchronous workflow_call.
+        # The release fast-path fallback calls this workflow against a tag ref;
+        # gating on push-only would silently skip every GHCR publishing step.
         # Only pull_request runs must stop short of publishing.
         if: github.event_name != 'pull_request'
         uses: docker/setup-buildx-action@v3
@@ -657,43 +660,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ───────────────────────────────────────────────────────────────
-  # 4. Release Artifacts (tags only)
-  # ───────────────────────────────────────────────────────────────
-  release-artifacts:
-    name: "📦 Release Artifacts"
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [go-test]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Set up Go 1.22
-        uses: actions/setup-go@v6
-        with:
-          go-version: '1.22'
-
-      - name: Build corescope-decrypt (static, linux/amd64)
-        run: |
-          cd cmd/decrypt
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o ../../corescope-decrypt-linux-amd64 .
-
-      - name: Build corescope-decrypt (static, linux/arm64)
-        run: |
-          cd cmd/decrypt
-          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o ../../corescope-decrypt-linux-arm64 .
-
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            corescope-decrypt-linux-amd64
-            corescope-decrypt-linux-arm64
-
-  # ───────────────────────────────────────────────────────────────
-  # 4b. Deploy Staging (master only)
+  # 4. Deploy Staging (master only)
   # ───────────────────────────────────────────────────────────────
   deploy:
     name: "🚀 Deploy Staging"
@@ -710,10 +677,12 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Pull latest image from GHCR
+        env:
+          IMAGE_OWNER: ${{ github.repository_owner }}
         run: |
           # Try to pull the edge image from GHCR and tag for docker-compose compatibility.
           # ghcr requires lowercase image names; repository_owner may be mixed-case.
-          IMAGE="ghcr.io/$(echo "${{ github.repository_owner }}" | tr 'A-Z' 'a-z')/corescope"
+          IMAGE="ghcr.io/$(printf '%s' "$IMAGE_OWNER" | tr '[:upper:]' '[:lower:]')/corescope"
           if docker pull "$IMAGE:edge"; then
             docker tag "$IMAGE:edge" corescope-go:latest
             echo "Pulled and tagged GHCR edge image ✅"
@@ -817,6 +786,7 @@ jobs:
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.BADGE_PUSH_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           # GITHUB_TOKEN cannot push to protected branches (required status checks).
           # Use admin PAT (BADGE_PUSH_TOKEN) via GitHub Contents API instead.
@@ -824,9 +794,9 @@ jobs:
             FILENAME=$(basename "$badge")
             FILEPATH=".badges/$FILENAME"
             CONTENT=$(base64 -w0 "$badge")
-            CURRENT_SHA=$(gh api "repos/${{ github.repository }}/contents/$FILEPATH" --jq '.sha' 2>/dev/null || echo "")
+            CURRENT_SHA=$(gh api "repos/$REPOSITORY/contents/$FILEPATH" --jq '.sha' 2>/dev/null || echo "")
             if [ -n "$CURRENT_SHA" ]; then
-              gh api "repos/${{ github.repository }}/contents/$FILEPATH" \
+              gh api "repos/$REPOSITORY/contents/$FILEPATH" \
                 -X PUT \
                 -f message="ci: update $FILENAME [skip ci]" \
                 -f content="$CONTENT" \
@@ -834,7 +804,7 @@ jobs:
                 -f branch="master" \
                 --silent 2>&1 || echo "Failed to update $FILENAME"
             else
-              gh api "repos/${{ github.repository }}/contents/$FILEPATH" \
+              gh api "repos/$REPOSITORY/contents/$FILEPATH" \
                 -X PUT \
                 -f message="ci: update $FILENAME [skip ci]" \
                 -f content="$CONTENT" \
