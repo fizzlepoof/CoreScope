@@ -1,5 +1,6 @@
 /* Unit tests for frontend helper functions (tested via VM sandbox) */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
@@ -5905,7 +5906,7 @@ console.log('\n=== analytics.js: renderCollisionsFromServer collision table ==='
 
   // Test 1: ROLE_COLORS.observer is defined and not empty
   test('ROLE_COLORS.observer is defined and not empty', () => {
-    const rolesJs = fs.readFileSync(__dirname + '/public/roles.js', 'utf8');
+    const rolesJs = fs.readFileSync(repositoryRoot + '/public/roles.js', 'utf8');
     const ctx = makeSandbox();
     vm.runInNewContext(rolesJs, ctx);
     assert.ok(ctx.window.ROLE_COLORS.observer, 'ROLE_COLORS.observer should be defined');
@@ -5914,7 +5915,7 @@ console.log('\n=== analytics.js: renderCollisionsFromServer collision table ==='
 
   // Test 2: Observer checkbox exists in neighbor graph filter (unchecked by default)
   test('Observer checkbox exists in neighbor graph filter section', () => {
-    const analyticsJs = fs.readFileSync(__dirname + '/public/analytics.js', 'utf8');
+    const analyticsJs = fs.readFileSync(repositoryRoot + '/public/analytics.js', 'utf8');
     // The observer checkbox is added with data-role="observer" and NO "checked" attribute
     assert.ok(analyticsJs.includes('data-role="observer"'), 'analytics.js should contain observer checkbox');
     // Verify it's NOT checked by default (no "checked" attribute on observer checkbox)
@@ -5925,7 +5926,7 @@ console.log('\n=== analytics.js: renderCollisionsFromServer collision table ==='
 
   // Test 3: Other role checkboxes ARE checked by default
   test('Non-observer role checkboxes are checked by default', () => {
-    const analyticsJs = fs.readFileSync(__dirname + '/public/analytics.js', 'utf8');
+    const analyticsJs = fs.readFileSync(repositoryRoot + '/public/analytics.js', 'utf8');
     // The main role loop uses "checked" attribute
     const mainRoleCheckbox = analyticsJs.match(/data-role="\$\{r\}"[^>]*checked/);
     assert.ok(mainRoleCheckbox, 'Main role checkboxes should have checked attribute');
@@ -5933,13 +5934,13 @@ console.log('\n=== analytics.js: renderCollisionsFromServer collision table ==='
 
   // Test 4: --role-observer CSS variable exists in style.css
   test('--role-observer CSS variable exists in style.css', () => {
-    const css = fs.readFileSync(__dirname + '/public/style.css', 'utf8');
+    const css = fs.readFileSync(repositoryRoot + '/public/style.css', 'utf8');
     assert.ok(css.includes('--role-observer:'), 'style.css should define --role-observer CSS variable');
   });
 
   // Test 5: Filter logic does NOT auto-include observer role
   test('Filter logic excludes observer nodes when checkbox unchecked', () => {
-    const analyticsJs = fs.readFileSync(__dirname + '/public/analytics.js', 'utf8');
+    const analyticsJs = fs.readFileSync(repositoryRoot + '/public/analytics.js', 'utf8');
     // Old code had: return checkedRoles.has(role) || role === 'unknown' || role === 'observer';
     // New code: return checkedRoles.has(role) || role === 'unknown';
     // Verify observer is NOT given special pass-through treatment
@@ -6094,7 +6095,7 @@ console.log('\n=== analytics.js: renderCollisionsFromServer collision table ==='
   test('#852: no var(--muted) in public/ files (regression guard)', () => {
     const fs = require('fs');
     const path = require('path');
-    const pubDir = path.join(__dirname, 'public');
+    const pubDir = path.join(repositoryRoot, 'public');
     const files = fs.readdirSync(pubDir).filter(f => f.endsWith('.js') || f.endsWith('.css'));
     files.forEach(f => {
       const content = fs.readFileSync(path.join(pubDir, f), 'utf8');
@@ -6288,7 +6289,7 @@ console.log('\n=== analytics.js: renderCollisionsFromServer collision table ==='
     sb.self = sb.window;
     sb.globalThis = sb.window;
     const ctx = vm.createContext(sb);
-    const hopSrc = fs.readFileSync(__dirname + '/public/hop-display.js', 'utf8');
+    const hopSrc = fs.readFileSync(repositoryRoot + '/public/hop-display.js', 'utf8');
     vm.runInContext(hopSrc, ctx);
     return ctx;
   }
@@ -6391,7 +6392,7 @@ console.log('\n=== roles.js: Map Tile Config Parsing ===');
 {
   function makeRolesSandbox(cfg) {
     const ctx = makeSandbox();
-    const rolesJs = fs.readFileSync(__dirname + '/public/roles.js', 'utf8');
+    const rolesJs = fs.readFileSync(repositoryRoot + '/public/roles.js', 'utf8');
     ctx.fetch = () => Promise.resolve({ json: () => Promise.resolve(cfg) });
     ctx.window.fetch = ctx.fetch;
     // Load it
@@ -6437,7 +6438,7 @@ console.log('\n=== roles.js: Map Tile Config Parsing ===');
   };
   sb.window.document = sb.document; sb.self = sb.window; sb.globalThis = sb.window;
   const ctx1504 = vm.createContext(sb);
-  vm.runInContext(fs.readFileSync(__dirname + '/public/hop-display.js', 'utf8'), ctx1504);
+  vm.runInContext(fs.readFileSync(repositoryRoot + '/public/hop-display.js', 'utf8'), ctx1504);
   const HD = ctx1504.window.HopDisplay;
 
   test('#1504: HopDisplay.PATH_SYMBOLS_LEGEND is defined and non-empty array', () => {
@@ -6468,7 +6469,7 @@ console.log('\n=== roles.js: Map Tile Config Parsing ===');
   });
 
   test('#1504: packets.js places legend in a sibling wrapper (NOT inside any <th> with data-sort-key)', () => {
-    const src = fs.readFileSync(__dirname + '/public/packets.js', 'utf8');
+    const src = fs.readFileSync(repositoryRoot + '/public/packets.js', 'utf8');
     assert.ok(src.includes('renderPathSymbolsLegend'),
       'packets.js must invoke HopDisplay.renderPathSymbolsLegend()');
     assert.ok(src.includes('path-symbols-legend-wrapper'),
@@ -6484,7 +6485,7 @@ console.log('\n=== roles.js: Map Tile Config Parsing ===');
   });
 
   test('#1504: nodes.js places legend in a sibling wrapper (NOT inside <h4>)', () => {
-    const src = fs.readFileSync(__dirname + '/public/nodes.js', 'utf8');
+    const src = fs.readFileSync(repositoryRoot + '/public/nodes.js', 'utf8');
     assert.ok(src.includes('path-symbols-legend-wrapper'),
       'nodes.js must wrap the legend in .path-symbols-legend-wrapper (sibling, not inside <h4>)');
     src.split('\n').forEach((line, i) => {
@@ -6496,7 +6497,7 @@ console.log('\n=== roles.js: Map Tile Config Parsing ===');
   });
 
   test('#1504: style.css gives .path-symbols-legend position:relative so absolutely-positioned panel anchors correctly', () => {
-    const css = fs.readFileSync(__dirname + '/public/style.css', 'utf8');
+    const css = fs.readFileSync(repositoryRoot + '/public/style.css', 'utf8');
     // Find the rule block for .path-symbols-legend (NOT .path-symbols-legend-wrapper)
     const m = css.match(/\.path-symbols-legend\s*\{[^}]*\}/);
     assert.ok(m, '.path-symbols-legend rule must exist');
@@ -6509,7 +6510,7 @@ console.log('\n=== roles.js: Map Tile Config Parsing ===');
   });
 
   test('#1504: legend glyphs match what hop-display.js actually renders (no documented-but-missing glyphs)', () => {
-    const hopSrc = fs.readFileSync(__dirname + '/public/hop-display.js', 'utf8');
+    const hopSrc = fs.readFileSync(repositoryRoot + '/public/hop-display.js', 'utf8');
     HD.PATH_SYMBOLS_LEGEND.forEach(entry => {
       // #1648 M3: glyphs are now sprite HTML (glyphHtml); the legend uses
       // ph-warning sprite refs which appear inline in hop-display.js too.
@@ -6536,7 +6537,7 @@ console.log('\n=== roles.js: Map Tile Config Parsing ===');
     // Simulate the structural guarantee from the wrapper move: legend must not be a descendant of a sortable <th>.
     // table-sort.js binds click on th[data-sort-key]; with the legend in a sibling div, no click on summary
     // can bubble to a sortable th.
-    const pktSrc = fs.readFileSync(__dirname + '/public/packets.js', 'utf8');
+    const pktSrc = fs.readFileSync(repositoryRoot + '/public/packets.js', 'utf8');
     // Extract the snippet around the table head and confirm the legend is OUTSIDE <thead>...</thead>
     const theadIdx = pktSrc.indexOf('<thead>');
     const theadEnd = pktSrc.indexOf('</thead>', theadIdx);

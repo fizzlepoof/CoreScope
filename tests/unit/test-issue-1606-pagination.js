@@ -12,6 +12,7 @@
  * assertion below fails. With the pagination loop in place, it passes.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
@@ -143,7 +144,7 @@ function makeNodesEnv(totalNodes, serverCap) {
   let pageMod = null;
   ctx.registerPage = (name, handlers) => { pageMod = handlers; };
 
-  const repoRoot = path.resolve(__dirname);
+  const repoRoot = path.resolve(repositoryRoot);
   loadInCtx(ctx, path.join(repoRoot, 'public/nodes.js'));
 
   return { ctx, pageMod: () => pageMod, apiCalls, fixtureTotal: fixture.length };
@@ -232,7 +233,7 @@ test('B1: after api() throws mid-pagination, _allNodes resets so next call refet
   ctx.debouncedOnWS = () => () => {};
   let pageMod = null;
   ctx.registerPage = (name, handlers) => { pageMod = handlers; };
-  loadInCtx(ctx, path.join(__dirname, 'public/nodes.js'));
+  loadInCtx(ctx, path.join(repositoryRoot, 'public/nodes.js'));
 
   // First call — will fail on page 2
   pageMod.init(ctx.document.getElementById('page'));
@@ -300,7 +301,7 @@ test('M1: pagination fetches all pages even when total is understated (filter in
   ctx.debouncedOnWS = () => () => {};
   let pageMod = null;
   ctx.registerPage = (name, handlers) => { pageMod = handlers; };
-  loadInCtx(ctx, path.join(__dirname, 'public/nodes.js'));
+  loadInCtx(ctx, path.join(repositoryRoot, 'public/nodes.js'));
 
   pageMod.init(ctx.document.getElementById('page'));
   for (let i = 0; i < 50; i++) await new Promise(r => setImmediate(r));
@@ -377,7 +378,7 @@ test('M2: progress feedback is shown between page fetches', async () => {
   ctx.debouncedOnWS = () => () => {};
   let pageMod = null;
   ctx.registerPage = (name, handlers) => { pageMod = handlers; };
-  loadInCtx(ctx, path.join(__dirname, 'public/nodes.js'));
+  loadInCtx(ctx, path.join(repositoryRoot, 'public/nodes.js'));
 
   pageMod.init(ctx.document.getElementById('page'));
   for (let i = 0; i < 50; i++) await new Promise(r => setImmediate(r));

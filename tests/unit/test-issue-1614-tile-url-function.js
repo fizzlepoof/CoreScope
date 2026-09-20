@@ -1,4 +1,4 @@
-/* test-issue-1614-tile-url-function.js — regression test for #1614.
+/* tests/unit/test-issue-1614-tile-url-function.js — regression test for #1614.
  *
  * Bug: window.getTileUrl() in public/roles.js returns the provider's
  * `url` *property as-is*. When the active dark-mode provider declares
@@ -20,6 +20,7 @@
  * fail if map-tile-providers.js drifted.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
@@ -56,7 +57,7 @@ function makeSandbox(theme) {
   ctx.window.document = ctx.document;
   ctx.globalThis = ctx;
   vm.createContext(ctx);
-  const src = fs.readFileSync(path.join(__dirname, 'public', 'roles.js'), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'roles.js'), 'utf8');
   vm.runInContext(src, ctx, { filename: 'public/roles.js' });
   // Mirror window.* back so bare-name refs inside roles.js (TILE_DARK etc.) resolve.
   for (const k of Object.keys(ctx.window)) if (!(k in ctx)) ctx[k] = ctx.window[k];

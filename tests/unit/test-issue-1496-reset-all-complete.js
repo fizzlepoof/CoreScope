@@ -17,6 +17,7 @@
  *     mc-channels-* selection state
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const vm = require('vm');
 const fs = require('fs');
@@ -151,7 +152,7 @@ function loadCustomizer() {
   };
   env.ctx.window.MC_getDarkTileProvider = () => env.localStorage.getItem('mc-dark-tile-provider') || 'carto-dark';
 
-  const code = fs.readFileSync(path.join(__dirname, 'public', 'customize-v2.js'), 'utf8');
+  const code = fs.readFileSync(path.join(repositoryRoot, 'public', 'customize-v2.js'), 'utf8');
   vm.createContext(env.ctx);
   vm.runInContext(code, env.ctx, { filename: 'customize-v2.js' });
   env.api = env.ctx.window._customizerV2;

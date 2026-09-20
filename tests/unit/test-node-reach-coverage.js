@@ -1,7 +1,7 @@
 'use strict';
 const { fromRepositoryRoot } = require('../helpers/repository-root');
 // Unit test for node-reach-coverage.js color buckets. Loads the browser IIFE in
-// a vm sandbox (pattern from test-frontend-helpers.js) and exercises the pure
+// a vm sandbox (pattern from tests/unit/test-frontend-helpers.js) and exercises the pure
 // coverageColorVar mapping.
 const assert = require('assert');
 const fs = require('fs');

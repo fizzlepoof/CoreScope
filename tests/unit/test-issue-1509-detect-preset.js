@@ -20,7 +20,7 @@
  * for the same key (the preset's value will become effective via the CSS
  * cascade anyway). This test asserts that semantic.
  *
- * Run: node test-issue-1509-detect-preset.js
+ * Run: node tests/unit/test-issue-1509-detect-preset.js
  */
 'use strict';
 const vm = require('vm');

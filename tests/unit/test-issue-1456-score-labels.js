@@ -11,6 +11,7 @@
  * This file pins the frontend pieces by file-grep on nodes.js.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -21,7 +22,7 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const src = fs.readFileSync(path.join(__dirname, 'public', 'nodes.js'), 'utf8');
+const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'nodes.js'), 'utf8');
 
 console.log('\n=== #1456: nodes.js renders "Traffic share" label ===');
 

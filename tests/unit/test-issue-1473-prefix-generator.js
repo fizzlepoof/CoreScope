@@ -7,13 +7,14 @@
  * Reporter: @halo779 (community).
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const assert = require('assert');
 
-const src = fs.readFileSync(path.join(__dirname, 'public', 'prefix-reserved.js'), 'utf8');
+const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'prefix-reserved.js'), 'utf8');
 const sandbox = { module: { exports: {} }, exports: {}, window: {} };
 vm.createContext(sandbox);
 vm.runInContext(src, sandbox);
@@ -93,14 +94,14 @@ test('with only {00, FE, FF} free, generator returns "FE" (NOT 00 or FF)',
   () => assert.strictEqual(enumerateFirstFree(1, usedAllBut3), 'FE'));
 
 console.log('\n=== #1473: analytics.js wires reserved filter into the generator ===');
-const analyticsSrc = fs.readFileSync(path.join(__dirname, 'public', 'analytics.js'), 'utf8');
+const analyticsSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'analytics.js'), 'utf8');
 test('analytics.js references PrefixReserved (generator wiring)',
   () => assert.ok(/PrefixReserved/.test(analyticsSrc)));
 test('analytics.js mentions the reserved-excluded note in the generator card',
   () => assert.ok(/0x00 and 0xFF[\s\S]{0,200}excluded/i.test(analyticsSrc)));
 test('analytics.js loads prefix-reserved before analytics in index.html',
   () => {
-    const html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+    const html = fs.readFileSync(path.join(repositoryRoot, 'public', 'index.html'), 'utf8');
     const pri = html.indexOf('prefix-reserved.js');
     const ani = html.indexOf('analytics.js');
     assert.ok(pri > 0 && ani > 0 && pri < ani, 'prefix-reserved.js must load before analytics.js');

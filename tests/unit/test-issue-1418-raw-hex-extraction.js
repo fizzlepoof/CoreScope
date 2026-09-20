@@ -20,6 +20,7 @@
  * that drops the extraction is caught.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -30,7 +31,7 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const mapSrc = fs.readFileSync(path.join(__dirname, 'public', 'map.js'), 'utf8');
+const mapSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'map.js'), 'utf8');
 
 console.log('\n=== #1418 raw_hex A: source invariants in map.js ===');
 assert(/TYPES_WITH_DST_SRC\s*=\s*\[\s*1\s*,\s*2\s*,\s*7\s*,\s*8\s*\]/.test(mapSrc),

@@ -13,9 +13,10 @@
  * This test fails on master and passes after the fix lands.
  *
  * Pure node + vm.createContext — runs in the JS-unit-tests CI step
- * without a browser. Mirrors test-issue-1361-cb-presets.js sandbox shape.
+ * without a browser. Mirrors tests/unit/test-issue-1361-cb-presets.js sandbox shape.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -27,10 +28,10 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const rolesSrc   = fs.readFileSync(path.join(__dirname, 'public', 'roles.js'), 'utf8');
-const presetsSrc = fs.readFileSync(path.join(__dirname, 'public', 'cb-presets.js'), 'utf8');
-const styleSrc   = fs.readFileSync(path.join(__dirname, 'public', 'style.css'), 'utf8');
-const mapSrc     = fs.readFileSync(path.join(__dirname, 'public', 'map.js'), 'utf8');
+const rolesSrc   = fs.readFileSync(path.join(repositoryRoot, 'public', 'roles.js'), 'utf8');
+const presetsSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'cb-presets.js'), 'utf8');
+const styleSrc   = fs.readFileSync(path.join(repositoryRoot, 'public', 'style.css'), 'utf8');
+const mapSrc     = fs.readFileSync(path.join(repositoryRoot, 'public', 'map.js'), 'utf8');
 
 // ─── WCAG helpers (independent of cb-presets, so we validate the impl) ───
 function hexToRgb(hex) {

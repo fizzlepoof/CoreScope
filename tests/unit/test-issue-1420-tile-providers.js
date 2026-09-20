@@ -1,13 +1,14 @@
-/* test-issue-1420-tile-providers.js — Tile provider registry tests.
+/* tests/unit/test-issue-1420-tile-providers.js — Tile provider registry tests.
  *
  * Covers MC_initTileRegistry config-gating, dark + light persistence
  * helpers, CSS-filter swap, OSM/Stamen provider enable/disable, and
  * the fromAsync dispatch that re-syncs maps after config loads.
  *
- * Runs via: node test-issue-1420-tile-providers.js
+ * Runs via: node tests/unit/test-issue-1420-tile-providers.js
  * No jsdom or Playwright dependency — pure vm sandbox.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm   = require('vm');
 const fs   = require('fs');
 const path = require('path');
@@ -72,7 +73,7 @@ function makeSandbox(opts) {
 function loadProviders(ctx, mapCfg) {
   // Optionally pre-populate MC_MAP_CFG before the IIFE runs
   if (mapCfg !== undefined) ctx.window.MC_MAP_CFG = mapCfg;
-  const src = fs.readFileSync(path.join(__dirname, 'public', 'map-tile-providers.js'), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'map-tile-providers.js'), 'utf8');
   vm.runInContext(src, ctx);
 }
 

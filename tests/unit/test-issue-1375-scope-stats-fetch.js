@@ -14,6 +14,7 @@
  * branch never merged, so the bug resurfaced in subsequent rebases.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -25,7 +26,7 @@ function assert(cond, msg) {
 }
 
 const src = fs.readFileSync(
-  path.join(__dirname, 'public', 'analytics.js'), 'utf8');
+  path.join(repositoryRoot, 'public', 'analytics.js'), 'utf8');
 
 console.log('\n=== #1375: Scopes tab scope-stats fetch path ===');
 

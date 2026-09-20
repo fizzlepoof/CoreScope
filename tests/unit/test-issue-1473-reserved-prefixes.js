@@ -15,6 +15,7 @@
  * Reporter: @halo779 (community).
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -22,7 +23,7 @@ const vm = require('vm');
 const assert = require('assert');
 
 // Load prefix-reserved.js as a CommonJS module under vm.
-const src = fs.readFileSync(path.join(__dirname, 'public', 'prefix-reserved.js'), 'utf8');
+const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'prefix-reserved.js'), 'utf8');
 const sandbox = { module: { exports: {} }, exports: {}, window: {} };
 vm.createContext(sandbox);
 vm.runInContext(src, sandbox);
@@ -95,9 +96,9 @@ test('cell 00 title cites MeshCore firmware keygen', () => assert.ok(/MeshCore f
 test('cell FF title cites MeshCore firmware keygen', () => assert.ok(/MeshCore firmware keygen/i.test(cells[255]._attrs.title)));
 
 console.log('\n=== #1473: prefix-reserved.js loaded by index.html ===');
-const indexHtml = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+const indexHtml = fs.readFileSync(path.join(repositoryRoot, 'public', 'index.html'), 'utf8');
 test('index.html includes prefix-reserved.js script', () => assert.ok(/prefix-reserved\.js/.test(indexHtml)));
-const styleCss = fs.readFileSync(path.join(__dirname, 'public', 'style.css'), 'utf8');
+const styleCss = fs.readFileSync(path.join(repositoryRoot, 'public', 'style.css'), 'utf8');
 test('style.css defines .prefix-reserved', () => assert.ok(/\.prefix-reserved\b/.test(styleCss)));
 test('style.css disables pointer events on reserved cell',
   () => assert.ok(/\.prefix-reserved[\s\S]{0,400}pointer-events:\s*none/i.test(styleCss)));
