@@ -96,8 +96,30 @@ async function verifyCoverageColors() {
   assert.strictEqual(context.scopeCoverageRegionColor('#us-tn'), '#12abef', 'saved Regions-tool color overrides the hash fallback');
   assert.match(context.scopeCoverageRegionColor('#invalid'), /^fallback:/, 'invalid saved colors retain deterministic fallback');
   assert.match(context.scopeCoverageRegionColor('#automatic'), /^fallback:/, 'regions without an assigned color retain deterministic fallback');
+  const authoritativeGeometry = {
+    type: 'Polygon',
+    coordinates: [[[-88, 35], [-87, 35], [-87, 36], [-88, 35]]],
+  };
+  const combined = context.scopeCoverageCombineRegions([
+    { name: '#us-tn', nodeCount: 2, hull: [[35, -88], [40, -70], [36, -87]] },
+    { name: '#relay-only', nodeCount: 1, hull: [[50, -60]] },
+  ], [
+    { name: '#us-tn', color: '#12abef', geometry: authoritativeGeometry },
+    { name: '#configured-empty', color: '#345678', geometry: null },
+  ]);
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(combined)), [
+    { name: '#us-tn', nodeCount: 2, geometry: authoritativeGeometry },
+    { name: '#configured-empty', nodeCount: 0, geometry: null },
+    { name: '#relay-only', nodeCount: 1, geometry: null },
+  ], 'admin definitions own polygon geometry while relay-only regions retain counts without inferred polygons');
+  assert.deepStrictEqual(
+    JSON.parse(JSON.stringify(context.scopeCoverageGeometryLatLngs(authoritativeGeometry))),
+    [[[35, -88], [35, -87], [36, -87], [35, -88]]],
+    'admin GeoJSON coordinates are converted to Leaflet coordinates without using relay hull points'
+  );
   assert.match(scopeCoverageJS, /api\('\/config\/hash-region-definitions'/, 'coverage overlay loads Regions-tool color definitions');
   assert.match(scopeCoverageJS, /var fill = scopeCoverageRegionColor\(region\.name\)/, 'coverage polygons use the shared region color resolver');
+  assert.match(scopeCoverageJS, /scopeCoverageGeometryLatLngs\(region\.geometry\)/, 'coverage polygons use saved admin geometry');
   assert.match(liveJS, /createScopeCoverageOverlay\(/, 'Live map uses the shared coverage overlay');
   assert.match(regionsJS, /createScopeCoverageOverlay\(/, 'Regions tab uses the shared coverage overlay');
   assert.match(regionsJS, /scopeCoverageRegionColor\(activeRegionFilter \|\| regions\[0\]\)/, 'Regions node markers use the same color resolver as polygons and legend swatches');
@@ -111,6 +133,32 @@ async function verifyCoverageColors() {
   });
   await overlay.load();
   assert.strictEqual(overlay.getRegions().length, 1, 'definition failure does not suppress scope coverage data');
+
+  let renderedPolygon = null;
+  const toggle = { checked: true, addEventListener() {} };
+  const label = { style: {} };
+  context.document.getElementById = id => id === 'coverage-toggle' ? toggle : (id === 'coverage-label' ? label : null);
+  context.L = {
+    polygon(latlngs, style) {
+      renderedPolygon = { latlngs, style };
+      return { setStyle() {}, bringToFront() {} };
+    },
+    layerGroup() { return { addTo() {} }; },
+  };
+  context.api = async path => path === '/config/hash-region-definitions'
+    ? [{ name: '#us-tn', color: '#12abef', geometry: authoritativeGeometry }]
+    : { regions: [{ name: '#us-tn', nodeCount: 2, hull: [[35, -88], [40, -70], [36, -87]] }] };
+  const renderedOverlay = context.createScopeCoverageOverlay({
+    on() {}, off() {}, removeLayer() {}, hasLayer() { return true; },
+  }, {
+    checkboxId: 'coverage-toggle', labelId: 'coverage-label', storageKey: 'rendered-scope-coverage',
+  });
+  await renderedOverlay.load();
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(renderedPolygon.latlngs)),
+    [[[35, -88], [35, -87], [36, -87], [35, -88]]],
+    'Live and Regions shared overlay renders the saved polygon, not the relay hull');
+  assert.strictEqual(renderedPolygon.style.fillColor, '#12abef', 'saved region color styles the authoritative polygon');
+  assert.strictEqual(renderedOverlay.getRegions()[0].nodeCount, 2, 'out-of-bound relays remain included in the displayed count');
 }
 
 verifyCoverageColors().then(() => {

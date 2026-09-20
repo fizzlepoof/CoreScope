@@ -1,10 +1,9 @@
 // Hash Region Coverage overlay — shared between map.js and live.js.
 //
-// Renders /api/scope-coverage's per-region convex hulls as colored map
-// shapes — the positions of repeaters/rooms that have actually RELAYED
-// traffic for that region (not just self-declared it), so an inferred
-// coverage area, not an authoritative boundary; hash regions carry no
-// shape of their own. See cmd/server/scope_coverage.go.
+// Renders administrator-defined region boundaries from
+// /api/config/hash-region-definitions, joined to /api/scope-coverage's
+// observed relay counts. Relay nodes remain countable and visible even when
+// they sit outside the saved boundary; observations never expand a polygon.
 //
 // Usage (per Leaflet map instance):
 //   const overlay = createScopeCoverageOverlay(map, {
@@ -74,6 +73,55 @@ function scopeCoverageRegionSwatchHtml(name) {
     scopeCoverageRegionColor(name) + ';margin-right:5px;vertical-align:middle;"></span>';
 }
 
+// Join observed relay membership/counts to the administrator-owned region
+// boundaries. Definitions own geometry: a relay outside the saved boundary
+// still contributes to nodeCount and remains available to the Regions page,
+// but it never expands (or invents) a polygon. Configured regions with no
+// observed relays remain visible with a zero count; observed names without a
+// saved definition remain countable/filterable with no polygon.
+function scopeCoverageCombineRegions(coverageRegions, definitions) {
+  var coverageByName = Object.create(null);
+  (Array.isArray(coverageRegions) ? coverageRegions : []).forEach(function (region) {
+    if (region && typeof region.name === 'string') coverageByName[region.name] = region;
+  });
+  var included = Object.create(null);
+  var combined = [];
+  (Array.isArray(definitions) ? definitions : []).forEach(function (definition) {
+    if (!definition || typeof definition.name !== 'string' || included[definition.name]) return;
+    var observed = coverageByName[definition.name];
+    combined.push({
+      name: definition.name,
+      nodeCount: observed && Number.isFinite(Number(observed.nodeCount)) ? Number(observed.nodeCount) : 0,
+      geometry: definition.geometry || null
+    });
+    included[definition.name] = true;
+  });
+  Object.keys(coverageByName).sort().forEach(function (name) {
+    if (included[name]) return;
+    var observed = coverageByName[name];
+    combined.push({
+      name: name,
+      nodeCount: Number.isFinite(Number(observed.nodeCount)) ? Number(observed.nodeCount) : 0,
+      geometry: null
+    });
+  });
+  return combined;
+}
+
+// GeoJSON stores [longitude, latitude]; Leaflet expects [latitude, longitude].
+// Preserve every ring and MultiPolygon member so holes and disjoint areas are
+// rendered exactly as saved by the administrator.
+function scopeCoverageGeometryLatLngs(geometry) {
+  if (!geometry || !Array.isArray(geometry.coordinates)) return null;
+  function ringLatLngs(ring) {
+    return ring.map(function (position) { return [position[1], position[0]]; });
+  }
+  function polygonLatLngs(polygon) { return polygon.map(ringLatLngs); }
+  if (geometry.type === 'Polygon') return polygonLatLngs(geometry.coordinates);
+  if (geometry.type === 'MultiPolygon') return geometry.coordinates.map(polygonLatLngs);
+  return null;
+}
+
 function createScopeCoverageOverlay(map, opts) {
   var checkboxId = opts.checkboxId;
   var labelId = opts.labelId;
@@ -131,6 +179,37 @@ function createScopeCoverageOverlay(map, opts) {
     return Math.abs(area / 2);
   }
 
+  function _ringArea(ring) {
+    if (!ring || ring.length < 3) return 0;
+    var area = 0;
+    for (var i = 0; i < ring.length - 1; i++) {
+      area += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1];
+    }
+    return Math.abs(area / 2);
+  }
+
+  function _polygonArea(polygon) {
+    if (!polygon || !polygon.length) return 0;
+    var area = _ringArea(polygon[0]);
+    for (var i = 1; i < polygon.length; i++) area -= _ringArea(polygon[i]);
+    return Math.max(0, area);
+  }
+
+  function _geometryArea(geometry) {
+    if (!geometry || !Array.isArray(geometry.coordinates)) return 0;
+    if (geometry.type === 'Polygon') return _polygonArea(geometry.coordinates);
+    if (geometry.type === 'MultiPolygon') {
+      return geometry.coordinates.reduce(function (total, polygon) { return total + _polygonArea(polygon); }, 0);
+    }
+    return 0;
+  }
+
+  function _regionArea(region) {
+    return Object.prototype.hasOwnProperty.call(region, 'geometry')
+      ? _geometryArea(region.geometry)
+      : _hullArea(region.hull);
+  }
+
   // Ray-casting point-in-polygon test. hull is [[lat,lon], ...]; treats
   // lat/lon as generic planar x/y, consistent with _hullArea/convexHull.
   function _pointInHull(latlng, hull) {
@@ -146,14 +225,50 @@ function createScopeCoverageOverlay(map, opts) {
     return inside;
   }
 
-  // Every polygon region (3+ point hull) whose area actually contains
+  function _pointInGeoJSONRing(latlng, ring) {
+    if (!ring || ring.length < 4) return false;
+    var x = latlng.lng, y = latlng.lat;
+    var inside = false;
+    for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      var xi = ring[i][0], yi = ring[i][1];
+      var xj = ring[j][0], yj = ring[j][1];
+      var intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  function _pointInGeoJSONPolygon(latlng, polygon) {
+    if (!polygon || !polygon.length || !_pointInGeoJSONRing(latlng, polygon[0])) return false;
+    for (var i = 1; i < polygon.length; i++) {
+      if (_pointInGeoJSONRing(latlng, polygon[i])) return false;
+    }
+    return true;
+  }
+
+  function _pointInGeometry(latlng, geometry) {
+    if (!geometry || !Array.isArray(geometry.coordinates)) return false;
+    if (geometry.type === 'Polygon') return _pointInGeoJSONPolygon(latlng, geometry.coordinates);
+    if (geometry.type === 'MultiPolygon') {
+      return geometry.coordinates.some(function (polygon) { return _pointInGeoJSONPolygon(latlng, polygon); });
+    }
+    return false;
+  }
+
+  function _regionContains(latlng, region) {
+    return Object.prototype.hasOwnProperty.call(region, 'geometry')
+      ? _pointInGeometry(latlng, region.geometry)
+      : _pointInHull(latlng, region.hull);
+  }
+
+  // Every polygon region whose saved boundary actually contains
   // latlng — computed directly by geometry, not by which shape happens to
   // be drawn on top, so a region buried under several others at a given
   // pixel is still found here. Sorted smallest-area first (most specific).
   function _polygonMatchesAt(latlng) {
     return _visibleRegions()
-      .filter(function (r) { return r.hull && r.hull.length >= 3 && _pointInHull(latlng, r.hull); })
-      .sort(function (a, b) { return _hullArea(a.hull) - _hullArea(b.hull); });
+      .filter(function (r) { return _regionContains(latlng, r); })
+      .sort(function (a, b) { return _regionArea(a) - _regionArea(b); });
   }
 
   // Single source of truth for "which regions are currently highlighted."
@@ -184,7 +299,7 @@ function createScopeCoverageOverlay(map, opts) {
     if (!visibleRegions.length) return;
     // Largest-area first so smaller/nested regions draw on top — see _hullArea.
     var regionsByZOrder = visibleRegions.slice().sort(function (a, b) {
-      return _hullArea(b.hull) - _hullArea(a.hull);
+      return _regionArea(b) - _regionArea(a);
     });
 
     var shapes = [];
@@ -192,11 +307,21 @@ function createScopeCoverageOverlay(map, opts) {
       var hull = region.hull || [];
       var fill = scopeCoverageRegionColor(region.name);
       var outline = scopeCoverageRegionOutline(region.name);
-      var shape, baseStyle, hoverStyle;
-      if (hull.length >= 3) {
+      var shape, baseStyle, hoverStyle, isPolygon = false;
+      var hasAuthoritativeGeometry = Object.prototype.hasOwnProperty.call(region, 'geometry');
+      if (hasAuthoritativeGeometry) {
+        var latlngs = scopeCoverageGeometryLatLngs(region.geometry);
+        if (!latlngs) return; // Count/membership remains visible; no inferred polygon.
+        baseStyle = { color: outline, weight: 2, opacity: 0.8, fillColor: fill, fillOpacity: 0.15 };
+        hoverStyle = { weight: 4, opacity: 1, fillOpacity: 0.4 };
+        shape = L.polygon(latlngs, baseStyle);
+        isPolygon = true;
+      } else if (hull.length >= 3) {
+        // Compatibility fallback only when definition metadata could not load.
         baseStyle = { color: outline, weight: 2, opacity: 0.8, fillColor: fill, fillOpacity: 0.15 };
         hoverStyle = { weight: 4, opacity: 1, fillOpacity: 0.4 };
         shape = L.polygon(hull, baseStyle);
+        isPolygon = true;
       } else if (hull.length === 2) {
         baseStyle = { color: outline, weight: 3, opacity: 0.8, dashArray: '4 4' };
         hoverStyle = { weight: 5, opacity: 1 };
@@ -212,9 +337,9 @@ function createScopeCoverageOverlay(map, opts) {
       shape._scopeBaseStyle = baseStyle;
       shape._scopeHoverStyle = hoverStyle;
 
-      if (hull.length >= 3) {
+      if (isPolygon) {
         // Polygons: no native hover/click bindings here at all — with
-        // overlapping hulls, Leaflet would only ever reach whichever shape
+        // overlapping boundaries, Leaflet would only ever reach whichever shape
         // happens to be topmost at that pixel, exactly the "can't hover
         // it, too many layers on top" problem. Real selection instead
         // happens via the map-level mousemove/click handlers below, which
@@ -323,11 +448,15 @@ function createScopeCoverageOverlay(map, opts) {
         api('/scope-coverage', { ttl: 30000 }),
         api('/config/hash-region-definitions', { ttl: 30000 }).then(function (definitions) {
           scopeCoverageSetRegionColors(definitions);
-        }).catch(function () { /* color metadata is optional; retain fallback colors */ })
+          return Array.isArray(definitions) ? definitions : [];
+        }).catch(function () { return null; /* preserve legacy fallback if metadata is unavailable */ })
       ]);
-      var resp = results[0];
-      if (!resp || !resp.regions || !resp.regions.length) return;
-      data = resp;
+      var resp = results[0] || { regions: [] };
+      var definitions = results[1];
+      data = Array.isArray(definitions)
+        ? { regions: scopeCoverageCombineRegions(resp.regions || [], definitions) }
+        : resp;
+      if (!data.regions || !data.regions.length) return;
       var label = document.getElementById(labelId);
       var el = document.getElementById(checkboxId);
       if (label) label.style.display = '';

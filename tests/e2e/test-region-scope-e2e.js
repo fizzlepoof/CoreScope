@@ -50,6 +50,22 @@ const server = http.createServer((request, response) => {
       },
     }));
   }
+  if (url.pathname === '/api/scope-coverage') {
+    return send(response, 200, 'application/json', JSON.stringify({
+      regions: [{ name: '#tn', nodeCount: 2, hull: [[35, -88], [40, -70], [36, -87]] }],
+    }));
+  }
+  if (url.pathname === '/api/scope-coverage/nodes') {
+    return send(response, 200, 'application/json', JSON.stringify({
+      nodes: [{ pubkey: 'outside-node', regions: ['#tn'] }],
+    }));
+  }
+  if (url.pathname === '/api/nodes') {
+    return send(response, 200, 'application/json', JSON.stringify({
+      nodes: [{ public_key: 'outside-node', name: 'Outside relay', role: 'repeater', lat: 40, lon: -70 }],
+      total: 1, limit: 1000, offset: 0,
+    }));
+  }
   if (url.pathname === '/geo/us-counties.geojson' && failCounties) {
     return send(response, 503, 'application/json', JSON.stringify({ error: 'county fixture unavailable' }));
   }
@@ -265,6 +281,32 @@ async function clipboardText(page) {
     await page.goto(base + '/#/tools');
     assert.deepStrictEqual(await page.evaluate(() => window.__tileListenerCounts), { added: 1, removed: 1 }, 'tile provider listener is removed on route teardown');
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('mc-tile-provider-changed')));
+
+    await page.goto(base + '/#/regions', { waitUntil: 'domcontentloaded' });
+    await page.locator('#regionsLegendList .regions-legend-row').first().waitFor();
+    assert.match(await page.locator('#regionsLegendList').textContent(), /#tn\s*2/, 'Regions tab keeps the full observed relay count');
+    await page.waitForFunction(() => document.querySelectorAll('.leaflet-pane path[fill="#12abef"]').length >= 2);
+    assert.strictEqual(await page.locator('.leaflet-pane path[fill="#12abef"]').count() >= 2, true,
+      'Regions tab uses the assigned color for both the saved polygon and an out-of-bound relay marker');
+    assert.strictEqual(await page.locator('[class*="regionsNodes"] path[fill="#12abef"]').count(), 1,
+      'relay outside the saved boundary remains visible without expanding the polygon');
+
+    await page.evaluate(() => localStorage.setItem('meshcore-live-scope-coverage', 'true'));
+    await page.goto(base + '/#/live?lat=35.5&lon=-86&zoom=6', { waitUntil: 'domcontentloaded' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    const liveCoverageToggle = page.locator('#liveScopeCoverageToggle');
+    await liveCoverageToggle.waitFor({ state: 'attached' });
+    await page.waitForFunction(() => {
+      const label = document.querySelector('#liveScopeCoverageLabel');
+      return label && label.style.display !== 'none';
+    });
+    await liveCoverageToggle.evaluate(toggle => {
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await page.locator('.leaflet-overlay-pane canvas').first().waitFor({ state: 'attached' });
+    assert.strictEqual(await liveCoverageToggle.isChecked(), true,
+      'Live map activates the shared saved-region coverage renderer');
 
     await page.goto(base + '/admin/hash-regions', { waitUntil: 'domcontentloaded' });
     await page.locator('.region-definition-card').first().waitFor();
