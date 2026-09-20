@@ -32,6 +32,7 @@
  *     mac  = b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const vm = require('vm');
 const fs = require('fs');
@@ -63,20 +64,20 @@ function loadChannelDecryptInsecureContext() {
   vm.createContext(sandbox);
 
   // Vendored AES (must load before channel-decrypt.js — same as index.html).
-  const vendorAesPath = path.join(__dirname, 'public/vendor/aes-ecb.js');
+  const vendorAesPath = path.join(repositoryRoot, 'public/vendor/aes-ecb.js');
   if (fs.existsSync(vendorAesPath)) {
     vm.runInContext(fs.readFileSync(vendorAesPath, 'utf8'), sandbox);
   }
   // Optional vendored SHA-256 / HMAC (the fix). Load if present so the test
   // works whether the fix vendors it as a separate file OR inlines it into
   // channel-decrypt.js.
-  const vendorShaPath = path.join(__dirname, 'public/vendor/sha256-hmac.js');
+  const vendorShaPath = path.join(repositoryRoot, 'public/vendor/sha256-hmac.js');
   if (fs.existsSync(vendorShaPath)) {
     vm.runInContext(fs.readFileSync(vendorShaPath, 'utf8'), sandbox);
   }
 
   vm.runInContext(
-    fs.readFileSync(path.join(__dirname, 'public/channel-decrypt.js'), 'utf8'),
+    fs.readFileSync(path.join(repositoryRoot, 'public/channel-decrypt.js'), 'utf8'),
     sandbox
   );
   return sandbox.window.ChannelDecrypt;

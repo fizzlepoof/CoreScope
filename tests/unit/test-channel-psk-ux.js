@@ -9,6 +9,7 @@
  * Runs in Node.js via vm.createContext to simulate the browser.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const vm = require('vm');
 const fs = require('fs');
@@ -47,7 +48,7 @@ function createSandbox() {
 async function run() {
   console.log('\n=== #1020 PSK UX: ChannelDecrypt label storage ===');
 
-  const cdSrc = fs.readFileSync(path.join(__dirname, 'public/channel-decrypt.js'), 'utf8');
+  const cdSrc = fs.readFileSync(path.join(repositoryRoot, 'public/channel-decrypt.js'), 'utf8');
   const sandbox = createSandbox();
   vm.runInContext(cdSrc, vm.createContext(sandbox));
   const CD = sandbox.window.ChannelDecrypt;
@@ -78,7 +79,7 @@ async function run() {
   assert(!CD.getLabel('#LongFast'), 'no label means getLabel returns falsy');
 
   console.log('\n=== #1020 PSK UX: channels.js DOM/contract ===');
-  const chSrc = fs.readFileSync(path.join(__dirname, 'public/channels.js'), 'utf8');
+  const chSrc = fs.readFileSync(path.join(repositoryRoot, 'public/channels.js'), 'utf8');
 
   // E2E DOM: optional label input in add form (now in #1034 modal as #chPskName)
   assert(chSrc.includes('id="chPskName"') || chSrc.includes('id="chKeyLabelInput"'),

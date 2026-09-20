@@ -3,6 +3,7 @@
  * Runs in Node.js via vm.createContext to simulate browser environment.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const vm = require('vm');
 const fs = require('fs');
@@ -58,7 +59,7 @@ async function runTests() {
   console.log('\n=== M3: PSK hex key detection ===');
 
   // Load channel-decrypt.js in sandbox
-  const cdSrc = fs.readFileSync(__dirname + '/public/channel-decrypt.js', 'utf8');
+  const cdSrc = fs.readFileSync(repositoryRoot + '/public/channel-decrypt.js', 'utf8');
   const sandbox = createSandbox();
   const context = vm.createContext(sandbox);
   vm.runInContext(cdSrc, context);

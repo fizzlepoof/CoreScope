@@ -20,6 +20,7 @@
  * Companion E2E coverage: test-channel-issue-1087-e2e.js
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -31,10 +32,10 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const chSrc   = fs.readFileSync(path.join(__dirname, 'public/channels.js'),       'utf8');
-const qrSrc   = fs.readFileSync(path.join(__dirname, 'public/channel-qr.js'),     'utf8');
-const decSrc  = fs.readFileSync(path.join(__dirname, 'public/channel-decrypt.js'), 'utf8');
-const idxSrc  = fs.readFileSync(path.join(__dirname, 'public/index.html'),         'utf8');
+const chSrc   = fs.readFileSync(path.join(repositoryRoot, 'public/channels.js'),       'utf8');
+const qrSrc   = fs.readFileSync(path.join(repositoryRoot, 'public/channel-qr.js'),     'utf8');
+const decSrc  = fs.readFileSync(path.join(repositoryRoot, 'public/channel-decrypt.js'), 'utf8');
+const idxSrc  = fs.readFileSync(path.join(repositoryRoot, 'public/index.html'),         'utf8');
 
 console.log('\n=== #1087 Bug 1: QR vendor library is wired correctly ===');
 

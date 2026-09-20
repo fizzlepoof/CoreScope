@@ -15,6 +15,7 @@
  * all dark modules at least that far from the SVG edge.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -32,7 +33,7 @@ function ok(cond, msg) {
 }
 
 // --- (a) Source-grep: both createSvgTag call sites in nodes.js use margin >= 12 ---
-const nodesSrc = fs.readFileSync(path.join(__dirname, 'public/nodes.js'), 'utf8');
+const nodesSrc = fs.readFileSync(path.join(repositoryRoot, 'public/nodes.js'), 'utf8');
 const callRe = /createSvgTag\(\s*(\d+)\s*,\s*(\d+)\s*\)/g;
 const calls = [];
 let m;
@@ -53,7 +54,7 @@ sandbox.window = sandbox;
 sandbox.self = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(
-  fs.readFileSync(path.join(__dirname, 'public/vendor/qrcode.js'), 'utf8'),
+  fs.readFileSync(path.join(repositoryRoot, 'public/vendor/qrcode.js'), 'utf8'),
   sandbox,
 );
 const qrcode = sandbox.window.qrcode || sandbox.qrcode;

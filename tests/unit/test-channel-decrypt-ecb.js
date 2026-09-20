@@ -17,6 +17,7 @@
  *   ciphertext = 69c4e0d86a7b0430d8cdb78070b4c55a
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const vm = require('vm');
 const fs = require('fs');
@@ -47,12 +48,12 @@ function loadChannelDecrypt() {
   vm.createContext(sandbox);
 
   // Load vendored AES (if present) before channel-decrypt.js.
-  const vendorPath = path.join(__dirname, 'public/vendor/aes-ecb.js');
+  const vendorPath = path.join(repositoryRoot, 'public/vendor/aes-ecb.js');
   if (fs.existsSync(vendorPath)) {
     vm.runInContext(fs.readFileSync(vendorPath, 'utf8'), sandbox);
   }
   vm.runInContext(
-    fs.readFileSync(path.join(__dirname, 'public/channel-decrypt.js'), 'utf8'),
+    fs.readFileSync(path.join(repositoryRoot, 'public/channel-decrypt.js'), 'utf8'),
     sandbox
   );
   return sandbox.window.ChannelDecrypt;

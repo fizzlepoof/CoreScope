@@ -7,6 +7,7 @@
  * elsewhere in the redesign series.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const vm = require('vm');
 const fs = require('fs');
@@ -30,7 +31,7 @@ function loadChannelQR() {
   sandbox.self = sandbox;
   vm.createContext(sandbox);
 
-  const src = fs.readFileSync(path.join(__dirname, 'public/channel-qr.js'), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, 'public/channel-qr.js'), 'utf8');
   vm.runInContext(src, sandbox);
   return sandbox.window.ChannelQR;
 }
