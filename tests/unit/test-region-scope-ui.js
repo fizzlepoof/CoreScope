@@ -30,8 +30,16 @@ assert.match(scopeJS, /id="region-scope-lon"/, 'helper provides an accessible lo
 assert.match(scopeJS, /id="region-scope-recommend"/, 'helper provides a keyboard-operable recommendation button');
 assert.match(scopeJS, /id="region-scope-home"/, 'helper provides an explicit home selector');
 assert.match(scopeJS, /id="region-scope-default"/, 'helper provides an explicit default selector');
+assert.match(scopeJS, /Home region marks this repeater’s local place in the displayed hierarchy/, 'home region has a concise operational description');
+assert.match(scopeJS, /Default scope is attached to this repeater’s flooded adverts/, 'default scope has a concise operational description');
+assert.match(scopeJS, /Creates or reparents the complete selected tree in one current-firmware command/, 'region def stage explains its effect');
+assert.match(scopeJS, /If firmware reports an error, earlier mutations from that command may remain in memory/, 'region def help explains partial failure behavior');
+assert.match(scopeJS, /Displays the repeater’s resulting in-memory tree so you can verify parentage before saving/, 'verification stage explains its safety purpose');
+assert.match(scopeJS, /Writes the verified in-memory hierarchy to persistent storage/, 'save stage explains persistence');
 assert.match(scopeJS, /<option value="">No choice<\/option>/, 'home/default selectors start with no choice');
-assert.match(scopeJS, /copy-region-mutations/, 'hierarchy mutations have a separate copy control');
+assert.match(scopeJS, /<h3 id="region-mutations-title">1\. Define hierarchy \(one-shot\)<\/h3>/, 'helper labels the current one-shot region definition workflow');
+assert.match(scopeJS, />Copy region def<\/button>/, 'hierarchy copy control names the current CLI command');
+assert.match(scopeJS, /copy-region-mutations/, 'hierarchy definition has a separate copy control');
 assert.match(scopeJS, /copy-region-verification/, 'verification has a separate copy control');
 assert.match(scopeJS, /copy-region-home-default/, 'optional home/default has a separate copy control');
 assert.match(scopeJS, /copy-region-save/, 'persistence has a separate copy control');

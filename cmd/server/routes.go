@@ -388,6 +388,8 @@ func (s *Server) RegisterRoutes(r *mux.Router) {
 	// (reloadRegionKeys), so edits apply without restarting it.
 	r.Handle("/api/admin/hash-regions", s.requireAdmin(http.HandlerFunc(s.handleAdminGetHashRegions))).Methods("GET")
 	r.Handle("/api/admin/hash-regions", s.requireAdmin(s.requireCSRF(http.HandlerFunc(s.handleAdminPutHashRegions)))).Methods("PUT")
+	r.Handle("/api/admin/hash-regions/export", s.requireAdmin(http.HandlerFunc(s.handleAdminExportHashRegions))).Methods("GET")
+	r.Handle("/api/admin/hash-regions/import", s.requireAdmin(s.requireCSRF(http.HandlerFunc(s.handleAdminImportHashRegions)))).Methods("POST")
 
 	// Packet endpoints
 	r.HandleFunc("/api/packets/observations", s.handleBatchObservations).Methods("POST")
@@ -4203,7 +4205,13 @@ func (s *Server) handleAdminPutHashRegions(w http.ResponseWriter, r *http.Reques
 	}
 
 	if body.HashRegionDefinitions != nil {
-		definitions, err := cleanHashRegionDefinitions(*body.HashRegionDefinitions)
+		storedDefinitions, err := s.admin.ListHashRegionDefinitions()
+		if err != nil {
+			log.Printf("[hash-regions] load definitions before save failed: %v", err)
+			writeError(w, http.StatusInternalServerError, "failed to read existing hash regions")
+			return
+		}
+		definitions, err := cleanHashRegionDefinitionsWithTrusted(*body.HashRegionDefinitions, storedDefinitions)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
