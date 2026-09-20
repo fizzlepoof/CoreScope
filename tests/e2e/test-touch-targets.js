@@ -17,13 +17,14 @@
  * in CSS (:focus / :focus-within rule in the Touch Targets section).
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const { chromium, devices } = require('playwright');
 
-const REPO = __dirname;
+const REPO = repositoryRoot;
 const CSS = fs.readFileSync(path.join(REPO, 'public/style.css'), 'utf8');
 
 // Selectors we claim to make 48x48. Each entry: [selector, tag, classes,
@@ -114,7 +115,7 @@ async function run() {
     // where this path is never taken. Set TOUCH_TARGETS_REQUIRE=1 to force
     // a hard failure even when Chromium is unavailable.
     if (process.env.TOUCH_TARGETS_REQUIRE === '1') throw err;
-    console.log(`test-touch-targets.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-touch-targets.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 
@@ -199,13 +200,13 @@ async function run() {
   await browser.close();
 
   if (failures > 0) {
-    console.log(`\ntest-touch-targets.js: FAIL (${failures} assertion(s))`);
+    console.log(`\ntests/e2e/test-touch-targets.js: FAIL (${failures} assertion(s))`);
     process.exit(1);
   }
-  console.log('\ntest-touch-targets.js: OK');
+  console.log('\ntests/e2e/test-touch-targets.js: OK');
 }
 
 run().catch((err) => {
-  console.error('test-touch-targets.js: fatal', err);
+  console.error('tests/e2e/test-touch-targets.js: fatal', err);
   process.exit(1);
 });

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* B6 coverage push for public/touch-gestures.js (umbrella #1297).
  *
- * Sister suite to test-gestures-1062-e2e.js — that file proves correctness
+ * Sister suite to tests/e2e/test-gestures-1062-e2e.js — that file proves correctness
  * of the *primary* swipe paths (row-action, bottom-nav forward, slide-over
  * dismiss). This file drives the branches that the primary suite does not:
  *
@@ -31,7 +31,7 @@
  *           must appear (proves findRow's nodes-table branch executes).
  *
  * Pointer events are synthesized at the document level (same approach as
- * test-gestures-1062-e2e.js) because headless Chromium's native
+ * tests/e2e/test-gestures-1062-e2e.js) because headless Chromium's native
  * page.touchscreen does not interact reliably with axis-locked custom
  * handlers driven by Pointer Events.
  */
