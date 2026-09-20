@@ -156,6 +156,19 @@
     };
   }
 
+  function backupImportSummary(result) {
+    result = result || {};
+    var mode = result.mode === 'replace' ? 'replace' : 'merge';
+    var parts = [Number(result.added || 0) + ' added', Number(result.updated || 0) + ' updated'];
+    if (mode === 'merge') parts.push(Number(result.preserved || 0) + ' preserved');
+    else parts.push(Number(result.removed || 0) + ' removed');
+    return 'Valid ' + mode + ' backup: ' + parts.join(', ') + '; ' + Number(result.total || 0) + ' regions after import.';
+  }
+
+  function isCurrentBackupPreview(generation, currentGeneration, mode, currentMode, text, currentText) {
+    return generation === currentGeneration && mode === currentMode && text === currentText;
+  }
+
   return {
     MAX_PAYLOAD_BYTES: MAX_PAYLOAD_BYTES,
     normalize: normalize,
@@ -170,6 +183,8 @@
     parseEditableGeoJSON: parseEditableGeoJSON,
     sampleFreehandPoint: sampleFreehandPoint,
     payloadByteStatus: payloadByteStatus,
+    backupImportSummary: backupImportSummary,
+    isCurrentBackupPreview: isCurrentBackupPreview,
   };
 });
 
@@ -189,6 +204,13 @@
   var payloadStatus = document.getElementById('payload-size-status');
   var freehandInput = document.getElementById('freehand-mode');
   var applyCountiesBtn = document.getElementById('apply-counties-btn');
+  var exportRegionsBtn = document.getElementById('export-regions-btn');
+  var chooseBackupBtn = document.getElementById('choose-region-backup-btn');
+  var backupFileInput = document.getElementById('region-backup-file');
+  var backupModeSelect = document.getElementById('region-backup-mode');
+  var replaceConfirmInput = document.getElementById('region-replace-confirm');
+  var importRegionsBtn = document.getElementById('import-regions-btn');
+  var backupStatus = document.getElementById('region-backup-status');
   var definitions = [];
   var rows = [];
   var counties = [];
@@ -203,6 +225,11 @@
   var drawingPoints = [];
   var tileLayer;
   var regionsLoaded = false;
+  var backupText = '';
+  var backupPreview = null;
+  var backupPreviewText = '';
+  var backupPreviewMode = '';
+  var backupValidationGeneration = 0;
 
   function payloadObject() {
     return { hashRegionDefinitions: definitions.map(function (definition) {
@@ -246,6 +273,61 @@
         if (!response.ok) throw new Error(body.error || ('request failed (' + response.status + ')'));
         return body;
       });
+    });
+  }
+
+  function backupMode() {
+    return backupModeSelect.value === 'replace' ? 'replace' : 'merge';
+  }
+
+  function refreshBackupImportButton() {
+    var mode = backupMode();
+    var previewMatches = backupPreview && backupPreview.revision && backupPreviewText === backupText && backupPreviewMode === mode;
+    var confirmed = mode !== 'replace' || replaceConfirmInput.checked;
+    importRegionsBtn.disabled = !backupText || !previewMatches || !confirmed;
+    replaceConfirmInput.disabled = mode !== 'replace';
+  }
+
+  function validateBackupForImport() {
+    var generation = ++backupValidationGeneration;
+    var text = backupText;
+    var mode = backupMode();
+    backupPreview = null;
+    backupPreviewText = '';
+    backupPreviewMode = '';
+    refreshBackupImportButton();
+    backupStatus.classList.toggle('is-destructive', mode === 'replace');
+    if (!text) {
+      backupStatus.textContent = 'Choose a backup file to validate it before import.';
+      return Promise.resolve();
+    }
+    backupStatus.textContent = 'Validating backup without changing saved regions…';
+    return fetchJSON('/api/admin/hash-regions/import?mode=' + encodeURIComponent(mode) + '&dryRun=true', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: text,
+    }).then(function (preview) {
+      if (!core.isCurrentBackupPreview(generation, backupValidationGeneration, mode, backupMode(), text, backupText)) return;
+      backupPreview = preview;
+      backupPreviewText = text;
+      backupPreviewMode = mode;
+      backupStatus.textContent = core.backupImportSummary(preview) +
+        (mode === 'replace' && preview.removed ? ' Confirm the removal warning before importing.' : '');
+      refreshBackupImportButton();
+    }).catch(function (error) {
+      if (!core.isCurrentBackupPreview(generation, backupValidationGeneration, mode, backupMode(), text, backupText)) return;
+      backupStatus.textContent = 'Backup rejected: ' + (error.message || String(error));
+      refreshBackupImportButton();
+    });
+  }
+
+  function readBackupFile(file) {
+    if (file && typeof file.text === 'function') return file.text();
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () { resolve(String(reader.result || '')); };
+      reader.onerror = function () { reject(new Error('Unable to read the selected backup file.')); };
+      reader.readAsText(file);
     });
   }
 
@@ -725,6 +807,85 @@
       };
     });
   }
+
+  exportRegionsBtn.addEventListener('click', function () {
+    var link = document.createElement('a');
+    link.href = '/api/admin/hash-regions/export';
+    link.download = 'corescope-hash-regions-v1.json';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    backupStatus.textContent = 'Region backup download requested.';
+  });
+
+  chooseBackupBtn.addEventListener('click', function () { backupFileInput.click(); });
+
+  backupFileInput.addEventListener('change', function () {
+    var file = backupFileInput.files && backupFileInput.files[0];
+    var selectionGeneration = ++backupValidationGeneration;
+    backupText = '';
+    backupPreview = null;
+    backupPreviewText = '';
+    backupPreviewMode = '';
+    refreshBackupImportButton();
+    if (!file) return;
+    if (file.size > core.MAX_PAYLOAD_BYTES) {
+      backupStatus.textContent = 'Backup rejected: file exceeds the 1 MiB limit.';
+      return;
+    }
+    backupStatus.textContent = 'Reading ' + file.name + '…';
+    readBackupFile(file).then(function (text) {
+      if (selectionGeneration !== backupValidationGeneration) return;
+      backupText = text;
+      return validateBackupForImport();
+    }).catch(function (error) {
+      if (selectionGeneration !== backupValidationGeneration) return;
+      backupStatus.textContent = 'Backup rejected: ' + (error.message || String(error));
+      refreshBackupImportButton();
+    });
+  });
+
+  backupModeSelect.addEventListener('change', function () {
+    replaceConfirmInput.checked = false;
+    validateBackupForImport();
+  });
+  replaceConfirmInput.addEventListener('change', refreshBackupImportButton);
+
+  importRegionsBtn.addEventListener('click', function () {
+    var mode = backupMode();
+    if (!backupText || !backupPreview || !backupPreview.revision || backupPreviewText !== backupText || backupPreviewMode !== mode) return;
+    if (mode === 'replace' && !replaceConfirmInput.checked) return;
+    var importedText = backupText;
+    var expectedRevision = backupPreview.revision;
+    importRegionsBtn.disabled = true;
+    backupStatus.textContent = 'Importing validated ' + mode + ' backup…';
+    var query = '?mode=' + encodeURIComponent(mode) + '&expectedRevision=' + encodeURIComponent(expectedRevision) +
+      (mode === 'replace' ? '&confirm=true' : '');
+    fetchJSON('/api/admin/hash-regions/import' + query, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: importedText,
+    }).then(function (result) {
+      backupStatus.textContent = 'Import complete: ' + core.backupImportSummary(result).replace(/^Valid /, '');
+      try { localStorage.setItem('corescope-hash-regions-version', String(Date.now())); } catch (_) {}
+      ++backupValidationGeneration;
+      backupText = '';
+      backupPreview = null;
+      backupPreviewText = '';
+      backupPreviewMode = '';
+      backupFileInput.value = '';
+      replaceConfirmInput.checked = false;
+      refreshBackupImportButton();
+      return loadRegions();
+    }).catch(function (error) {
+      ++backupValidationGeneration;
+      backupPreview = null;
+      backupPreviewText = '';
+      backupPreviewMode = '';
+      backupStatus.textContent = 'Import failed without applying changes: ' + (error.message || String(error)) + ' Validate the backup again before retrying.';
+      refreshBackupImportButton();
+    });
+  });
 
   document.getElementById('add-region-btn').addEventListener('click', function () {
     definitions.push({ name: '#', parentName: '', description: '', color: '', geometry: null });

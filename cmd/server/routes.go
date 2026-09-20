@@ -388,6 +388,8 @@ func (s *Server) RegisterRoutes(r *mux.Router) {
 	// (reloadRegionKeys), so edits apply without restarting it.
 	r.Handle("/api/admin/hash-regions", s.requireAdmin(http.HandlerFunc(s.handleAdminGetHashRegions))).Methods("GET")
 	r.Handle("/api/admin/hash-regions", s.requireAdmin(s.requireCSRF(http.HandlerFunc(s.handleAdminPutHashRegions)))).Methods("PUT")
+	r.Handle("/api/admin/hash-regions/export", s.requireAdmin(http.HandlerFunc(s.handleAdminExportHashRegions))).Methods("GET")
+	r.Handle("/api/admin/hash-regions/import", s.requireAdmin(s.requireCSRF(http.HandlerFunc(s.handleAdminImportHashRegions)))).Methods("POST")
 
 	// Packet endpoints
 	r.HandleFunc("/api/packets/observations", s.handleBatchObservations).Methods("POST")
