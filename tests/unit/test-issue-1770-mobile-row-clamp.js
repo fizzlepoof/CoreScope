@@ -16,6 +16,7 @@
  * Pattern borrowed from tests/unit/test-issue-1364-pill-no-clamp.js.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -26,7 +27,7 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const cssSrc = fs.readFileSync(path.join(__dirname, 'public', 'style.css'), 'utf8');
+const cssSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'style.css'), 'utf8');
 
 // Pull the existing mobile breakpoint block. The packets-table mobile
 // overrides (.data-table font-size, .data-table td max-width, etc.) live

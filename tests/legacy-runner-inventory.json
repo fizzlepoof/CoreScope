@@ -315,7 +315,9 @@
     "test-issue-1668-m3-typography.js": "tests/unit/test-issue-1668-m3-typography.js",
     "test-issue-1668-m4-per-route.js": "tests/unit/test-issue-1668-m4-per-route.js",
     "test-issue-1697-mqtt-mobile-e2e.js": "tests/unit/test-issue-1697-mqtt-mobile-e2e.js",
+    "test-issue-1705-subpath-contrast.js": "tests/unit/test-issue-1705-subpath-contrast.js",
     "test-issue-1753-copy-url-slash.js": "tests/unit/test-issue-1753-copy-url-slash.js",
+    "test-issue-1770-mobile-row-clamp.js": "tests/unit/test-issue-1770-mobile-row-clamp.js",
     "test-issue-1843-node-qr-quiet-zone.js": "tests/unit/test-issue-1843-node-qr-quiet-zone.js",
     "test-naive-banner-tone.js": "tests/unit/test-naive-banner-tone.js",
     "test-node-reach-coverage-debounce.js": "tests/unit/test-node-reach-coverage-debounce.js",
@@ -326,6 +328,7 @@
     "test-perf-render-1258.js": "tests/unit/test-perf-render-1258.js",
     "test-rx-coverage-config-race.js": "tests/unit/test-rx-coverage-config-race.js",
     "test-rx-coverage-escape.js": "tests/unit/test-rx-coverage-escape.js",
+    "test-table-sort.js": "tests/unit/test-table-sort.js",
     "test-url-state.js": "tests/unit/test-url-state.js",
     "test-xss-escape-sinks.js": "tests/unit/test-xss-escape-sinks.js"
   },

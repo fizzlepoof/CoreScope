@@ -1,5 +1,6 @@
-/* test-table-sort.js — Unit tests for TableSort utility */
+/* tests/unit/test-table-sort.js — Unit tests for TableSort utility */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
@@ -27,7 +28,7 @@ function createDOM(html) {
     runScripts: 'dangerously'
   });
   // Load TableSort into this DOM
-  const script = fs.readFileSync(path.join(__dirname, 'public', 'table-sort.js'), 'utf8');
+  const script = fs.readFileSync(path.join(repositoryRoot, 'public', 'table-sort.js'), 'utf8');
   const el = dom.window.document.createElement('script');
   el.textContent = script;
   dom.window.document.head.appendChild(el);
