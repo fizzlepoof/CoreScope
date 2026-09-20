@@ -4595,7 +4595,7 @@
   // this gate, every SPA re-mount of /live registers a new 'change' handler.
   // The handler reads from current DOM each time, so a one-shot bind is safe
   // across re-mounts. window.__liveMQLBindCount is a debug seam consumed by
-  // test-live-mql-leak-1180-e2e.js and otherwise unused.
+  // tests/e2e/test-live-mql-leak-1180-e2e.js and otherwise unused.
   var _liveNarrowMqlBound = false;
   // #1514 S4 — single source of truth for window._liveTestSeams is at the
   // earlier exposure block (search for `window._liveTestSeams = {`). The

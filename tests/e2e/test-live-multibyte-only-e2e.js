@@ -6,7 +6,7 @@
  *   3. Turning it OFF and rebuilding shows the previously-hidden single-byte pkt.
  *   4. The setting persists across a reload (localStorage round-trip).
  *
- * Usage: BASE_URL=http://localhost:13581 node test-live-multibyte-only-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-live-multibyte-only-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

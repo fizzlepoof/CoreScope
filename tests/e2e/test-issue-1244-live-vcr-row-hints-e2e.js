@@ -12,7 +12,7 @@
  * Desktop (1280x800) sanity: VCR still renders, no regression to the
  * existing single-row desktop layout.
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1244-live-vcr-row-hints-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1244-live-vcr-row-hints-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

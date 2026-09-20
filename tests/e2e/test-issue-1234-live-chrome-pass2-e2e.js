@@ -11,7 +11,7 @@
  * Desktop (≥768px) sanity: top-nav visible, all 4 scope buttons visible
  * (More button hidden).
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1234-live-chrome-pass2-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1234-live-chrome-pass2-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

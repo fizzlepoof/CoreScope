@@ -5,7 +5,7 @@
  * that have been added to tests/e2e/test-e2e-playwright.js.
  *
  * Usage:
- *   BASE_URL=http://localhost:13581 node test-1110-live-filter.js
+ *   BASE_URL=http://localhost:13581 node tests/e2e/test-1110-live-filter.js
  */
 const { chromium } = require('playwright');
 

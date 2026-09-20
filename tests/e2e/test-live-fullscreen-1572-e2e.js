@@ -32,10 +32,10 @@ async function main() {
     });
   } catch (err) {
     if (requireChromium) {
-      console.error(`test-live-fullscreen-1572-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-live-fullscreen-1572-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
       process.exit(1);
     }
-    console.log(`test-live-fullscreen-1572-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-live-fullscreen-1572-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 
