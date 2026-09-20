@@ -11,6 +11,7 @@
  * `text-overflow:ellipsis` as graceful-degrade if JS ever fails.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -21,7 +22,7 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const cssSrc = fs.readFileSync(path.join(__dirname, 'public', 'style.css'), 'utf8');
+const cssSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'style.css'), 'utf8');
 const pillRuleRe = /\.mc-cluster\s+\.mc-pill\s*\{([\s\S]*?)\}/;
 const pillMatch = cssSrc.match(pillRuleRe);
 

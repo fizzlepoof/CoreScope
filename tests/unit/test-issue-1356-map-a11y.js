@@ -14,6 +14,7 @@
  * so this runs in the JS-unit-tests CI step without a browser.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -24,8 +25,8 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const mapSrc   = fs.readFileSync(path.join(__dirname, 'public', 'map.js'),   'utf8');
-const cssSrc   = fs.readFileSync(path.join(__dirname, 'public', 'style.css'), 'utf8');
+const mapSrc   = fs.readFileSync(path.join(repositoryRoot, 'public', 'map.js'),   'utf8');
+const cssSrc   = fs.readFileSync(path.join(repositoryRoot, 'public', 'style.css'), 'utf8');
 
 console.log('\n=== #1356 V1: cluster bubble — neutral fill, border-style ramp, ARIA ===');
 

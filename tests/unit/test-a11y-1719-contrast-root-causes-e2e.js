@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * test-a11y-1719-contrast-root-causes-e2e.js — Issue #1719 regression gate.
+ * tests/unit/test-a11y-1719-contrast-root-causes-e2e.js — Issue #1719 regression gate.
  *
  * Asserts WCAG AA color-contrast (≥4.5:1 body text, ≥3:1 large) for the FOUR
  * recurring root-cause patterns identified in #1719 that were generating ~320
@@ -34,14 +34,15 @@
  * four patterns above stay tracked even when CI chromium is broken in the
  * sandbox.
  *
- * Usage:  node test-a11y-1719-contrast-root-causes-e2e.js
+ * Usage:  node tests/unit/test-a11y-1719-contrast-root-causes-e2e.js
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = __dirname;
+const ROOT = repositoryRoot;
 const STYLE_CSS = process.env.STYLE_CSS_PATH || path.join(ROOT, 'public', 'style.css');
 const CUSTOMIZE_JS = path.join(ROOT, 'public', 'customize.js');
 

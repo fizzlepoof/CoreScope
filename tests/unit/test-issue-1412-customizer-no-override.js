@@ -24,6 +24,7 @@
  * write to customize-v2.js makes the first test fail.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -35,9 +36,9 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const rolesSrc   = fs.readFileSync(path.join(__dirname, 'public', 'roles.js'), 'utf8');
-const presetsSrc = fs.readFileSync(path.join(__dirname, 'public', 'cb-presets.js'), 'utf8');
-const cv2Src     = fs.readFileSync(path.join(__dirname, 'public', 'customize-v2.js'), 'utf8');
+const rolesSrc   = fs.readFileSync(path.join(repositoryRoot, 'public', 'roles.js'), 'utf8');
+const presetsSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'cb-presets.js'), 'utf8');
+const cv2Src     = fs.readFileSync(path.join(repositoryRoot, 'public', 'customize-v2.js'), 'utf8');
 
 // Browser-ish sandbox (CSS var setProperty/getPropertyValue).
 function makeSandbox() {
@@ -199,7 +200,7 @@ console.log('\n=== #1412 D: customize.js per-key node-color picker uses setRoleC
   // ROLE_COLORS directly. The proxy-on-read trick in roles.js handles direct
   // assignment, but going through the explicit API keeps semantics obvious
   // and lets us delete the proxy layer later.
-  const customizeSrc = fs.readFileSync(path.join(__dirname, 'public', 'customize.js'), 'utf8');
+  const customizeSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'customize.js'), 'utf8');
 
   // Grep for the two affected handlers (data-node input handler + reset).
   // Locate the input[data-node] handler — slice forward through the inner forEach callback.

@@ -7,6 +7,7 @@
  * Pure-string assertions over public/map.js (mirrors #1356 test pattern).
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -17,7 +18,7 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const mapSrc = fs.readFileSync(path.join(__dirname, 'public', 'map.js'), 'utf8');
+const mapSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'map.js'), 'utf8');
 
 console.log('\n=== #1360: pill body emits letter + count (not letter alone) ===');
 
@@ -74,7 +75,7 @@ assert(jsCapRe.test(mapSrc),
 
 // G. CSS guard: .mc-pill rule must include max-width AND text-overflow:ellipsis
 //    as defense-in-depth in case a render slips past the JS cap.
-const cssSrc = fs.readFileSync(path.join(__dirname, 'public', 'style.css'), 'utf8');
+const cssSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'style.css'), 'utf8');
 const pillRuleRe = /\.mc-cluster\s+\.mc-pill\s*\{([\s\S]*?)\}/;
 const pillMatch = cssSrc.match(pillRuleRe);
 assert(pillMatch, '.mc-cluster .mc-pill rule found in style.css');

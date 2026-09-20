@@ -16,12 +16,13 @@
  * Anti-tautology: this test FAILS pre-implementation by construction.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-const ROOT = path.resolve(__dirname, 'public');
+const ROOT = path.resolve(repositoryRoot, 'public');
 
 const M4_FILES = [
   'map.js',

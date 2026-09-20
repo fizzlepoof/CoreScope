@@ -9,6 +9,7 @@
  */
 
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
@@ -29,7 +30,7 @@ function assert(condition, msg) {
 // --- Test 1: Live feed dot size ---
 console.log('\n=== Live feed color dot size (#681) ===');
 
-const liveSource = fs.readFileSync(path.join(__dirname, 'public/live.js'), 'utf8');
+const liveSource = fs.readFileSync(path.join(repositoryRoot, 'public/live.js'), 'utf8');
 
 // The feed-color-dot inline style should use width >= 16px
 const dotMatch = liveSource.match(/feed-color-dot.*?width:(\d+)px/);
@@ -49,7 +50,7 @@ if (dotHeightMatch) {
 // --- Test 2: No contextmenu hijack on live feed ---
 console.log('\n=== No right-click hijack on live feed (#681) ===');
 
-const pickerSource = fs.readFileSync(path.join(__dirname, 'public/channel-color-picker.js'), 'utf8');
+const pickerSource = fs.readFileSync(path.join(repositoryRoot, 'public/channel-color-picker.js'), 'utf8');
 
 // The picker should NOT install a contextmenu listener on the live feed
 // Look for the installLiveFeedHandlers function and check it doesn't add contextmenu
@@ -68,7 +69,7 @@ if (liveFeedHandlerMatch) {
 // --- Test 3: Channels page clear affordance ---
 console.log('\n=== Channels page clear affordance (#681) ===');
 
-const channelsSource = fs.readFileSync(path.join(__dirname, 'public/channels.js'), 'utf8');
+const channelsSource = fs.readFileSync(path.join(repositoryRoot, 'public/channels.js'), 'utf8');
 
 // Channels page should render a clear button/icon next to colored dots
 // without requiring the picker to be opened

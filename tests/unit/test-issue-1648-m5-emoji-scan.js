@@ -23,12 +23,13 @@
  * every M5 file has at least one icon emoji or misc-symbol today.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-const ROOT = path.resolve(__dirname);
+const ROOT = path.resolve(repositoryRoot);
 const PUB = path.join(ROOT, 'public');
 
 const M5_FILES = [

@@ -17,11 +17,12 @@
  * Pure-Node, no browser. Parses style.css + greps customize-v2.js.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = __dirname;
+const ROOT = repositoryRoot;
 const CSS = fs.readFileSync(path.join(ROOT, 'public/style.css'), 'utf8');
 const CUSTOMIZE = fs.readFileSync(path.join(ROOT, 'public/customize-v2.js'), 'utf8');
 

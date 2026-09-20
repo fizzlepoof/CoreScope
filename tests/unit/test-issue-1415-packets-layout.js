@@ -24,6 +24,7 @@
  * fails. Cheap to run, deterministic, runs in CI without browser deps.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const path = require('path');
 
@@ -33,8 +34,8 @@ function assert(cond, msg) {
   else { failed++; console.error('  \u274c ' + msg); }
 }
 
-const pktJs = fs.readFileSync(path.join(__dirname, 'public/packets.js'), 'utf8');
-const css = fs.readFileSync(path.join(__dirname, 'public/style.css'), 'utf8');
+const pktJs = fs.readFileSync(path.join(repositoryRoot, 'public/packets.js'), 'utf8');
+const css = fs.readFileSync(path.join(repositoryRoot, 'public/style.css'), 'utf8');
 
 // ── 1. col-expand class + CSS pin ────────────────────────────────────────
 assert(

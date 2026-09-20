@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * test-a11y-1715-dark-role-swatches.js — Issue #1715 regression gate.
+ * tests/unit/test-a11y-1715-dark-role-swatches.js — Issue #1715 regression gate.
  *
  * Locks in the per-theme `--role-*` custom properties used by the
  * /analytics?tab=neighbor-graph role swatches (`#ngRoleChecks` labels).
@@ -29,15 +29,16 @@
  * a browser. The umbrella axe gate (test-a11y-axe-1668.js) is the
  * live-browser net.
  *
- * Usage:  node test-a11y-1715-dark-role-swatches.js
+ * Usage:  node tests/unit/test-a11y-1715-dark-role-swatches.js
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-const ROOT = __dirname;
+const ROOT = repositoryRoot;
 const STYLE_CSS = process.env.STYLE_CSS_PATH || path.join(ROOT, 'public', 'style.css');
 
 const ROLES = ['repeater', 'companion', 'room', 'sensor', 'observer'];

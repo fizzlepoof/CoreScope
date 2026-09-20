@@ -1,5 +1,5 @@
 /**
- * test-a11y-axe-1668-selftest.js
+ * tests/unit/test-a11y-axe-1668-selftest.js
  *
  * Deterministic, browser-free unit test for the M5 axe gate's
  * allowlist parser and shape. Runs in <100ms on any Node host.
@@ -11,6 +11,7 @@
  */
 
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const assert = require('assert');
 const fs = require('fs');
@@ -103,7 +104,7 @@ for (const r of mod.ROUTES) {
 
 // Cross-check REGISTERED_* against actual source code so the constant cannot
 // drift silently from `registerPage()` calls or analytics tab `case` arms.
-const repoRoot = __dirname;
+const repoRoot = repositoryRoot;
 const publicDir = path.join(repoRoot, 'public');
 if (fs.existsSync(publicDir)) {
   const files = fs.readdirSync(publicDir).filter(f => f.endsWith('.js'));
@@ -382,7 +383,7 @@ assert.throws(
 );
 
 // ---- repo allowlist file: shape sanity --------------------------------------
-const allowPath = path.join(__dirname, 'tests', 'a11y-allowlist.yaml');
+const allowPath = path.join(repositoryRoot, 'tests', 'a11y-allowlist.yaml');
 assert.ok(fs.existsSync(allowPath), `tests/a11y-allowlist.yaml missing at ${allowPath}`);
 const entries = mod.loadAllowlist();
 for (const e of entries) {

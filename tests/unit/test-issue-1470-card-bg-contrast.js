@@ -1,4 +1,4 @@
-/* test-issue-1470-card-bg-contrast.js — unit tests for the dark-mode card-bg
+/* tests/unit/test-issue-1470-card-bg-contrast.js — unit tests for the dark-mode card-bg
  * contrast fix shipped in #1517.
  *
  * Verifies two independent things:
@@ -15,12 +15,13 @@
  * Mutation guards: reverting either hunk makes the corresponding test fail.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const fs   = require('fs');
 const path = require('path');
 const vm   = require('vm');
 const assert = require('assert');
 
-const ROOT = __dirname;
+const ROOT = repositoryRoot;
 function read(rel) { return fs.readFileSync(path.join(ROOT, rel), 'utf8'); }
 
 let passed = 0, failed = 0;
