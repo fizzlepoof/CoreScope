@@ -15,7 +15,7 @@ import (
 
 func TestConfigHashRegionDefinitionsReturnsPublicMetadata(t *testing.T) {
 	srv := newTestAdminServer(t)
-	body := []byte(`{"hashRegionDefinitions":[{"name":"#us-tn","description":"Tennessee regional scope","geometry":{"type":"Polygon","coordinates":[[[-90,35],[-81,35],[-81,37],[-90,35]]]}}]}`)
+	body := []byte(`{"hashRegionDefinitions":[{"name":"#us-tn","description":"Tennessee regional scope","color":"#12ABef","geometry":{"type":"Polygon","coordinates":[[[-90,35],[-81,35],[-81,37],[-90,35]]]}}]}`)
 	putReq := httptest.NewRequest(http.MethodPut, "/api/admin/hash-regions", bytes.NewReader(body))
 	putRecorder := httptest.NewRecorder()
 	srv.handleAdminPutHashRegions(putRecorder, putReq)
@@ -33,7 +33,7 @@ func TestConfigHashRegionDefinitionsReturnsPublicMetadata(t *testing.T) {
 	if err := json.Unmarshal(recorder.Body.Bytes(), &definitions); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if len(definitions) != 1 || definitions[0].Name != "#us-tn" || definitions[0].Description != "Tennessee regional scope" {
+	if len(definitions) != 1 || definitions[0].Name != "#us-tn" || definitions[0].Description != "Tennessee regional scope" || definitions[0].Color != "#12abef" {
 		t.Fatalf("definitions = %#v, want public region metadata", definitions)
 	}
 }
@@ -72,6 +72,10 @@ func TestAdminHashRegionDefinitionsRejectInvalidHierarchyAndGeometry(t *testing.
 		{
 			name: "parent cycle",
 			body: `{"hashRegionDefinitions":[{"name":"#a","parentName":"#b"},{"name":"#b","parentName":"#a"}]}`,
+		},
+		{
+			name: "invalid color",
+			body: `{"hashRegionDefinitions":[{"name":"#a","color":"red; background:url(javascript:alert(1))"}]}`,
 		},
 		{
 			name: "unsupported geometry",

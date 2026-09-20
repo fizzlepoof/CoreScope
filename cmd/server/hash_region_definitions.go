@@ -25,6 +25,7 @@ type hashRegionDefinitionPayload struct {
 	Name        string          `json:"name"`
 	ParentName  string          `json:"parentName,omitempty"`
 	Description string          `json:"description,omitempty"`
+	Color       string          `json:"color,omitempty"`
 	Geometry    json.RawMessage `json:"geometry,omitempty"`
 }
 
@@ -73,6 +74,10 @@ func cleanHashRegionDefinitions(input []hashRegionDefinitionPayload) ([]admindb.
 		if utf8.RuneCountInString(description) > maxHashRegionDescriptionLen {
 			return nil, fmt.Errorf("hash region description for %q exceeds %d characters", name, maxHashRegionDescriptionLen)
 		}
+		regionColor, err := normalizeHashRegionColor(raw.Color)
+		if err != nil {
+			return nil, fmt.Errorf("invalid color for %q: %w", name, err)
+		}
 		remainingWork := maxGeoJSONValidationWork - requestValidationWork
 		geometryJSON, geometryWork, err := normalizeHashRegionGeometry(raw.Geometry, remainingWork)
 		if err != nil {
@@ -86,6 +91,7 @@ func cleanHashRegionDefinitions(input []hashRegionDefinitionPayload) ([]admindb.
 			Name:         name,
 			ParentName:   normalizeHashRegionName(raw.ParentName),
 			Description:  description,
+			Color:        regionColor,
 			GeometryJSON: geometryJSON,
 		})
 	}
@@ -106,6 +112,23 @@ func cleanHashRegionDefinitions(input []hashRegionDefinitionPayload) ([]admindb.
 		return nil, fmt.Errorf("hash region hierarchy contains a cycle at %q", cycleAt)
 	}
 	return definitions, nil
+}
+
+func normalizeHashRegionColor(input string) (string, error) {
+	color := strings.TrimSpace(input)
+	if color == "" {
+		return "", nil
+	}
+	if len(color) != 7 || color[0] != '#' {
+		return "", errors.New("must use #RRGGBB format")
+	}
+	for index := 1; index < len(color); index++ {
+		character := color[index]
+		if !((character >= '0' && character <= '9') || (character >= 'a' && character <= 'f') || (character >= 'A' && character <= 'F')) {
+			return "", errors.New("must use #RRGGBB format")
+		}
+	}
+	return strings.ToLower(color), nil
 }
 
 func hashRegionParentCycle(parents map[string]string) string {
@@ -573,6 +596,7 @@ func hashRegionDefinitionPayloads(definitions []admindb.HashRegionDefinition) ([
 			Name:        definition.Name,
 			ParentName:  definition.ParentName,
 			Description: definition.Description,
+			Color:       definition.Color,
 			Geometry:    geometry,
 		})
 	}

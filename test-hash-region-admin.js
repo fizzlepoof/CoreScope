@@ -2,6 +2,7 @@
 'use strict';
 
 const assert = require('assert');
+const fs = require('fs');
 const core = require('./public/admin/hash-regions.js');
 
 const hierarchy = [
@@ -23,6 +24,30 @@ const cyclic = [
   { name: '#c', parentName: '#a' },
 ];
 assert.throws(() => core.validateHierarchy(cyclic), /cycle/i, 'multi-node cycle is rejected before submit');
+assert.equal(core.normalizeColor('#12ABef'), '#12abef', 'custom colors are canonicalized');
+assert.equal(core.normalizeColor(''), '', 'blank color keeps automatic assignment');
+assert.throws(() => core.normalizeColor('red'), /#RRGGBB/, 'named colors are rejected');
+assert.throws(() => core.normalizeColor('#123456; background:red'), /#RRGGBB/, 'CSS injection is rejected');
+
+const unordered = [
+  { name: '#grandchild', parentName: '#child' },
+  { name: '#other', parentName: '' },
+  { name: '#child', parentName: '#root' },
+  { name: '#root', parentName: '' },
+];
+assert.deepStrictEqual(core.orderDefinitionsParentFirst(unordered).map((item) => [item.definition.name, item.depth]), [
+  ['#other', 0], ['#root', 0], ['#child', 1], ['#grandchild', 2],
+], 'admin rows are ordered as a deterministic parent/child tree with depth metadata');
+
+const countyData = JSON.parse(fs.readFileSync('./public/geo/us-counties.geojson', 'utf8'));
+const countyStates = new Set(countyData.features.map((feature) => feature.properties.STUSPS));
+['TN', 'KY', 'AL'].forEach((state) => assert.ok(countyStates.has(state), 'county picker includes ' + state));
+assert.ok(countyData.features.every((feature) => feature.properties.GEOID && feature.properties.STUSPS),
+  'US county choices have stable cross-state identifiers');
+const adminHTML = fs.readFileSync('./public/admin/hash-regions.html', 'utf8');
+const adminJS = fs.readFileSync('./public/admin/hash-regions.js', 'utf8');
+assert.match(adminHTML, /id="state-select"[\s\S]*multiple/, 'admin exposes a multi-state county filter');
+assert.match(adminJS, /fetch\('\/geo\/us-counties\.geojson'\)/, 'admin loads the nationwide county dataset');
 
 const polygonWithHole = {
   type: 'Polygon',

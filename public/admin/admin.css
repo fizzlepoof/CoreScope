@@ -185,11 +185,15 @@ body.auth-gated.authed { visibility: visible; }
 .region-editor-toolbar h2 { margin: 0; }
 .region-editor-list { display: grid; gap: 12px; }
 .region-definition-card {
-  display: grid; grid-template-columns: minmax(160px, .8fr) minmax(160px, .8fr) minmax(240px, 1.5fr) auto;
+  display: grid; grid-template-columns: minmax(150px, .8fr) minmax(150px, .8fr) minmax(220px, 1.5fr) minmax(120px, .5fr) auto;
   gap: 12px; align-items: end; padding: 14px; background: var(--surface-1);
-  border: 1px solid var(--border); border-radius: 8px;
+  border: 1px solid var(--border); border-left: 5px solid var(--region-admin-color, var(--border)); border-radius: 8px;
 }
-.region-definition-card.is-active { border-color: var(--accent); }
+.region-definition-card.is-active { border-color: var(--accent); border-left-color: var(--region-admin-color, var(--accent)); }
+.region-definition-card.is-child-region {
+  margin-inline-start: min(calc(var(--region-tree-depth) * 1.25rem), 5rem);
+  border-inline-start-width: 5px;
+}
 .region-definition-field label, .boundary-tools label {
   display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 12px; font-weight: 600;
 }
@@ -199,6 +203,10 @@ body.auth-gated.authed { visibility: visible; }
   background: var(--input-bg); color: var(--text); font: inherit;
 }
 .region-definition-field textarea { min-height: 68px; resize: vertical; }
+.region-definition-field input[type="color"] { min-height: 42px; padding: 4px; cursor: pointer; }
+.region-definition-field input[type="color"]:disabled { cursor: not-allowed; opacity: .45; }
+.region-definition-field .region-color-auto { display: flex; align-items: center; gap: 5px; margin-top: 6px; color: var(--text-muted); font-size: 12px; }
+.region-definition-field .region-color-auto input { width: auto; }
 .region-card-actions { display: flex; flex-direction: column; gap: 7px; }
 .boundary-layout { display: grid; grid-template-columns: minmax(360px, 1.2fr) minmax(280px, .8fr); gap: 18px; }
 #geometry-map { height: 430px; border: 1px solid var(--border); border-radius: 6px; }

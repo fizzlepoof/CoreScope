@@ -31,22 +31,37 @@ assert.match(scopeJS, /copy-region-home-default/, 'optional home/default has a s
 assert.match(scopeJS, /copy-region-save/, 'persistence has a separate copy control');
 assert.match(scopeJS, /persists immediately/, 'UI explains immediate default persistence');
 assert.match(scopeJS, /recommendRegionDetails/, 'UI exposes direct-vs-ancestor recommendation provenance');
+assert.match(scopeJS, /Nearby border: about/, 'UI identifies nearby border suggestions and their distance');
+assert.match(scopeJS, /item\.reason !== 'nearby'/, 'nearby border suggestions are not selected automatically');
+assert.match(scopeJS, /id="region-scope-list-cue"/, 'available regions includes a visible scroll cue');
+assert.match(scopeJS, /More regions below/, 'scroll cue explicitly tells operators when more regions are below');
+assert.match(scopeJS, /regionColorToken/, 'regions receive deterministic distinct colors');
+assert.match(scopeJS, /--region-scope-color/, 'region colors are exposed to list styling');
+assert.match(scopeJS, /getComputedStyle\(probe\)\.color/, 'theme color tokens are resolved before Canvas map rendering');
+assert.match(scopeJS, /addEventListener\('theme-changed', themeColorHandler\)/, 'map colors redraw after theme changes');
+assert.match(scopeJS, /removeEventListener\('theme-changed', themeColorHandler\)/, 'theme color listener is removed on route teardown');
 assert.match(scopeJS, /AbortController|loadGeneration/, 'definition loading guards against stale SPA fetches');
 assert.match(scopeJS, /replaceChildren\(\)|textContent\s*=\s*''/, 'definition target is cleared before append');
 assert.match(scopeJS, /_applyTilesToNodeMap/, 'helper uses the established tile provider path');
 assert.doesNotMatch(scopeJS, /basemaps\.cartocdn\.com/, 'helper does not bypass configured tile providers');
 assert.match(bottomNav, /region-scope/, 'mobile navigation exposes the helper route directly');
 assert.match(scopeCSS, /@media \(max-width: 800px\)/, 'helper has mobile layout coverage');
+assert.match(scopeCSS, /scrollbar-gutter:\s*stable/, 'available region list reserves visible scrollbar space');
+assert.match(scopeCSS, /region-scope-list-frame\.is-scrollable/, 'scrollable list has a distinct visual treatment');
+assert.match(scopeCSS, /var\(--region-scope-color\)/, 'region cards visibly use their assigned colors');
 assert.match(testAll, /node test-region-scope-e2e\.js/, 'canonical full test runner includes real Chromium coverage');
 assert.doesNotMatch(packageJSON.scripts['test:unit'], /region-scope-e2e/, 'fast unit runner does not require a browser');
 
 assert.match(adminHTML, /id="region-editor-list"/, 'admin has structured editor list');
 assert.match(adminHTML, /id="county-select"/, 'admin has bundled county selection');
+assert.match(adminHTML, /id="state-select"[\s\S]*multiple/, 'admin can select counties across multiple states');
 assert.match(adminHTML, /id="geometry-map"/, 'admin has boundary preview/editor map');
 assert.match(adminHTML, /id="geometry-coordinates"/, 'admin has accessible coordinate editing');
 assert.match(adminHTML, /id="geojson-import"/, 'admin has GeoJSON import');
 assert.match(adminJS, /hashRegionDefinitions/, 'admin persists structured definitions');
-assert.match(adminJS, /\/geo\/tn-counties\.geojson/, 'admin loads bundled counties once');
+assert.match(adminJS, /\/geo\/us-counties\.geojson/, 'admin loads bundled nationwide counties once');
+assert.match(adminJS, /orderDefinitionsParentFirst/, 'admin presents definitions in parent/child order');
+assert.match(adminJS, /corescope-hash-regions-version/, 'saving definitions invalidates the public helper cache');
 assert.doesNotMatch(adminJS, /\.innerHTML\s*=\s*[^'"`]/, 'admin does not inject untrusted values through innerHTML');
 
 console.log('test-region-scope-ui.js: all tests passed');

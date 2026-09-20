@@ -442,6 +442,7 @@ func TestHashRegionDefinitionsReplaceAndList(t *testing.T) {
 	definitions := []HashRegionDefinition{
 		{
 			Name:         "#us-tn",
+			Color:        "#12abef",
 			Description:  "Tennessee regional scope",
 			GeometryJSON: `{"type":"Polygon","coordinates":[[[-90,35],[-81,35],[-81,37],[-90,35]]]}`,
 		},
