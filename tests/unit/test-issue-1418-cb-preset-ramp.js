@@ -8,9 +8,10 @@
  *   2. Fire a cb-preset-changed CustomEvent so route-view.js recolorRoute
  *      can walk .mc-rt-edge / .mc-rt-row / .mc-rt-spark-dot live.
  *
- * Pattern mirrors test-issue-1407-cb-preset-propagation.js sandbox shape.
+ * Pattern mirrors tests/unit/test-issue-1407-cb-preset-propagation.js sandbox shape.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -22,9 +23,9 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const rolesSrc   = fs.readFileSync(path.join(__dirname, 'public', 'roles.js'), 'utf8');
-const presetsSrc = fs.readFileSync(path.join(__dirname, 'public', 'cb-presets.js'), 'utf8');
-const routeSrc   = fs.readFileSync(path.join(__dirname, 'public', 'route-view.js'), 'utf8');
+const rolesSrc   = fs.readFileSync(path.join(repositoryRoot, 'public', 'roles.js'), 'utf8');
+const presetsSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'cb-presets.js'), 'utf8');
+const routeSrc   = fs.readFileSync(path.join(repositoryRoot, 'public', 'route-view.js'), 'utf8');
 
 console.log('\n=== #1418 ramp A: route-view reads --mc-rt-ramp-* CSS vars ===');
 assert(/--mc-rt-ramp-/.test(routeSrc),

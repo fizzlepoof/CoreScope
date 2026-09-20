@@ -9,6 +9,7 @@
  * Pure-string + vm.createContext assertions, mirrors test-issue-1361.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs   = require('fs');
 const path = require('path');
@@ -20,8 +21,8 @@ function assert(cond, msg) {
   else      { failed++; console.error('  \u2717 ' + msg); }
 }
 
-const customSrc  = fs.readFileSync(path.join(__dirname, 'public', 'customize-v2.js'), 'utf8');
-const presetsSrc = fs.readFileSync(path.join(__dirname, 'public', 'cb-presets.js'), 'utf8');
+const customSrc  = fs.readFileSync(path.join(repositoryRoot, 'public', 'customize-v2.js'), 'utf8');
+const presetsSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'cb-presets.js'), 'utf8');
 
 console.log('\n=== #1380 Reset A: customize-v2.js renders a Reset-to-Wong button ===');
 assert(/data-cv2-cb-reset/.test(customSrc),

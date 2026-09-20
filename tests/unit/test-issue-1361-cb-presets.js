@@ -18,6 +18,7 @@
  * are explicitly DEFERRED and intentionally NOT asserted here.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -29,11 +30,11 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const presetsPath = path.join(__dirname, 'public', 'cb-presets.js');
-const styleSrc    = fs.readFileSync(path.join(__dirname, 'public', 'style.css'), 'utf8');
-const customSrc   = fs.readFileSync(path.join(__dirname, 'public', 'customize-v2.js'), 'utf8');
-const appSrc      = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
-const indexSrc    = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+const presetsPath = path.join(repositoryRoot, 'public', 'cb-presets.js');
+const styleSrc    = fs.readFileSync(path.join(repositoryRoot, 'public', 'style.css'), 'utf8');
+const customSrc   = fs.readFileSync(path.join(repositoryRoot, 'public', 'customize-v2.js'), 'utf8');
+const appSrc      = fs.readFileSync(path.join(repositoryRoot, 'public', 'app.js'), 'utf8');
+const indexSrc    = fs.readFileSync(path.join(repositoryRoot, 'public', 'index.html'), 'utf8');
 
 console.log('\n=== #1361 A: cb-presets.js module exists and is loadable ===');
 assert(fs.existsSync(presetsPath), 'public/cb-presets.js exists');

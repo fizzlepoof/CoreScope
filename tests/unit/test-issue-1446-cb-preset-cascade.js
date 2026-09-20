@@ -13,6 +13,7 @@
  * brings them back red.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -24,7 +25,7 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const ROOT = __dirname;
+const ROOT = repositoryRoot;
 const cv2Src     = fs.readFileSync(path.join(ROOT, 'public', 'customize-v2.js'), 'utf8');
 const rolesSrc   = fs.readFileSync(path.join(ROOT, 'public', 'roles.js'), 'utf8');
 const presetsSrc = fs.readFileSync(path.join(ROOT, 'public', 'cb-presets.js'), 'utf8');

@@ -90,7 +90,7 @@ Every change must consider performance impact BEFORE implementation. This codeba
 No proof = no merge.
 
 ### 1. No commit without tests
-Every change that touches logic MUST have tests. For Go backend: `cd cmd/server && go test ./...` and `cd cmd/ingestor && go test ./...`. For frontend: `node test-packet-filter.js && node tests/unit/test-aging.js && node test-frontend-helpers.js`. If you add new logic, add tests. No exceptions.
+Every change that touches logic MUST have tests. For Go backend: `cd cmd/server && go test ./...` and `cd cmd/ingestor && go test ./...`. For frontend: `node test-packet-filter.js && node tests/unit/test-aging.js && node tests/unit/test-frontend-helpers.js`. If you add new logic, add tests. No exceptions.
 
 ### 2. No commit without browser validation
 After pushing, verify the change works in an actual browser. Use `browser profile=openclaw` against the running instance. Take a screenshot if the change is visual. If you can't validate it, say so — don't claim it works.
@@ -226,7 +226,7 @@ node test-server-helpers.js       # extracted server functions
 node test-server-routes.js        # API route tests via supertest
 node test-packet-store.js         # in-memory packet store
 node test-db.js                   # SQLite operations
-node test-frontend-helpers.js     # frontend logic (via vm.createContext)
+node tests/unit/test-frontend-helpers.js     # frontend logic (via vm.createContext)
 node tools/e2e-test.js            # E2E: temp server + synthetic packets
 node tools/frontend-test.js       # frontend smoke: HTML, JS refs, API shapes
 
@@ -288,7 +288,7 @@ If the same logic exists in two places, it MUST be extracted into a shared funct
 ### Testability
 - **Write functions that are easy to test.** Pure functions (input → output, no side effects) are ideal. If a function reads from the DOM, the DB, and localStorage, it's untestable without mocking everything.
 - **Dependency injection enables testing.** Pass the node list, the map reference, the API function as parameters. Tests can substitute fakes.
-- **Test the real code, not copies.** Don't paste a function into a test file and test the copy. Import/require the actual module. If the module isn't importable (IIFE, browser-only), refactor it so it is — or use `vm.createContext` like `test-frontend-helpers.js` does.
+- **Test the real code, not copies.** Don't paste a function into a test file and test the copy. Import/require the actual module. If the module isn't importable (IIFE, browser-only), refactor it so it is — or use `vm.createContext` like `tests/unit/test-frontend-helpers.js` does.
 - **Every bug fix gets a regression test.** If it broke once, it'll break again. The test proves it stays fixed.
 
 ### Type Safety (without TypeScript)

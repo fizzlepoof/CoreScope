@@ -15,6 +15,7 @@
  *   - innerHTML row re-wire factored (dijkstra) — wireRow helper
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -25,8 +26,8 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const rvSrc = fs.readFileSync(path.join(__dirname, 'public', 'route-view.js'), 'utf8');
-const mapSrc = fs.readFileSync(path.join(__dirname, 'public', 'map.js'), 'utf8');
+const rvSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'route-view.js'), 'utf8');
+const mapSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'map.js'), 'utf8');
 
 console.log('\n=== A. resize listener leak fix (carmack/munger) ===');
 // Single resize listener attached via window.__mc_routeResizeRefit stash,

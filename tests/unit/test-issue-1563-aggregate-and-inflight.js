@@ -13,6 +13,7 @@
  *     "Last updated" pill reflects the latest fetch, not the stale one).
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -67,7 +68,7 @@ function makeSandbox() {
   return ctx;
 }
 function load(ctx, file) {
-  vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync(path.join(repositoryRoot, file), 'utf8'), ctx);
   for (const k of Object.keys(ctx.window)) ctx[k] = ctx.window[k];
 }
 
@@ -129,7 +130,7 @@ console.log('\n=== #1563 A. Aggregate uses same classifier as per-row dots ===')
 
   t('source: observers.js no longer contains the old standalone `classify()` ladder', () => {
     // Defense in depth — make sure the parallel ladder isn't re-introduced.
-    const src = fs.readFileSync(path.join(__dirname, 'public', 'observers.js'), 'utf8');
+    const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'observers.js'), 'utf8');
     // Old code had `function classify(lastSeen)` returning string 'online'/'stale'/'offline'
     // The new defaultClassify() returns { cls: 'health-*' } objects.
     assert.ok(!/function\s+classify\s*\(\s*lastSeen\s*\)\s*\{[\s\S]*?return\s+'online'/.test(src),
@@ -185,7 +186,7 @@ console.log('\n=== #1563 B. loadObservers in-flight guard ===');
   // window seam in observers.js. If it doesn't exist, skip the runtime
   // test but the source-grep test below still asserts the guard exists.
   await t('source: loadObservers tracks a monotonic request id', () => {
-    const src = fs.readFileSync(path.join(__dirname, 'public', 'observers.js'), 'utf8');
+    const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'observers.js'), 'utf8');
     assert.ok(/_loadObserversReqId|loadObserversReqId/.test(src),
       'observers.js must track a monotonic request id on loadObservers');
     assert.ok(/myId\s*!==\s*_loadObserversReqId/.test(src) || /myId\s*!==\s*loadObserversReqId/.test(src),
@@ -193,7 +194,7 @@ console.log('\n=== #1563 B. loadObservers in-flight guard ===');
   });
 
   await t('source: stale resolutions return early before assigning observers/_fetchedAt', () => {
-    const src = fs.readFileSync(path.join(__dirname, 'public', 'observers.js'), 'utf8');
+    const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'observers.js'), 'utf8');
     // The guard must appear BEFORE `observers = data.observers` to actually drop stale data.
     const guardIdx = src.search(/if\s*\(\s*myId\s*!==\s*_loadObserversReqId\s*\)\s*return/);
     const assignIdx = src.search(/observers\s*=\s*data\.observers/);
@@ -238,7 +239,7 @@ console.log('\n=== #1563 B. loadObservers in-flight guard ===');
     // Inject a seam: re-exec observers.js with a trailing line that
     // exposes loadObservers + the `observers` local + `_fetchedAt` for
     // inspection. We patch the source on the fly.
-    const src = fs.readFileSync(path.join(__dirname, 'public', 'observers.js'), 'utf8');
+    const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'observers.js'), 'utf8');
     // Append exposure inside the IIFE by replacing the closing `})();` of
     // the second IIFE with seam code then re-closing.
     const seam =

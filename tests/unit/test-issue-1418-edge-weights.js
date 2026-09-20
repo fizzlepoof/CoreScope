@@ -17,6 +17,7 @@
  * function — if route-view.js drifts, the test breaks.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -28,7 +29,7 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const src = fs.readFileSync(path.join(__dirname, 'public', 'route-view.js'), 'utf8');
+const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'route-view.js'), 'utf8');
 
 console.log('\n=== #1418 edgeWeight A: source invariants ===');
 assert(/function\s+edgeWeight\s*\(\s*idx\s*\)/.test(src),

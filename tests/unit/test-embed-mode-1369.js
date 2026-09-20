@@ -13,6 +13,7 @@
  *     ship the two surfaces operators asked for, no more).
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
@@ -26,7 +27,7 @@ function test(name, fn) {
 
 // Load app.js into a sandbox. We only need the helper, so we wrap with a
 // minimal browser shim that no-ops everything app.js touches at import time.
-const appSrc = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+const appSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'app.js'), 'utf8');
 const ctx = {
   window: { addEventListener: () => {}, dispatchEvent: () => {}, matchMedia: () => ({ matches: false }) },
   document: {

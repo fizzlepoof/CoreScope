@@ -5,6 +5,7 @@
  * semantics).
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
@@ -18,7 +19,7 @@ function test(name, fn) {
 console.log('\n=== issue #1166: First Seen column ===');
 
 // --- 1. Source-level assertions on public/nodes.js ---
-const src = fs.readFileSync(__dirname + '/public/nodes.js', 'utf8');
+const src = fs.readFileSync(repositoryRoot + '/public/nodes.js', 'utf8');
 
 test('nodes table header includes a "First Seen" column', () => {
   // Match a <th> with text "First Seen" (case-insensitive)
@@ -99,9 +100,9 @@ function loadInCtx(ctx, file) {
 }
 
 const ctx = makeSandbox();
-loadInCtx(ctx, __dirname + '/public/roles.js');
-loadInCtx(ctx, __dirname + '/public/app.js');
-loadInCtx(ctx, __dirname + '/public/nodes.js');
+loadInCtx(ctx, repositoryRoot + '/public/roles.js');
+loadInCtx(ctx, repositoryRoot + '/public/app.js');
+loadInCtx(ctx, repositoryRoot + '/public/nodes.js');
 
 const sortNodes = ctx.window._nodesSortNodes;
 const setState = ctx.window._nodesSetSortState;

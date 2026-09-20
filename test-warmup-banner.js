@@ -4,7 +4,7 @@
  * banner visible; flip to ready:true → assert banner fades.
  *
  * Uses a vm sandbox with a minimal DOM and a stubbed fetch — same pattern as
- * test-frontend-helpers.js. No Playwright needed for the FE-only contract.
+ * tests/unit/test-frontend-helpers.js. No Playwright needed for the FE-only contract.
  */
 'use strict';
 const vm = require('vm');

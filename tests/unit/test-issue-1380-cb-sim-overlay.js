@@ -15,6 +15,7 @@
  * Persistence is intentionally NOT asserted (preview-only per spec).
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs   = require('fs');
 const path = require('path');
@@ -26,9 +27,9 @@ function assert(cond, msg) {
   else      { failed++; console.error('  \u2717 ' + msg); }
 }
 
-const indexSrc  = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
-const customSrc = fs.readFileSync(path.join(__dirname, 'public', 'customize-v2.js'), 'utf8');
-const labelsSrc = fs.readFileSync(path.join(__dirname, 'public', 'payload-labels.js'), 'utf8');
+const indexSrc  = fs.readFileSync(path.join(repositoryRoot, 'public', 'index.html'), 'utf8');
+const customSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'customize-v2.js'), 'utf8');
+const labelsSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'payload-labels.js'), 'utf8');
 
 console.log('\n=== #1380 A: index.html has inline SVG filters for the 4 sim classes ===');
 ['cb-deut', 'cb-prot', 'cb-trit', 'cb-achromat'].forEach(function (id) {

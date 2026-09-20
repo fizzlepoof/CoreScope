@@ -2143,11 +2143,11 @@
       ]
     },
     {
-      "path": "test-embed-mode-1369.js",
+      "path": "tests/unit/test-embed-mode-1369.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-embed-mode-1369.js"
+        "tests/unit/test-embed-mode-1369.js"
       ],
       "requirements": {
         "environment": [],
@@ -2162,7 +2162,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-embed-mode-1369.js",
+          "source": "tests/unit/test-embed-mode-1369.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -2254,11 +2254,11 @@
       ]
     },
     {
-      "path": "test-frontend-helpers.js",
+      "path": "tests/unit/test-frontend-helpers.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-frontend-helpers.js"
+        "tests/unit/test-frontend-helpers.js"
       ],
       "requirements": {
         "environment": [],
@@ -2281,7 +2281,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-frontend-helpers.js",
+          "source": "tests/unit/test-frontend-helpers.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -2965,11 +2965,11 @@
       ]
     },
     {
-      "path": "test-issue-1166-first-seen-column.js",
+      "path": "tests/unit/test-issue-1166-first-seen-column.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1166-first-seen-column.js"
+        "tests/unit/test-issue-1166-first-seen-column.js"
       ],
       "requirements": {
         "environment": [],
@@ -2984,17 +2984,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1166-first-seen-column.js",
+          "source": "tests/unit/test-issue-1166-first-seen-column.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-issue-1189-composed-cell.js",
+      "path": "tests/unit/test-issue-1189-composed-cell.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1189-composed-cell.js"
+        "tests/unit/test-issue-1189-composed-cell.js"
       ],
       "requirements": {
         "environment": [],
@@ -3009,7 +3009,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1189-composed-cell.js",
+          "source": "tests/unit/test-issue-1189-composed-cell.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -3693,11 +3693,11 @@
       ]
     },
     {
-      "path": "test-issue-1361-cb-presets.js",
+      "path": "tests/unit/test-issue-1361-cb-presets.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1361-cb-presets.js"
+        "tests/unit/test-issue-1361-cb-presets.js"
       ],
       "requirements": {
         "environment": [],
@@ -3712,7 +3712,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1361-cb-presets.js",
+          "source": "tests/unit/test-issue-1361-cb-presets.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -3822,11 +3822,11 @@
       ]
     },
     {
-      "path": "test-issue-1375-scope-stats-fetch.js",
+      "path": "tests/unit/test-issue-1375-scope-stats-fetch.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1375-scope-stats-fetch.js"
+        "tests/unit/test-issue-1375-scope-stats-fetch.js"
       ],
       "requirements": {
         "environment": [],
@@ -3841,17 +3841,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1375-scope-stats-fetch.js",
+          "source": "tests/unit/test-issue-1375-scope-stats-fetch.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-issue-1380-cb-reset-button.js",
+      "path": "tests/unit/test-issue-1380-cb-reset-button.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1380-cb-reset-button.js"
+        "tests/unit/test-issue-1380-cb-reset-button.js"
       ],
       "requirements": {
         "environment": [],
@@ -3870,17 +3870,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1380-cb-reset-button.js",
+          "source": "tests/unit/test-issue-1380-cb-reset-button.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-issue-1380-cb-sim-overlay.js",
+      "path": "tests/unit/test-issue-1380-cb-sim-overlay.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1380-cb-sim-overlay.js"
+        "tests/unit/test-issue-1380-cb-sim-overlay.js"
       ],
       "requirements": {
         "environment": [],
@@ -3899,7 +3899,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1380-cb-sim-overlay.js",
+          "source": "tests/unit/test-issue-1380-cb-sim-overlay.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -3948,11 +3948,11 @@
       ]
     },
     {
-      "path": "test-issue-1407-cb-preset-propagation.js",
+      "path": "tests/unit/test-issue-1407-cb-preset-propagation.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1407-cb-preset-propagation.js"
+        "tests/unit/test-issue-1407-cb-preset-propagation.js"
       ],
       "requirements": {
         "environment": [],
@@ -3967,7 +3967,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1407-cb-preset-propagation.js",
+          "source": "tests/unit/test-issue-1407-cb-preset-propagation.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4095,11 +4095,11 @@
       ]
     },
     {
-      "path": "test-issue-1418-cb-preset-ramp.js",
+      "path": "tests/unit/test-issue-1418-cb-preset-ramp.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1418-cb-preset-ramp.js"
+        "tests/unit/test-issue-1418-cb-preset-ramp.js"
       ],
       "requirements": {
         "environment": [],
@@ -4118,7 +4118,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1418-cb-preset-ramp.js",
+          "source": "tests/unit/test-issue-1418-cb-preset-ramp.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4153,11 +4153,11 @@
       ]
     },
     {
-      "path": "test-issue-1418-edge-weights.js",
+      "path": "tests/unit/test-issue-1418-edge-weights.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1418-edge-weights.js"
+        "tests/unit/test-issue-1418-edge-weights.js"
       ],
       "requirements": {
         "environment": [],
@@ -4176,17 +4176,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1418-edge-weights.js",
+          "source": "tests/unit/test-issue-1418-edge-weights.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-issue-1418-polish-review.js",
+      "path": "tests/unit/test-issue-1418-polish-review.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1418-polish-review.js"
+        "tests/unit/test-issue-1418-polish-review.js"
       ],
       "requirements": {
         "environment": [],
@@ -4205,17 +4205,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1418-polish-review.js",
+          "source": "tests/unit/test-issue-1418-polish-review.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-issue-1418-raw-hex-extraction.js",
+      "path": "tests/unit/test-issue-1418-raw-hex-extraction.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1418-raw-hex-extraction.js"
+        "tests/unit/test-issue-1418-raw-hex-extraction.js"
       ],
       "requirements": {
         "environment": [],
@@ -4234,17 +4234,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1418-raw-hex-extraction.js",
+          "source": "tests/unit/test-issue-1418-raw-hex-extraction.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-issue-1418-spider-fan.js",
+      "path": "tests/unit/test-issue-1418-spider-fan.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1418-spider-fan.js"
+        "tests/unit/test-issue-1418-spider-fan.js"
       ],
       "requirements": {
         "environment": [],
@@ -4263,17 +4263,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1418-spider-fan.js",
+          "source": "tests/unit/test-issue-1418-spider-fan.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-issue-1420-tile-providers.js",
+      "path": "tests/unit/test-issue-1420-tile-providers.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1420-tile-providers.js"
+        "tests/unit/test-issue-1420-tile-providers.js"
       ],
       "requirements": {
         "environment": [],
@@ -4292,7 +4292,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1420-tile-providers.js",
+          "source": "tests/unit/test-issue-1420-tile-providers.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4352,11 +4352,11 @@
       ]
     },
     {
-      "path": "test-issue-1446-cb-preset-cascade.js",
+      "path": "tests/unit/test-issue-1446-cb-preset-cascade.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1446-cb-preset-cascade.js"
+        "tests/unit/test-issue-1446-cb-preset-cascade.js"
       ],
       "requirements": {
         "environment": [],
@@ -4371,7 +4371,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1446-cb-preset-cascade.js",
+          "source": "tests/unit/test-issue-1446-cb-preset-cascade.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4427,11 +4427,11 @@
       ]
     },
     {
-      "path": "test-issue-1456-score-labels.js",
+      "path": "tests/unit/test-issue-1456-score-labels.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1456-score-labels.js"
+        "tests/unit/test-issue-1456-score-labels.js"
       ],
       "requirements": {
         "environment": [],
@@ -4446,7 +4446,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1456-score-labels.js",
+          "source": "tests/unit/test-issue-1456-score-labels.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4527,11 +4527,11 @@
       ]
     },
     {
-      "path": "test-issue-1473-prefix-generator.js",
+      "path": "tests/unit/test-issue-1473-prefix-generator.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1473-prefix-generator.js"
+        "tests/unit/test-issue-1473-prefix-generator.js"
       ],
       "requirements": {
         "environment": [],
@@ -4546,17 +4546,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1473-prefix-generator.js",
+          "source": "tests/unit/test-issue-1473-prefix-generator.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-issue-1473-reserved-prefixes.js",
+      "path": "tests/unit/test-issue-1473-reserved-prefixes.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1473-reserved-prefixes.js"
+        "tests/unit/test-issue-1473-reserved-prefixes.js"
       ],
       "requirements": {
         "environment": [],
@@ -4571,7 +4571,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1473-reserved-prefixes.js",
+          "source": "tests/unit/test-issue-1473-reserved-prefixes.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4706,11 +4706,11 @@
       ]
     },
     {
-      "path": "test-issue-1496-reset-all-complete.js",
+      "path": "tests/unit/test-issue-1496-reset-all-complete.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1496-reset-all-complete.js"
+        "tests/unit/test-issue-1496-reset-all-complete.js"
       ],
       "requirements": {
         "environment": [],
@@ -4725,17 +4725,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1496-reset-all-complete.js",
+          "source": "tests/unit/test-issue-1496-reset-all-complete.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-issue-1509-detect-preset.js",
+      "path": "tests/unit/test-issue-1509-detect-preset.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1509-detect-preset.js"
+        "tests/unit/test-issue-1509-detect-preset.js"
       ],
       "requirements": {
         "environment": [],
@@ -4750,7 +4750,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1509-detect-preset.js",
+          "source": "tests/unit/test-issue-1509-detect-preset.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4824,11 +4824,11 @@
       ]
     },
     {
-      "path": "test-issue-1518-home-url.js",
+      "path": "tests/unit/test-issue-1518-home-url.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1518-home-url.js"
+        "tests/unit/test-issue-1518-home-url.js"
       ],
       "requirements": {
         "environment": [],
@@ -4843,7 +4843,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1518-home-url.js",
+          "source": "tests/unit/test-issue-1518-home-url.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4943,11 +4943,11 @@
       ]
     },
     {
-      "path": "test-issue-1563-aggregate-and-inflight.js",
+      "path": "tests/unit/test-issue-1563-aggregate-and-inflight.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1563-aggregate-and-inflight.js"
+        "tests/unit/test-issue-1563-aggregate-and-inflight.js"
       ],
       "requirements": {
         "environment": [],
@@ -4962,7 +4962,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1563-aggregate-and-inflight.js",
+          "source": "tests/unit/test-issue-1563-aggregate-and-inflight.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -5079,11 +5079,11 @@
       ]
     },
     {
-      "path": "test-issue-1606-pagination.js",
+      "path": "tests/unit/test-issue-1606-pagination.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1606-pagination.js"
+        "tests/unit/test-issue-1606-pagination.js"
       ],
       "requirements": {
         "environment": [],
@@ -5098,17 +5098,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1606-pagination.js",
+          "source": "tests/unit/test-issue-1606-pagination.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-issue-1614-tile-url-function.js",
+      "path": "tests/unit/test-issue-1614-tile-url-function.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1614-tile-url-function.js"
+        "tests/unit/test-issue-1614-tile-url-function.js"
       ],
       "requirements": {
         "environment": [],
@@ -5127,7 +5127,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1614-tile-url-function.js",
+          "source": "tests/unit/test-issue-1614-tile-url-function.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
