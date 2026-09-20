@@ -280,6 +280,7 @@
           {
             "name": "A11Y_STRICT_UNUSED",
             "value": "1",
+            "enabled": false,
             "description": "fail the accessibility gate when allowlist entries match no tested violation"
           }
         ]
@@ -512,6 +513,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -554,6 +556,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -596,6 +599,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -1335,7 +1339,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -1371,7 +1382,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -1432,7 +1450,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -1468,7 +1493,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -1504,7 +1536,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -1540,7 +1579,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -1931,7 +1977,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -2062,6 +2115,7 @@
           {
             "name": "E2E_REQUIRE_PATH_TEST",
             "value": "1",
+            "enabled": false,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -2281,6 +2335,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -2323,6 +2378,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -2365,6 +2421,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -2432,6 +2489,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -2574,6 +2632,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -3000,7 +3059,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -3036,7 +3102,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -3072,7 +3145,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -3108,7 +3188,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -3180,7 +3267,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -3252,7 +3346,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -3486,6 +3587,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -3696,7 +3798,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -3819,6 +3928,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -3940,6 +4050,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -4546,7 +4657,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -4686,6 +4804,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -4868,7 +4987,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -4933,6 +5059,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -5054,6 +5181,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -5153,7 +5281,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -5293,6 +5428,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -5360,6 +5496,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -5427,6 +5564,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -5494,6 +5632,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -5561,6 +5700,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -5648,6 +5788,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -5821,6 +5962,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -5909,7 +6051,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -6250,6 +6399,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -6288,7 +6438,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -6349,7 +6506,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -6500,6 +6664,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -6578,6 +6743,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -6620,6 +6786,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -6719,7 +6886,14 @@
             "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -6868,6 +7042,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -6910,11 +7085,13 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           },
           {
             "name": "NAV_FLUID_REQUIRE",
             "value": "1",
+            "enabled": false,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -6957,6 +7134,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -6999,6 +7177,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -7041,6 +7220,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -7083,6 +7263,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -7141,7 +7322,14 @@
             "description": "CoreScope server URL; the test provides a localhost default when unset"
           }
         ],
-        "flags": []
+        "flags": [
+          {
+            "name": "CHROMIUM_REQUIRE",
+            "value": "1",
+            "enabled": true,
+            "description": "enable the test's strict/required execution mode"
+          }
+        ]
       },
       "status": "active",
       "statusEvidence": [
@@ -7485,6 +7673,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -7901,6 +8090,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -8144,6 +8334,7 @@
           {
             "name": "CHROMIUM_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]
@@ -8181,6 +8372,7 @@
           {
             "name": "TOUCH_TARGETS_REQUIRE",
             "value": "1",
+            "enabled": true,
             "description": "enable the test's strict/required execution mode"
           }
         ]

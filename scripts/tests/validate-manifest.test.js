@@ -336,6 +336,7 @@ test('requires every process.env variable to have requirement metadata', () => {
   manifest.tests[0].requirements.flags.push({
     name: 'STRICT_MODE',
     value: '1',
+    enabled: true,
     description: 'enable strict execution',
   });
   errors = errorsFor(manifest, repoRoot);
@@ -356,6 +357,7 @@ test('distinguishes value-bearing environment settings from strict boolean flags
   manifest.tests[0].requirements.flags = [{
     name: 'BASE_URL',
     value: '1',
+    enabled: true,
     description: 'incorrectly placed URL setting',
   }];
   const errors = errorsFor(manifest, repoRoot);
@@ -400,6 +402,7 @@ test('uses the frozen legacy inventory after orchestration surfaces become gener
   const frozenInventory = {
     profiles: { local: ['test-example.js'] },
     orchestration: new Set(),
+    capturedPaths: new Set(['test-example.js']),
     references: new Map([
       ['package.json', new Set()],
       ['test-all.sh', new Set(['test-example.js'])],
@@ -414,11 +417,49 @@ test('uses the frozen legacy inventory after orchestration surfaces become gener
   );
 });
 
+test('uses current surfaces to classify tests added after the frozen capture', () => {
+  const { repoRoot, manifest } = fixture();
+  const frozenInventory = {
+    profiles: { local: [] },
+    orchestration: new Set(),
+    capturedPaths: new Set(),
+    references: new Map([
+      ['package.json', new Set()],
+      ['test-all.sh', new Set()],
+      ['.github/workflows/deploy.yml', new Set()],
+      ['AGENTS.md', new Set()],
+      ['README.md', new Set()],
+    ]),
+  };
+  assert.deepStrictEqual(
+    errorsFor(manifest, repoRoot, ['test-example.js'], { frozenInventory }),
+    []
+  );
+});
+
+test('requires explicit boolean execution metadata for strict flags', () => {
+  const { repoRoot, manifest } = fixture();
+  fs.writeFileSync(
+    path.join(repoRoot, 'test-example.js'),
+    "if (process.env.STRICT_MODE === '1') process.exit(0);\n"
+  );
+  manifest.tests[0].requirements.flags = [{
+    name: 'STRICT_MODE',
+    value: '1',
+    enabled: false,
+    description: 'available strict mode that the historical runner did not enable',
+  }];
+  assert.deepStrictEqual(errorsFor(manifest, repoRoot), []);
+  manifest.tests[0].requirements.flags[0].enabled = 'no';
+  assert(errorsFor(manifest, repoRoot).some(error => error.includes('.enabled must be boolean')));
+});
+
 test('requires orchestration markers to exactly match the frozen inventory', () => {
   const { repoRoot, manifest } = fixture();
   const frozenInventory = {
     profiles: { local: [] },
     orchestration: new Set(['test-example.js']),
+    capturedPaths: new Set(['test-example.js']),
     references: new Map([
       ['package.json', new Set()],
       ['test-all.sh', new Set(['test-example.js'])],
@@ -590,7 +631,7 @@ test('wires manifest validation and canonical suites into npm, the local wrapper
 
   assert.strictEqual(
     packageJson.scripts['test:manifest'],
-    'node scripts/tests/validate-manifest.test.js && node scripts/tests/run-manifest.test.js && node scripts/tests/validate-manifest.js'
+    'node scripts/tests/validate-manifest.test.js && node scripts/tests/run-manifest.test.js && node scripts/tests/combined-coverage.test.js && node scripts/tests/validate-manifest.js'
   );
   assert.strictEqual(packageJson.scripts.test,
     'npx c8 --reporter=text --reporter=text-summary sh test-all.sh');

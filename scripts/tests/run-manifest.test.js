@@ -4,6 +4,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 const {
   parseArguments,
   dispatchTests,
@@ -208,7 +209,7 @@ test('executes exact argv from repository root with inherited env and flag defau
     command: ['node', 'test-exact.js'],
     requirements: {
       environment: [],
-      flags: [{ name: 'STRICT_MODE', value: '1' }],
+      flags: [{ name: 'STRICT_MODE', value: '1', enabled: true }],
       packages: [],
     },
   })];
@@ -228,6 +229,30 @@ test('executes exact argv from repository root with inherited env and flag defau
   assert.strictEqual(calls[0].options.stdio, 'inherit');
   assert.strictEqual(calls[0].options.env.KEEP_ME, 'yes');
   assert.strictEqual(calls[0].options.env.STRICT_MODE, '1');
+});
+
+test('does not inject strict flags marked as metadata-only', () => {
+  const calls = [];
+  const testEntry = entry('test-exact.js', 'unit', 'active', {
+    requirements: {
+      environment: [],
+      flags: [
+        { name: 'HISTORICAL_STRICT', value: '1', enabled: true },
+        { name: 'AVAILABLE_BUT_NOT_LEGACY', value: '1', enabled: false },
+      ],
+      packages: [],
+    },
+  });
+  assert.strictEqual(runTests([testEntry], {
+    repoRoot: '/repo',
+    environment: {},
+    spawnSync: (_executable, _argv, options) => {
+      calls.push(options.env);
+      return { status: 0 };
+    },
+  }), 0);
+  assert.strictEqual(calls[0].HISTORICAL_STRICT, '1');
+  assert(!Object.prototype.hasOwnProperty.call(calls[0], 'AVAILABLE_BUT_NOT_LEGACY'));
 });
 
 test('stops at the first failure and propagates its exit status', () => {
@@ -281,6 +306,42 @@ test('checked-in profiles exactly match each frozen legacy execution list', () =
   assert(wrapper, 'test-all.sh must remain represented in the manifest');
   assert.strictEqual(wrapper.orchestration, true);
   assert(!Object.values(inventory.executedRootTests).flat().includes('test-all.sh'));
+});
+
+test('frozen profile execution environments preserve legacy strict-flag behavior', () => {
+  const repoRoot = path.resolve(__dirname, '../..');
+  const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'tests/manifest.json'), 'utf8'));
+  const inventory = JSON.parse(fs.readFileSync(path.join(repoRoot, 'tests/legacy-runner-inventory.json'), 'utf8'));
+  const selected = selectTests(manifest, {
+    profile: 'ci-e2e-phase',
+    suites: ['e2e'],
+    statuses: ['active'],
+  }, inventory.executedRootTests);
+  const frozenWorkflow = execFileSync(
+    'git',
+    ['show', `${inventory.capturedAtCommit}:.github/workflows/deploy.yml`],
+    { cwd: repoRoot, encoding: 'utf8' }
+  );
+  const calls = new Map();
+  assert.strictEqual(runTests(selected, {
+    repoRoot,
+    environment: {},
+    writeOutput: () => {},
+    spawnSync: (_executable, argv, options) => {
+      calls.set(argv[0], options.env);
+      return { status: 0 };
+    },
+  }), 0);
+  for (const item of selected) {
+    const commandLine = frozenWorkflow.split(/\r?\n/).find(line =>
+      line.includes(`node ${item.path}`)
+    );
+    assert(commandLine, `missing frozen command for ${item.path}`);
+    const expected = Object.fromEntries([...commandLine.matchAll(/\b([A-Z][A-Z0-9_]*)=([^\s\\]+)/g)]
+      .filter(match => match[1].endsWith('_REQUIRE') || match[1].includes('_STRICT'))
+      .map(match => [match[1], match[2]]));
+    assert.deepStrictEqual(calls.get(item.path), expected, item.path);
+  }
 });
 
 test('local and CI entry points name their exact legacy profiles', () => {

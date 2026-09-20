@@ -137,7 +137,9 @@ function runTests(tests, options) {
   for (const item of tests) {
     const [executable, ...argv] = item.command;
     const childEnvironment = { ...environment };
-    for (const flag of item.requirements.flags || []) childEnvironment[flag.name] = flag.value;
+    for (const flag of item.requirements.flags || []) {
+      if (flag.enabled) childEnvironment[flag.name] = flag.value;
+    }
     writeOutput(`\n══ ${item.path} ══\n`);
     const result = spawn(executable, argv, {
       cwd: repoRoot,

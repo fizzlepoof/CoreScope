@@ -92,6 +92,9 @@ function validateRequirements(value, index, errors) {
       if (field === 'flags' && (typeof item.value !== 'string' || !item.value)) {
         errors.push(`${itemPrefix}.value must be a non-empty string`);
       }
+      if (field === 'flags' && typeof item.enabled !== 'boolean') {
+        errors.push(`${itemPrefix}.enabled must be boolean`);
+      }
     });
   }
   if (value.packages !== undefined) {
@@ -237,10 +240,16 @@ function readFrozenInventory(repoRoot) {
       }
       return [surface, new Set(paths)];
     }));
+    const capturedPaths = new Set(execFileSync(
+      'git',
+      ['ls-tree', '--name-only', FROZEN_INVENTORY_COMMIT],
+      { cwd: repoRoot, encoding: 'utf8' }
+    ).split(/\r?\n/).filter(testPath => /^test[^/\\]*\.(?:js|sh)$/.test(testPath)));
     return {
       profiles: inventory.executedRootTests,
       references,
       orchestration: new Set(inventory.orchestrationRootTests),
+      capturedPaths,
     };
   } catch (error) {
     if (error.code === 'ENOENT') return null;
@@ -293,7 +302,7 @@ function validateManifest(manifest, options = {}) {
   const frozenInventory = options.frozenInventory !== undefined
     ? options.frozenInventory
     : readFrozenInventory(repoRoot);
-  const statusSurfaces = frozenInventory ? null : readStatusSurfaces(repoRoot);
+  const statusSurfaces = readStatusSurfaces(repoRoot);
   const errors = [];
 
   if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
@@ -371,12 +380,13 @@ function validateManifest(manifest, options = {}) {
     }
 
     if (typeof item.path === 'string' && VALID_STATUSES.has(item.status)) {
+      const isCapturedPath = frozenInventory && frozenInventory.capturedPaths.has(item.path);
       const referencingSurfaces = STATUS_SURFACES.filter(surface =>
-        frozenInventory
+        isCapturedPath
           ? frozenInventory.references.get(surface).has(item.path)
           : statusSurfaces.get(surface).includes(item.path)
       );
-      if (frozenInventory) {
+      if (isCapturedPath) {
         const expectedOrchestration = frozenInventory.orchestration.has(item.path);
         if ((item.orchestration === true) !== expectedOrchestration) {
           errors.push(`${prefix}.orchestration marker must match the frozen inventory`);
