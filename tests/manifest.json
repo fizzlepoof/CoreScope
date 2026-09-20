@@ -2001,11 +2001,11 @@
       ]
     },
     {
-      "path": "test-drag-manager.js",
+      "path": "tests/unit/test-drag-manager.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-drag-manager.js"
+        "tests/unit/test-drag-manager.js"
       ],
       "requirements": {
         "environment": [],
@@ -2020,7 +2020,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-drag-manager.js",
+          "source": "tests/unit/test-drag-manager.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -2559,11 +2559,11 @@
       ]
     },
     {
-      "path": "test-issue-1065-gesture-hints-gates.js",
+      "path": "tests/unit/test-issue-1065-gesture-hints-gates.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1065-gesture-hints-gates.js"
+        "tests/unit/test-issue-1065-gesture-hints-gates.js"
       ],
       "requirements": {
         "environment": [],
@@ -2578,7 +2578,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1065-gesture-hints-gates.js",
+          "source": "tests/unit/test-issue-1065-gesture-hints-gates.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4756,11 +4756,11 @@
       ]
     },
     {
-      "path": "test-issue-1509-nav-active-bg.js",
+      "path": "tests/unit/test-issue-1509-nav-active-bg.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1509-nav-active-bg.js"
+        "tests/unit/test-issue-1509-nav-active-bg.js"
       ],
       "requirements": {
         "environment": [],
@@ -4775,7 +4775,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1509-nav-active-bg.js",
+          "source": "tests/unit/test-issue-1509-nav-active-bg.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -5133,11 +5133,11 @@
       ]
     },
     {
-      "path": "test-issue-1619-feed-detail-card-draggable.js",
+      "path": "tests/unit/test-issue-1619-feed-detail-card-draggable.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1619-feed-detail-card-draggable.js"
+        "tests/unit/test-issue-1619-feed-detail-card-draggable.js"
       ],
       "requirements": {
         "environment": [],
@@ -5152,7 +5152,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1619-feed-detail-card-draggable.js",
+          "source": "tests/unit/test-issue-1619-feed-detail-card-draggable.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -6215,11 +6215,11 @@
       ]
     },
     {
-      "path": "test-issue-1836-crossnav-case-normalization.js",
+      "path": "tests/unit/test-issue-1836-crossnav-case-normalization.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1836-crossnav-case-normalization.js"
+        "tests/unit/test-issue-1836-crossnav-case-normalization.js"
       ],
       "requirements": {
         "environment": [],
@@ -6234,7 +6234,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1836-crossnav-case-normalization.js",
+          "source": "tests/unit/test-issue-1836-crossnav-case-normalization.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -7756,11 +7756,11 @@
       ]
     },
     {
-      "path": "test-panel-corner.js",
+      "path": "tests/unit/test-panel-corner.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-panel-corner.js"
+        "tests/unit/test-panel-corner.js"
       ],
       "requirements": {
         "environment": [],
@@ -7775,7 +7775,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-panel-corner.js",
+          "source": "tests/unit/test-panel-corner.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -8098,11 +8098,11 @@
       ]
     },
     {
-      "path": "test-pull-to-reconnect-1091.js",
+      "path": "tests/unit/test-pull-to-reconnect-1091.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-pull-to-reconnect-1091.js"
+        "tests/unit/test-pull-to-reconnect-1091.js"
       ],
       "requirements": {
         "environment": [],
@@ -8117,17 +8117,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-pull-to-reconnect-1091.js",
+          "source": "tests/unit/test-pull-to-reconnect-1091.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-pull-to-reconnect.js",
+      "path": "tests/unit/test-pull-to-reconnect.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-pull-to-reconnect.js"
+        "tests/unit/test-pull-to-reconnect.js"
       ],
       "requirements": {
         "environment": [],
@@ -8142,7 +8142,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-pull-to-reconnect.js",
+          "source": "tests/unit/test-pull-to-reconnect.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -8313,11 +8313,11 @@
       ]
     },
     {
-      "path": "test-slideover-1056-rowsel-strict.js",
+      "path": "tests/unit/test-slideover-1056-rowsel-strict.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-slideover-1056-rowsel-strict.js"
+        "tests/unit/test-slideover-1056-rowsel-strict.js"
       ],
       "requirements": {
         "environment": [],
@@ -8332,7 +8332,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-slideover-1056-rowsel-strict.js",
+          "source": "tests/unit/test-slideover-1056-rowsel-strict.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]

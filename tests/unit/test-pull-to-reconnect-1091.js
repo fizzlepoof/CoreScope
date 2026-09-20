@@ -1,4 +1,4 @@
-/* test-pull-to-reconnect-1091.js — gesture-tuning tests for issue #1091
+/* tests/unit/test-pull-to-reconnect-1091.js — gesture-tuning tests for issue #1091
  *
  * Pull-to-reconnect must require a DELIBERATE pull (~140px) at scrollTop=0.
  * Short pulls and incidental scrolls must NOT trigger the reconnect.
@@ -19,7 +19,7 @@ const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
 
-console.log('--- test-pull-to-reconnect-1091.js ---');
+console.log('--- tests/unit/test-pull-to-reconnect-1091.js ---');
 
 let passed = 0, failed = 0;
 function test(name, fn) {

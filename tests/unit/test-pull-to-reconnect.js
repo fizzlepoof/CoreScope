@@ -1,4 +1,4 @@
-/* test-pull-to-reconnect.js — behavioral tests for pull-to-reconnect (#1063)
+/* tests/unit/test-pull-to-reconnect.js — behavioral tests for pull-to-reconnect (#1063)
  * Loads app.js in a vm sandbox, stubs WebSocket + DOM, asserts that:
  *  - pullReconnect() exists as a global helper
  *  - calling it closes the existing WS (which triggers the existing
@@ -16,7 +16,7 @@ const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
 
-console.log('--- test-pull-to-reconnect.js ---');
+console.log('--- tests/unit/test-pull-to-reconnect.js ---');
 
 let passed = 0, failed = 0;
 function test(name, fn) {

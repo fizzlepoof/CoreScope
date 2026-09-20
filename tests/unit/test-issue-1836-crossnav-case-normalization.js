@@ -1,4 +1,4 @@
-/* test-issue-1836-crossnav-case-normalization.js — Issue #1836 regression test.
+/* tests/unit/test-issue-1836-crossnav-case-normalization.js — Issue #1836 regression test.
  *
  * The cross-navigation links introduced in PR #1826 return 404 because pubkeys
  * are stored lowercase in the `nodes` table and uppercase in the `observers`
@@ -11,6 +11,7 @@
  * Static-source test (grep the file text). No server, no DOM.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -24,8 +25,8 @@ function test(name, fn) {
 
 console.log('\u2500\u2500 Cross-nav case normalization (#1836) \u2500\u2500');
 
-const obsSrc = fs.readFileSync(path.join(__dirname, 'public', 'observer-detail.js'), 'utf8');
-const nodesSrc = fs.readFileSync(path.join(__dirname, 'public', 'nodes.js'), 'utf8');
+const obsSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'observer-detail.js'), 'utf8');
+const nodesSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'nodes.js'), 'utf8');
 
 test('observer-detail.js observer→node href lowercases currentId', () => {
   assert.ok(
