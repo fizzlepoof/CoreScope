@@ -2062,11 +2062,11 @@
       ]
     },
     {
-      "path": "test-e2e-badge-aggregate.sh",
+      "path": "tests/integration/test-e2e-badge-aggregate.sh",
       "suite": "integration",
       "command": [
         "bash",
-        "test-e2e-badge-aggregate.sh"
+        "tests/integration/test-e2e-badge-aggregate.sh"
       ],
       "requirements": {
         "environment": [],
@@ -2081,7 +2081,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-e2e-badge-aggregate.sh",
+          "source": "tests/integration/test-e2e-badge-aggregate.sh",
           "detail": "executes scripts/aggregate-e2e-pass.sh against fixture and generated files"
         }
       ]
