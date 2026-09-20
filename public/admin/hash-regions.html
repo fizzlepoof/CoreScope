@@ -79,9 +79,11 @@
           <p class="admin-note">Drawing mode: click the map for vertices, or enable freehand and drag across the map. Drag vertex markers to adjust, then finish. At least three vertices are required.</p>
         </div>
         <div class="boundary-tools">
-          <label for="county-select">Tennessee counties</label>
+          <label for="state-select">County states</label>
+          <select id="state-select" multiple size="5" aria-describedby="county-help"></select>
+          <label for="county-select">Counties in selected states</label>
           <select id="county-select" multiple size="8" aria-describedby="county-help"></select>
-          <p id="county-help" class="admin-note">Select one or more counties. Their polygons are preserved as members of one MultiPolygon; no computational union is performed.</p>
+          <p id="county-help" class="admin-note">Select one or more states, then counties from any of them. County polygons are preserved as members of one MultiPolygon; no computational union is performed.</p>
           <button type="button" class="btn-secondary" id="apply-counties-btn" disabled>Use selected counties</button>
 
           <label for="geometry-coordinates">Polygon outer-ring coordinates</label>

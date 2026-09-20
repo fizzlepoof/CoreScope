@@ -52,6 +52,37 @@
     return false;
   }
 
+  function pointToSegmentDistanceKm(point, a, b) {
+    var latitudeRadians = point[1] * Math.PI / 180;
+    var xScale = 111.32 * Math.cos(latitudeRadians);
+    var yScale = 110.574;
+    var px = (point[0] - a[0]) * xScale;
+    var py = (point[1] - a[1]) * yScale;
+    var bx = (b[0] - a[0]) * xScale;
+    var by = (b[1] - a[1]) * yScale;
+    var denominator = bx * bx + by * by;
+    var t = denominator ? Math.max(0, Math.min(1, (px * bx + py * by) / denominator)) : 0;
+    var dx = px - t * bx;
+    var dy = py - t * by;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function distanceToGeometryKm(point, geometry) {
+    if (!geometry || !Array.isArray(point) || point.length < 2) return Infinity;
+    if (pointInGeometry(point, geometry)) return 0;
+    var polygons = geometry.type === 'Polygon' ? [geometry.coordinates] :
+      (geometry.type === 'MultiPolygon' ? geometry.coordinates : []);
+    var minimum = Infinity;
+    (polygons || []).forEach(function (polygon) {
+      (polygon || []).forEach(function (ring) {
+        for (var i = 1; Array.isArray(ring) && i < ring.length; i++) {
+          minimum = Math.min(minimum, pointToSegmentDistanceKm(point, ring[i - 1], ring[i]));
+        }
+      });
+    });
+    return minimum;
+  }
+
   function definitionIndex(definitions) {
     var byName = new Map();
     (definitions || []).forEach(function (definition) {
@@ -108,13 +139,25 @@
     return parentBeforeChild(definitions, closure.included);
   }
 
-  function recommendRegionDetails(definitions, point) {
+  function recommendRegionDetails(definitions, point, nearbyDistanceKm) {
+    nearbyDistanceKm = Number.isFinite(nearbyDistanceKm) ? nearbyDistanceKm : 40;
     var directNames = new Set((definitions || []).filter(function (definition) {
       return pointInGeometry(point, definition && definition.geometry);
     }).map(function (definition) { return definition.name; }));
-    return recommendRegions(definitions, point).map(function (definition) {
+    var details = recommendRegions(definitions, point).map(function (definition) {
       return { definition: definition, reason: directNames.has(definition.name) ? 'direct' : 'ancestor' };
     });
+    var included = new Set(details.map(function (item) { return item.definition.name; }));
+    var nearby = (definitions || []).filter(function (definition) {
+      return definition && definition.geometry && !included.has(definition.name);
+    }).map(function (definition) {
+      return { definition: definition, reason: 'nearby', distanceKm: distanceToGeometryKm(point, definition.geometry) };
+    }).filter(function (item) {
+      return item.distanceKm > 0 && item.distanceKm <= nearbyDistanceKm;
+    }).sort(function (a, b) {
+      return a.distanceKm - b.distanceKm || a.definition.name.localeCompare(b.definition.name);
+    });
+    return details.concat(nearby);
   }
 
   function updateSelection(selectedNames, name, selected) {
@@ -285,8 +328,17 @@
     return input;
   }
 
+  function regionColorToken(index, total, customColor) {
+    var normalizedCustom = String(customColor || '').trim().toLowerCase();
+    if (/^#[0-9a-f]{6}$/.test(normalizedCustom)) return normalizedCustom;
+    var safeIndex = Math.max(0, Number(index) || 0);
+    var hue = (safeIndex * 137.50776405003785) % 360;
+    return 'oklch(var(--region-scope-auto-lightness) var(--region-scope-auto-chroma) ' + hue.toFixed(6) + 'deg)';
+  }
+
   return {
     pointInGeometry: pointInGeometry,
+    distanceToGeometryKm: distanceToGeometryKm,
     recommendRegions: recommendRegions,
     recommendRegionDetails: recommendRegionDetails,
     updateSelection: updateSelection,
@@ -296,5 +348,6 @@
     buildCommands: buildCommands,
     countiesToMultiPolygon: countiesToMultiPolygon,
     parseGeoJSONGeometry: parseGeoJSONGeometry,
+    regionColorToken: regionColorToken,
   };
 });

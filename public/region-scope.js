@@ -12,11 +12,20 @@
   var manualRemovals = new Set();
   var lastRecommendationPoint = null;
   var rowByName = new Map();
+  var colorByName = new Map();
   var loadGeneration = 0;
-  var loadController = null;
   var definitionsCache = null;
+  var definitionsCacheVersion = '';
+  var definitionsPromise = null;
+  var definitionsPromiseVersion = '';
+  var listResizeHandler = null;
+  var themeColorHandler = null;
 
   function element(id) { return document.getElementById(id); }
+
+  function definitionsVersion() {
+    try { return localStorage.getItem('corescope-hash-regions-version') || ''; } catch (_) { return ''; }
+  }
 
   function color(token, fallback) {
     var value = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
@@ -39,7 +48,8 @@
   function reconcileSelection() {
     selected = RegionScopeHelpers.reconcileRecommendationSelection(
       definitions,
-      recommendationDetails.map(function (item) { return item.definition.name; }),
+      recommendationDetails.filter(function (item) { return item.reason !== 'nearby'; })
+        .map(function (item) { return item.definition.name; }),
       Array.from(manualAdditions),
       Array.from(manualRemovals)
     );
@@ -49,6 +59,7 @@
     var label = document.createElement('label');
     label.className = 'region-scope-item';
     label.dataset.regionName = definition.name;
+    label.style.setProperty('--region-scope-color', colorByName.get(definition.name));
     var checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.setAttribute('aria-label', 'Select ' + definition.name);
@@ -83,6 +94,40 @@
     return label;
   }
 
+  function updateListAffordance() {
+    var frame = element('region-scope-list-frame');
+    var list = element('region-scope-list');
+    var cue = element('region-scope-list-cue');
+    if (!frame || !list || !cue) return;
+    var count = rowByName.size;
+    var scrollable = list.scrollHeight > list.clientHeight + 1;
+    var atEnd = !scrollable || list.scrollTop + list.clientHeight >= list.scrollHeight - 2;
+    frame.classList.toggle('is-scrollable', scrollable);
+    frame.classList.toggle('is-at-end', atEnd);
+    frame.dataset.scrollable = String(scrollable);
+    if (!count) {
+      cue.textContent = 'No regions available';
+    } else if (scrollable && !atEnd) {
+      cue.textContent = count + ' regions · More regions below ↓';
+    } else if (scrollable) {
+      cue.textContent = count + ' regions · End of region list';
+    } else {
+      cue.textContent = count + ' regions shown';
+    }
+  }
+
+  function resolveRegionColor(name) {
+    var token = colorByName.get(name) || color('--accent', 'currentColor');
+    var probe = document.createElement('span');
+    probe.style.color = token;
+    probe.style.position = 'absolute';
+    probe.style.visibility = 'hidden';
+    document.body.appendChild(probe);
+    var resolved = getComputedStyle(probe).color;
+    probe.remove();
+    return resolved;
+  }
+
   function setCommandStage(id, commands, emptyText) {
     var output = element(id);
     output.textContent = commands.length ? commands.join('\n') : emptyText;
@@ -108,17 +153,19 @@
 
   function updateRowsAndCommands() {
     var selectedSet = new Set(selected);
-    var reasonByName = new Map(recommendationDetails.map(function (item) {
-      return [item.definition.name, item.reason];
+    var detailByName = new Map(recommendationDetails.map(function (item) {
+      return [item.definition.name, item];
     }));
     rowByName.forEach(function (row, name) {
-      var reason = reasonByName.get(name);
+      var detail = detailByName.get(name);
+      var reason = detail && detail.reason;
       row.checkbox.checked = selectedSet.has(name);
       row.root.classList.toggle('is-selected', selectedSet.has(name));
       row.root.classList.toggle('is-recommended', !!reason);
       row.badge.textContent = reason === 'direct'
         ? 'Recommended: direct boundary match'
-        : reason === 'ancestor' ? 'Recommended: required ancestor' : '';
+        : reason === 'ancestor' ? 'Recommended: required ancestor'
+          : reason === 'nearby' ? 'Nearby border: about ' + Math.round(detail.distanceKm) + ' km away (not selected)' : '';
     });
     updateSelector('region-scope-home');
     updateSelector('region-scope-default');
@@ -152,12 +199,15 @@
     if (!boundaryLayer) return;
     boundaryLayer.clearLayers();
     var recommendedSet = new Set(recommendationDetails.map(function (item) { return item.definition.name; }));
+    var renderedColors = [];
     definitions.forEach(function (definition) {
       if (!definition.geometry) return;
+      var renderedColor = resolveRegionColor(definition.name);
+      renderedColors.push(renderedColor);
       L.geoJSON(definition.geometry, {
         style: function () {
           return {
-            color: recommendedSet.has(definition.name) ? color('--accent', 'currentColor') : color('--text-muted', 'currentColor'),
+            color: renderedColor,
             weight: recommendedSet.has(definition.name) ? 3 : 1,
             fillOpacity: recommendedSet.has(definition.name) ? 0.16 : 0.04,
           };
@@ -165,6 +215,7 @@
         interactive: false,
       }).addTo(boundaryLayer);
     });
+    if (map) map.getContainer().dataset.boundaryColors = JSON.stringify(renderedColors);
   }
 
   function chooseLocation(latlng) {
@@ -183,11 +234,13 @@
     updateRowsAndCommands();
     showBoundaries();
     var directCount = recommendationDetails.filter(function (item) { return item.reason === 'direct'; }).length;
-    var ancestorCount = recommendationDetails.length - directCount;
+    var ancestorCount = recommendationDetails.filter(function (item) { return item.reason === 'ancestor'; }).length;
+    var nearbyCount = recommendationDetails.filter(function (item) { return item.reason === 'nearby'; }).length;
     var status = element('region-scope-status');
     status.textContent = recommendationDetails.length
       ? 'Recommended ' + directCount + ' direct boundary match' + (directCount === 1 ? '' : 'es') +
-        ' and ' + ancestorCount + ' required ancestor' + (ancestorCount === 1 ? '' : 's') +
+        ', ' + ancestorCount + ' required ancestor' + (ancestorCount === 1 ? '' : 's') +
+        ', and ' + nearbyCount + ' nearby border suggestion' + (nearbyCount === 1 ? '' : 's') +
         ' for ' + Number(latlng.lat).toFixed(5) + ', ' + Number(latlng.lng).toFixed(5) + '.'
       : 'No saved boundary contains ' + Number(latlng.lat).toFixed(5) + ', ' + Number(latlng.lng).toFixed(5) +
         '. Prior automatic geography was cleared; manual overrides remain.';
@@ -223,6 +276,10 @@
     if (generation !== loadGeneration) return;
     definitions = Array.isArray(body) ? body : [];
     definitions.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    colorByName.clear();
+    definitions.forEach(function (definition, index) {
+      colorByName.set(definition.name, RegionScopeHelpers.regionColorToken(index, definitions.length, definition.color));
+    });
     var list = element('region-scope-list');
     list.replaceChildren();
     rowByName.clear();
@@ -236,6 +293,7 @@
       definitions.forEach(function (definition) { fragment.appendChild(createRow(definition)); });
       list.appendChild(fragment);
     }
+    requestAnimationFrame(updateListAffordance);
     if (lastRecommendationPoint) {
       chooseLocation({ lat: lastRecommendationPoint[1], lng: lastRecommendationPoint[0] });
     } else {
@@ -250,22 +308,33 @@
     var status = element('region-scope-status');
     var list = element('region-scope-list');
     list.replaceChildren();
-    if (definitionsCache) {
+    var version = definitionsVersion();
+    if (definitionsCache && definitionsCacheVersion === version) {
       renderLoadedDefinitions(definitionsCache, generation);
       return Promise.resolve();
     }
     status.textContent = 'Loading saved region definitions…';
-    loadController = typeof AbortController === 'function' ? new AbortController() : null;
-    var options = loadController ? { signal: loadController.signal } : {};
-    return fetch('/api/config/hash-region-definitions', options).then(function (response) {
-      if (!response.ok) throw new Error('request failed (' + response.status + ')');
-      return response.json();
-    }).then(function (body) {
+    if (!definitionsPromise || definitionsPromiseVersion !== version) {
+      definitionsPromiseVersion = version;
+      definitionsPromise = fetch('/api/config/hash-region-definitions').then(function (response) {
+        if (!response.ok) throw new Error('request failed (' + response.status + ')');
+        return response.json();
+      }).then(function (body) {
+        var loaded = Array.isArray(body) ? body : [];
+        if (definitionsVersion() === version) {
+          definitionsCache = loaded;
+          definitionsCacheVersion = version;
+        }
+        return loaded;
+      }).finally(function () {
+        if (definitionsPromiseVersion === version) definitionsPromise = null;
+      });
+    }
+    return definitionsPromise.then(function (body) {
       if (generation !== loadGeneration) return;
-      definitionsCache = Array.isArray(body) ? body : [];
-      renderLoadedDefinitions(definitionsCache, generation);
+      renderLoadedDefinitions(body, generation);
     }).catch(function (error) {
-      if (generation !== loadGeneration || (error && error.name === 'AbortError')) return;
+      if (generation !== loadGeneration) return;
       status.textContent = 'Could not load region definitions: ' + error.message;
     });
   }
@@ -290,6 +359,7 @@
       var generation = ++loadGeneration;
       definitions = []; selected = []; recommendationDetails = [];
       manualAdditions = new Set(); manualRemovals = new Set(); rowByName = new Map();
+      colorByName = new Map();
       lastRecommendationPoint = null;
       container.innerHTML =
         '<section class="region-scope-page" aria-labelledby="region-scope-title">' +
@@ -305,8 +375,11 @@
               '<div id="region-scope-map" role="application" aria-label="Map for choosing a proposed repeater location"></div>' +
               '<p id="region-scope-status" class="region-scope-status" role="status" aria-live="polite"></p></section>' +
             '<section class="region-scope-card" aria-labelledby="region-list-title"><h3 id="region-list-title">Available regions</h3>' +
-              '<p class="region-scope-status">Recommendation labels identify direct boundary matches and ancestors required for a valid hierarchy.</p>' +
-              '<div id="region-scope-list" class="region-scope-list"></div>' +
+              '<p class="region-scope-status">Recommendation labels identify direct boundary matches, required ancestors, and nearby borders. Nearby regions are suggestions only and stay unchecked until you choose them.</p>' +
+              '<div id="region-scope-list-frame" class="region-scope-list-frame" data-scrollable="false">' +
+                '<div class="region-scope-list-heading"><strong>Select regions</strong><span id="region-scope-list-cue">Loading regions…</span></div>' +
+                '<div id="region-scope-list" class="region-scope-list" tabindex="0" aria-describedby="region-scope-list-cue"></div>' +
+              '</div>' +
               '<div class="region-scope-selectors">' +
                 '<label for="region-scope-home">Optional home region</label><select id="region-scope-home"><option value="">No choice</option></select>' +
                 '<label for="region-scope-default">Optional default scope</label><select id="region-scope-default"><option value="">No choice</option></select>' +
@@ -326,6 +399,11 @@
       });
       element('region-scope-home').addEventListener('change', renderCommands);
       element('region-scope-default').addEventListener('change', renderCommands);
+      element('region-scope-list').addEventListener('scroll', updateListAffordance);
+      listResizeHandler = updateListAffordance;
+      window.addEventListener('resize', listResizeHandler);
+      themeColorHandler = showBoundaries;
+      window.addEventListener('theme-changed', themeColorHandler);
       copyStage('copy-region-mutations', 'region-scope-mutations', 'Hierarchy mutations');
       copyStage('copy-region-verification', 'region-scope-verification', 'Verification command');
       copyStage('copy-region-home-default', 'region-scope-home-default-commands', 'Optional home/default commands');
@@ -335,9 +413,10 @@
     },
     destroy: function () {
       loadGeneration++;
-      if (loadController) { loadController.abort(); loadController = null; }
+      if (listResizeHandler) { window.removeEventListener('resize', listResizeHandler); listResizeHandler = null; }
+      if (themeColorHandler) { window.removeEventListener('theme-changed', themeColorHandler); themeColorHandler = null; }
       if (map) { map.remove(); map = null; }
-      marker = null; boundaryLayer = null; rowByName.clear();
+      marker = null; boundaryLayer = null; rowByName.clear(); colorByName.clear();
     },
   });
 })();

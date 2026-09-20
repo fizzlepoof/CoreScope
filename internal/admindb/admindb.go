@@ -58,6 +58,7 @@ type HashRegionDefinition struct {
 	Name         string
 	ParentName   string
 	Description  string
+	Color        string
 	GeometryJSON string
 }
 
@@ -174,6 +175,7 @@ func ensureSchema(db *sql.DB) error {
 			name          TEXT PRIMARY KEY,
 			parent_name   TEXT NOT NULL DEFAULT '',
 			description   TEXT NOT NULL DEFAULT '',
+			color         TEXT NOT NULL DEFAULT '',
 			geometry_json TEXT NOT NULL DEFAULT '',
 			created_at    TEXT NOT NULL
 		)`,
@@ -225,6 +227,7 @@ func ensureHashRegionDefinitionColumns(db *sql.DB) error {
 	for name, definition := range map[string]string{
 		"parent_name":   `TEXT NOT NULL DEFAULT ''`,
 		"description":   `TEXT NOT NULL DEFAULT ''`,
+		"color":         `TEXT NOT NULL DEFAULT ''`,
 		"geometry_json": `TEXT NOT NULL DEFAULT ''`,
 	} {
 		if columns[name] {
@@ -493,7 +496,7 @@ func (s *Store) ListHashRegions() ([]string, error) {
 // alphabetically by scope name.
 func (s *Store) ListHashRegionDefinitions() ([]HashRegionDefinition, error) {
 	rows, err := s.db.Query(`
-		SELECT name, parent_name, description, geometry_json
+		SELECT name, parent_name, description, color, geometry_json
 		FROM hash_regions
 		ORDER BY name ASC`)
 	if err != nil {
@@ -504,7 +507,7 @@ func (s *Store) ListHashRegionDefinitions() ([]HashRegionDefinition, error) {
 	var out []HashRegionDefinition
 	for rows.Next() {
 		var definition HashRegionDefinition
-		if err := rows.Scan(&definition.Name, &definition.ParentName, &definition.Description, &definition.GeometryJSON); err != nil {
+		if err := rows.Scan(&definition.Name, &definition.ParentName, &definition.Description, &definition.Color, &definition.GeometryJSON); err != nil {
 			return nil, fmt.Errorf("scan hash region definition: %w", err)
 		}
 		out = append(out, definition)
@@ -527,9 +530,9 @@ func (s *Store) ReplaceHashRegionDefinitions(definitions []HashRegionDefinition)
 	now := time.Now().UTC().Format(time.RFC3339)
 	for _, definition := range definitions {
 		if _, err := tx.Exec(`
-			INSERT INTO hash_regions (name, parent_name, description, geometry_json, created_at)
-			VALUES (?, ?, ?, ?, ?)`,
-			definition.Name, definition.ParentName, definition.Description, definition.GeometryJSON, now,
+			INSERT INTO hash_regions (name, parent_name, description, color, geometry_json, created_at)
+			VALUES (?, ?, ?, ?, ?, ?)`,
+			definition.Name, definition.ParentName, definition.Description, definition.Color, definition.GeometryJSON, now,
 		); err != nil {
 			return fmt.Errorf("insert hash region definition %q: %w", definition.Name, err)
 		}

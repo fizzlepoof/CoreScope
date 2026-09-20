@@ -14,9 +14,10 @@ let failCounties = false;
 let failAdminDefinitions = false;
 let definitionRequestCount = 0;
 const definitions = [
-  { name: '#tn', description: '<img src=x onerror=alert(1)> Tennessee', geometry: { type: 'Polygon', coordinates: [[[-90, 34], [-81, 34], [-81, 37], [-90, 37], [-90, 34]]] } },
+  { name: '#tn', color: '#12abef', description: '<img src=x onerror=alert(1)> Tennessee', geometry: { type: 'Polygon', coordinates: [[[-90, 34], [-81, 34], [-81, 37], [-90, 37], [-90, 34]]] } },
   { name: '#middle', parentName: '#tn', description: 'Middle Tennessee', geometry: { type: 'Polygon', coordinates: [[[-88, 35], [-85, 35], [-85, 37], [-88, 37], [-88, 35]]] } },
   { name: '#manual', description: 'Manual option' },
+  { name: '#us-ky', description: 'Kentucky', geometry: { type: 'Polygon', coordinates: [[[-89.6, 36.5], [-82, 36.5], [-82, 39.2], [-89.6, 39.2], [-89.6, 36.5]]] } },
 ];
 
 function send(response, status, type, body) {
@@ -48,7 +49,7 @@ const server = http.createServer((request, response) => {
       },
     }));
   }
-  if (url.pathname === '/geo/tn-counties.geojson' && failCounties) {
+  if (url.pathname === '/geo/us-counties.geojson' && failCounties) {
     return send(response, 503, 'application/json', JSON.stringify({ error: 'county fixture unavailable' }));
   }
   if (url.pathname === '/api/admin/me') return send(response, 200, 'application/json', JSON.stringify({ username: 'test', role: 'super_admin' }));
@@ -103,6 +104,39 @@ async function clipboardText(page) {
     await page.locator('#region-scope-list .region-scope-item').first().waitFor();
     assert.strictEqual(await page.locator('#region-scope-list img').count(), 0, 'description HTML is not interpreted');
     assert.match(await page.locator('#region-scope-list').textContent(), /<img src=x onerror=alert\(1\)> Tennessee/);
+    const regionColors = await page.locator('#region-scope-list .region-scope-item').evaluateAll(nodes => nodes.map(node => node.style.getPropertyValue('--region-scope-color')));
+    assert.strictEqual(new Set(regionColors).size, regionColors.length, 'visible regions receive distinct colors');
+    assert.strictEqual(regionColors.every(Boolean), true, 'every region card exposes its color');
+    assert.strictEqual(await page.getByLabel('Select #tn').evaluate(node => node.closest('.region-scope-item').style.getPropertyValue('--region-scope-color')), '#12abef', 'saved admin color overrides the automatic palette');
+    const collapsedThemeColorCount = await page.evaluate(() => {
+      const root = document.documentElement;
+      const anchors = ['--accent', '--warning', '--success', '--status-purple', '--danger', '--status-info', '--status-orange', '--link-color'];
+      const previous = anchors.map(name => root.style.getPropertyValue(name));
+      anchors.forEach(name => root.style.setProperty(name, '#123456'));
+      const colors = Array.from({ length: 100 }, (_, index) => {
+        const probe = document.createElement('span');
+        probe.style.color = RegionScopeHelpers.regionColorToken(index, 100);
+        document.body.appendChild(probe);
+        const value = getComputedStyle(probe).color;
+        probe.remove();
+        return value;
+      });
+      anchors.forEach((name, index) => previous[index] ? root.style.setProperty(name, previous[index]) : root.style.removeProperty(name));
+      return new Set(colors).size;
+    });
+    assert.strictEqual(collapsedThemeColorCount, 100, 'automatic colors remain distinct when custom theme anchors are identical');
+    const boundaryColors = JSON.parse(await page.locator('#region-scope-map').getAttribute('data-boundary-colors'));
+    assert.strictEqual(boundaryColors.length, 3, 'map records one rendered color per saved boundary');
+    assert.strictEqual(boundaryColors.some(color => /var\(|color-mix/.test(color)), false, 'Canvas boundaries receive concrete computed colors');
+
+    await page.locator('#region-scope-list').evaluate(node => { node.style.maxHeight = '90px'; });
+    await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+    await page.waitForFunction(() => /More regions below/.test(document.querySelector('#region-scope-list-cue').textContent));
+    assert.strictEqual(await page.locator('#region-scope-list-frame').getAttribute('data-scrollable'), 'true', 'overflowing available regions is explicitly marked scrollable');
+    await page.locator('#region-scope-list').evaluate(node => { node.scrollTop = node.scrollHeight; node.dispatchEvent(new Event('scroll')); });
+    await page.waitForFunction(() => /End of region list/.test(document.querySelector('#region-scope-list-cue').textContent));
+    await page.locator('#region-scope-list').evaluate(node => { node.style.maxHeight = ''; node.scrollTop = 0; });
+    await page.evaluate(() => window.dispatchEvent(new Event('resize')));
 
     const home = page.getByLabel('Optional home region');
     const defaultScope = page.getByLabel('Optional default scope');
@@ -122,8 +156,18 @@ async function clipboardText(page) {
     await page.getByLabel('Longitude').fill('-86.4');
     await page.getByLabel('Longitude').press('Enter');
     await page.getByText(/direct boundary match/).first().waitFor();
-    assert.match(await page.locator('#region-scope-status').textContent(), /2 direct boundary matches and 0 required ancestors/);
+    assert.match(await page.locator('#region-scope-status').textContent(), /2 direct boundary matches, 0 required ancestors/);
     assert.deepStrictEqual(await home.locator('option').allTextContents(), ['No choice', '#middle', '#tn'], 'selected regions populate explicit selectors');
+
+    await page.getByLabel('Latitude').fill('36.30');
+    await page.getByLabel('Longitude').fill('-87.35');
+    await page.getByRole('button', { name: 'Recommend regions' }).click();
+    await page.getByText(/Nearby border: about .* km away \(not selected\)/).waitFor();
+    assert.strictEqual(await page.getByLabel('Select #us-ky').isChecked(), false, 'nearby Kentucky is suggested without imposing forwarding policy');
+
+    await page.getByLabel('Latitude').fill('35.85');
+    await page.getByLabel('Longitude').fill('-86.4');
+    await page.getByRole('button', { name: 'Recommend regions' }).click();
 
     const middle = page.getByLabel('Select #middle');
     await middle.uncheck();
@@ -172,7 +216,12 @@ async function clipboardText(page) {
     await page.goto(base + '/#/tools');
     await page.goto(base + '/#/tools/region-scope');
     await page.locator('#region-scope-list .region-scope-item').first().waitFor();
-    assert.strictEqual(definitionRequestCount, cachedRequestCount, 'definitions are fetched once and cached for the page lifetime');
+    assert.strictEqual(definitionRequestCount, cachedRequestCount, 'unchanged definitions are cached across helper route mounts');
+    await page.evaluate(() => localStorage.setItem('corescope-hash-regions-version', String(Date.now())));
+    await page.goto(base + '/#/tools');
+    await page.goto(base + '/#/tools/region-scope');
+    await page.locator('#region-scope-list .region-scope-item').first().waitFor();
+    assert.strictEqual(definitionRequestCount, cachedRequestCount + 1, 'admin-save version invalidation refreshes definitions on the next helper mount');
 
     const loadingContext = await browser.newContext();
     const loadingPage = await loadingContext.newPage();
@@ -193,7 +242,7 @@ async function clipboardText(page) {
     await racePage.goto(base + '/#/tools/region-scope');
     await racePage.locator('#region-scope-list .region-scope-item').first().waitFor();
     await racePage.waitForTimeout(450);
-    assert.strictEqual(await racePage.locator('#region-scope-list .region-scope-item').count(), 3, 'teardown/remount ignores stale fetch and does not append duplicates');
+    assert.strictEqual(await racePage.locator('#region-scope-list .region-scope-item').count(), 4, 'teardown/remount ignores stale fetch and does not append duplicates');
     await raceContext.close();
 
     await page.goto(base + '/#/tools');
@@ -218,7 +267,10 @@ async function clipboardText(page) {
 
     await page.goto(base + '/admin/hash-regions', { waitUntil: 'domcontentloaded' });
     await page.locator('.region-definition-card').first().waitFor();
-    assert.strictEqual(await page.locator('.region-definition-card').count(), 3);
+    assert.strictEqual(await page.locator('.region-definition-card').count(), 4);
+    assert.deepStrictEqual(await page.locator('.region-definition-card input[id^="region-name-"]').evaluateAll(nodes => nodes.map(node => node.value)), ['#tn', '#middle', '#manual', '#us-ky'], 'admin rows render each parent immediately before its children');
+    assert.strictEqual(await page.locator('.region-definition-card').nth(1).getAttribute('aria-label'), 'Child region level 1: #middle', 'child depth is exposed accessibly');
+    assert.strictEqual(await page.locator('input[type="color"]').first().inputValue(), '#12abef', 'admin color picker loads the saved region color');
     await page.waitForFunction(() => {
       const tile = document.querySelector('#geometry-map .leaflet-tile');
       return tile && /tile\.openstreetmap\.org/.test(tile.src);
@@ -228,11 +280,22 @@ async function clipboardText(page) {
     await rootName.fill('#tennessee');
     await rootName.blur();
     assert.strictEqual(await page.locator('#region-parent-1').inputValue(), '#tennessee', 'rename updates child parent in the live form');
-    assert.deepStrictEqual(await page.locator('#region-parent-0 option').allTextContents(), ['Wildcard root (*)', '#manual'], 'parent choices exclude self and descendants');
+    assert.deepStrictEqual(await page.locator('#region-parent-0 option').allTextContents(), ['Wildcard root (*)', '#manual', '#us-ky'], 'parent choices exclude self and descendants');
     await rootName.fill('#tn');
     await rootName.blur();
 
     await page.getByRole('button', { name: 'Edit boundary' }).first().click();
+    await page.locator('#state-select').selectOption(['TN', 'KY', 'AL']);
+    await page.locator('#county-select').selectOption({ label: 'TN — Davidson County' });
+    await page.locator('#county-select').selectOption([
+      { label: 'TN — Davidson County' },
+      { label: 'KY — Christian County' },
+      { label: 'AL — Madison County' },
+    ]);
+    await page.getByRole('button', { name: 'Use selected counties' }).click();
+    const crossStateGeometry = JSON.parse(await page.locator('#geojson-import').inputValue());
+    assert.strictEqual(crossStateGeometry.type, 'MultiPolygon', 'counties from multiple states create one region boundary');
+    assert.ok(crossStateGeometry.coordinates.length >= 3, 'cross-state county selection preserves every selected county polygon');
     await page.getByRole('button', { name: 'Clear boundary' }).click();
     await page.getByRole('button', { name: 'Draw polygon' }).click();
     const mapBox = await page.locator('#geometry-map').boundingBox();
@@ -299,7 +362,7 @@ async function clipboardText(page) {
     failCounties = true;
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.locator('.region-definition-card').first().waitFor();
-    assert.strictEqual(await page.locator('.region-definition-card').count(), 3, 'region definitions still load when optional county data fails');
+    assert.strictEqual(await page.locator('.region-definition-card').count(), 4, 'region definitions still load when optional county data fails');
     assert.strictEqual(await page.getByRole('button', { name: 'Save changes' }).isDisabled(), false, 'save is available after definitions load');
     assert.strictEqual(await page.getByRole('button', { name: 'Use selected counties' }).isDisabled(), true, 'county controls fail closed without blocking the editor');
     failCounties = false;

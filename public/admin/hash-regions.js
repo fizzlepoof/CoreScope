@@ -13,6 +13,13 @@
     return name.charAt(0) === '#' ? name : '#' + name;
   }
 
+  function normalizeColor(value) {
+    var color = String(value || '').trim();
+    if (!color) return '';
+    if (!/^#[0-9a-f]{6}$/i.test(color)) throw new Error('Region color must use #RRGGBB format.');
+    return color.toLowerCase();
+  }
+
   function clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
 
   function renameDefinition(definitions, index, requestedName) {
@@ -80,6 +87,28 @@
     return true;
   }
 
+  function orderDefinitionsParentFirst(definitions) {
+    var byParent = new Map();
+    var names = new Set((definitions || []).map(function (item) { return normalize(item.name); }));
+    (definitions || []).forEach(function (definition) {
+      var parent = normalize(definition.parentName);
+      if (!parent || !names.has(parent)) parent = '';
+      if (!byParent.has(parent)) byParent.set(parent, []);
+      byParent.get(parent).push(definition);
+    });
+    var ordered = [];
+    var visited = new Set();
+    function visit(definition, depth) {
+      if (visited.has(definition)) return;
+      visited.add(definition);
+      ordered.push({ definition: definition, depth: depth });
+      (byParent.get(normalize(definition.name)) || []).forEach(function (child) { visit(child, depth + 1); });
+    }
+    (byParent.get('') || []).forEach(function (definition) { visit(definition, 0); });
+    (definitions || []).forEach(function (definition) { visit(definition, 0); });
+    return ordered;
+  }
+
   function replacePolygonOuterRing(geometry, points) {
     if (geometry && geometry.type !== 'Polygon') throw new Error('Use full GeoJSON editing for MultiPolygon boundaries.');
     var ring = points.map(function (position) { return [Number(position[0]), Number(position[1])]; });
@@ -130,10 +159,12 @@
   return {
     MAX_PAYLOAD_BYTES: MAX_PAYLOAD_BYTES,
     normalize: normalize,
+    normalizeColor: normalizeColor,
     renameDefinition: renameDefinition,
     descendantNames: descendantNames,
     parentCandidateNames: parentCandidateNames,
     validateHierarchy: validateHierarchy,
+    orderDefinitionsParentFirst: orderDefinitionsParentFirst,
     replacePolygonOuterRing: replacePolygonOuterRing,
     geometryToEditableGeoJSON: geometryToEditableGeoJSON,
     parseEditableGeoJSON: parseEditableGeoJSON,
@@ -151,6 +182,7 @@
   var errorEl = document.getElementById('regions-error');
   var saveBtn = document.getElementById('save-regions-btn');
   var saveStatus = document.getElementById('save-status');
+  var stateSelect = document.getElementById('state-select');
   var countySelect = document.getElementById('county-select');
   var coordinateInput = document.getElementById('geometry-coordinates');
   var geoJSONInput = document.getElementById('geojson-import');
@@ -160,6 +192,7 @@
   var definitions = [];
   var rows = [];
   var counties = [];
+  var countyByGeoID = new Map();
   var activeIndex = -1;
   var map;
   var geometryLayer;
@@ -177,6 +210,7 @@
         name: core.normalize(definition.name),
         parentName: core.normalize(definition.parentName),
         description: String(definition.description || '').trim(),
+        color: core.normalizeColor(definition.color),
         geometry: definition.geometry || null,
       };
     }) };
@@ -242,9 +276,12 @@
     return input;
   }
 
-  function createRegionRow(definition, index) {
+  function createRegionRow(definition, index, depth) {
     var card = document.createElement('article');
     card.className = 'region-definition-card';
+    card.style.setProperty('--region-tree-depth', String(depth || 0));
+    card.classList.toggle('is-child-region', depth > 0);
+    card.setAttribute('aria-label', (depth ? 'Child region level ' + depth + ': ' : 'Root region: ') + (definition.name || 'unnamed'));
     var name = makeInput('region-name-' + index, definition.name);
     name.maxLength = 64;
     name.placeholder = '#region-name';
@@ -255,6 +292,28 @@
     description.maxLength = 2000;
     description.value = definition.description || '';
     description.placeholder = 'Explain when and why this scope applies.';
+    var colorInput = document.createElement('input');
+    colorInput.id = 'region-color-' + index;
+    colorInput.type = 'color';
+    var customColor = core.normalizeColor(definition.color);
+    if (customColor) colorInput.value = customColor;
+    else {
+      var themeColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+      try { colorInput.value = core.normalizeColor(themeColor); } catch (_) { /* retain browser default */ }
+    }
+    colorInput.disabled = !customColor;
+    var automaticColor = document.createElement('input');
+    automaticColor.id = 'region-color-auto-' + index;
+    automaticColor.type = 'checkbox';
+    automaticColor.checked = !customColor;
+    var automaticColorLabel = document.createElement('label');
+    automaticColorLabel.className = 'region-color-auto';
+    automaticColorLabel.htmlFor = automaticColor.id;
+    automaticColorLabel.appendChild(automaticColor);
+    automaticColorLabel.appendChild(document.createTextNode(' Automatic color'));
+    var colorField = field('Color', colorInput);
+    colorField.appendChild(automaticColorLabel);
+    if (customColor) card.style.setProperty('--region-admin-color', customColor);
 
     name.addEventListener('input', function () {
       if (activeIndex === index) {
@@ -278,6 +337,7 @@
       definition.parentName = parent.value;
       try {
         core.validateHierarchy(definitions);
+        renderRows();
         updatePayloadStatus();
       } catch (error) {
         definition.parentName = previous;
@@ -286,6 +346,20 @@
       }
     });
     description.addEventListener('input', function () { definition.description = description.value; updatePayloadStatus(); });
+    colorInput.addEventListener('input', function () {
+      definition.color = core.normalizeColor(colorInput.value);
+      card.style.setProperty('--region-admin-color', definition.color);
+      renderGeometry(false);
+      updatePayloadStatus();
+    });
+    automaticColor.addEventListener('change', function () {
+      colorInput.disabled = automaticColor.checked;
+      definition.color = automaticColor.checked ? '' : core.normalizeColor(colorInput.value);
+      if (definition.color) card.style.setProperty('--region-admin-color', definition.color);
+      else card.style.removeProperty('--region-admin-color');
+      renderGeometry(false);
+      updatePayloadStatus();
+    });
 
     var actions = document.createElement('div');
     actions.className = 'region-card-actions';
@@ -314,12 +388,17 @@
     card.appendChild(field('Name', name));
     card.appendChild(field('Parent', parent));
     card.appendChild(field('Description', description));
+    card.appendChild(colorField);
     card.appendChild(actions);
     listEl.appendChild(card);
-    rows.push({ card: card, name: name, parent: parent, description: description });
+    rows.push({ card: card, name: name, parent: parent, description: description, color: colorInput });
   }
 
   function renderRows() {
+    var activeDefinition = activeIndex >= 0 ? definitions[activeIndex] : null;
+    var ordered = core.orderDefinitionsParentFirst(definitions);
+    definitions = ordered.map(function (item) { return item.definition; });
+    activeIndex = activeDefinition ? definitions.indexOf(activeDefinition) : -1;
     while (listEl.firstChild) listEl.removeChild(listEl.firstChild);
     rows = [];
     if (!definitions.length) {
@@ -328,7 +407,10 @@
       empty.textContent = 'No regions configured yet.';
       listEl.appendChild(empty);
     } else {
-      definitions.forEach(createRegionRow);
+      definitions.forEach(function (definition, index) {
+        var orderedItem = ordered.find(function (item) { return item.definition === definition; });
+        createRegionRow(definition, index, orderedItem ? orderedItem.depth : 0);
+      });
     }
     refreshParentSelectors();
     rows.forEach(function (row, index) { row.card.classList.toggle('is-active', index === activeIndex); });
@@ -488,7 +570,7 @@
     renderCoordinateText(geometry);
     if (!geometry) return;
     var layer = L.geoJSON(geometry, {
-      style: { color: leafletColor('--accent', 'currentColor'), weight: 2, fillOpacity: 0.14 },
+      style: { color: core.normalizeColor(definitions[activeIndex].color) || leafletColor('--accent', 'currentColor'), weight: 2, fillOpacity: 0.14 },
     }).addTo(geometryLayer);
     var points = polygonOuterCoordinates(geometry);
     if (points.length) addVertexMarkers(points);
@@ -552,23 +634,42 @@
     errorEl.textContent = '';
   }
 
+  function refreshCountyOptions() {
+    var selectedStates = new Set(Array.prototype.map.call(stateSelect.selectedOptions, function (option) { return option.value; }));
+    while (countySelect.firstChild) countySelect.removeChild(countySelect.firstChild);
+    counties.filter(function (feature) { return selectedStates.has(feature.properties.STUSPS); })
+      .sort(function (a, b) {
+        return String(a.properties.STUSPS).localeCompare(String(b.properties.STUSPS)) ||
+          String(a.properties.NAME).localeCompare(String(b.properties.NAME));
+      }).forEach(function (feature) {
+        var option = document.createElement('option');
+        option.value = String(feature.properties.GEOID);
+        option.textContent = feature.properties.STUSPS + ' — ' + (feature.properties.NAMELSAD || feature.properties.NAME);
+        countySelect.appendChild(option);
+      });
+  }
+
   function loadCounties() {
-    return fetch('/geo/tn-counties.geojson').then(function (response) {
+    return fetch('/geo/us-counties.geojson').then(function (response) {
       if (!response.ok) throw new Error('county data request failed');
       return response.json();
     }).then(function (collection) {
-      counties = (collection.features || []).slice().sort(function (a, b) {
-        return String(a.properties.NAME).localeCompare(String(b.properties.NAME));
-      });
-      counties.forEach(function (feature, index) {
+      counties = (collection.features || []).slice();
+      countyByGeoID.clear();
+      counties.forEach(function (feature) { countyByGeoID.set(String(feature.properties.GEOID), feature); });
+      Array.from(new Set(counties.map(function (feature) { return feature.properties.STUSPS; }))).sort().forEach(function (state) {
         var option = document.createElement('option');
-        option.value = String(index);
-        option.textContent = feature.properties.NAMELSAD || feature.properties.NAME;
-        countySelect.appendChild(option);
+        option.value = state;
+        option.textContent = state;
+        option.selected = state === 'TN';
+        stateSelect.appendChild(option);
       });
+      refreshCountyOptions();
+      stateSelect.addEventListener('change', refreshCountyOptions);
       applyCountiesBtn.disabled = false;
     }).catch(function (error) {
       counties = [];
+      stateSelect.disabled = true;
       countySelect.disabled = true;
       applyCountiesBtn.disabled = true;
       document.getElementById('county-help').textContent = 'County data is unavailable. Existing boundaries and GeoJSON editing remain available.';
@@ -594,10 +695,11 @@
           name: normalize(definition.name),
           parentName: normalize(definition.parentName),
           description: definition.description || '',
+          color: core.normalizeColor(definition.color),
           geometry: cloneGeometry(definition.geometry),
         };
       }) : (body.hashRegions || []).map(function (name) {
-        return { name: normalize(name), parentName: '', description: '', geometry: null };
+        return { name: normalize(name), parentName: '', description: '', color: '', geometry: null };
       });
       regionsLoaded = true;
       renderRows();
@@ -610,6 +712,7 @@
       definition.name = normalize(definition.name);
       definition.parentName = normalize(definition.parentName);
       definition.description = String(definition.description || '').trim();
+      definition.color = core.normalizeColor(definition.color);
     });
     core.validateHierarchy(definitions);
     return definitions.map(function (definition) {
@@ -617,13 +720,14 @@
         name: definition.name,
         parentName: definition.parentName || '',
         description: definition.description,
+        color: definition.color,
         geometry: definition.geometry || null,
       };
     });
   }
 
   document.getElementById('add-region-btn').addEventListener('click', function () {
-    definitions.push({ name: '#', parentName: '', description: '', geometry: null });
+    definitions.push({ name: '#', parentName: '', description: '', color: '', geometry: null });
     renderRows();
     rows[rows.length - 1].name.focus();
     updatePayloadStatus();
@@ -661,7 +765,7 @@
     clearError();
     try {
       var selectedFeatures = Array.prototype.map.call(countySelect.selectedOptions, function (option) {
-        return counties[Number(option.value)];
+        return countyByGeoID.get(option.value);
       });
       if (!selectedFeatures.length) throw new Error('Select at least one county.');
       setGeometry(RegionScopeHelpers.countiesToMultiPolygon(selectedFeatures), true);
@@ -684,6 +788,7 @@
       body: JSON.stringify({ hashRegionDefinitions: payload }),
     }).then(function () {
       saveStatus.textContent = 'Saved. Changes take effect within about 15 seconds.';
+      try { localStorage.setItem('corescope-hash-regions-version', String(Date.now())); } catch (_) {}
       return loadRegions();
     }).catch(function (error) {
       showError(error);

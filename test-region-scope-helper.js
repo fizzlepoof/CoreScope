@@ -128,6 +128,21 @@ assert.deepStrictEqual(details.map((item) => [item.definition.name, item.reason]
   ['#country', 'ancestor'], ['#east', 'direct'], ['#city', 'direct'], ['#west', 'direct'],
 ], 'recommendation details distinguish direct boundary matches from required ancestors');
 
+const borderDefinitions = [
+  { name: '#us', geometry: null },
+  { name: '#us-tn', parentName: '#us', geometry: { type: 'Polygon', coordinates: [[[-88, 35], [-84, 35], [-84, 36.5], [-88, 36.5], [-88, 35]]] } },
+  { name: '#us-ky', parentName: '#us', geometry: { type: 'Polygon', coordinates: [[[-89.6, 36.5], [-82, 36.5], [-82, 39.2], [-89.6, 39.2], [-89.6, 36.5]]] } },
+];
+const borderDetails = helpers.recommendRegionDetails(borderDefinitions, [-87.35, 36.30]);
+assert.deepStrictEqual(borderDetails.map((item) => item.definition.name), ['#us', '#us-tn', '#us-ky'],
+  'a location near a neighboring boundary includes that region as a border suggestion');
+assert.strictEqual(borderDetails.find((item) => item.definition.name === '#us-ky').reason, 'nearby',
+  'neighboring boundary suggestion is distinguished from automatic direct matches');
+assert.ok(borderDetails.find((item) => item.definition.name === '#us-ky').distanceKm > 0,
+  'border suggestions expose their approximate distance');
+assert.strictEqual(helpers.recommendRegionDetails(borderDefinitions, [-87.35, 35.5]).some((item) => item.definition.name === '#us-ky'), false,
+  'faraway boundaries are not suggested');
+
 assert.deepStrictEqual(
   helpers.reconcileRecommendationSelection(definitions, ['#west'], ['#manual'], ['#east']),
   ['#country', '#manual', '#west'],
@@ -157,5 +172,12 @@ assert.deepStrictEqual(helpers.parseGeoJSONGeometry({
   geometry: squareWithHole,
 }), squareWithHole, 'GeoJSON Feature import extracts Polygon geometry');
 assert.throws(() => helpers.parseGeoJSONGeometry({ type: 'LineString', coordinates: [[0, 0], [1, 1]] }), /Polygon or MultiPolygon/);
+
+const regionColors = Array.from({ length: 100 }, (_, index) => helpers.regionColorToken(index, 100));
+assert.strictEqual(new Set(regionColors).size, 100, 'every supported region receives a distinct color token');
+assert.strictEqual(regionColors.every((value) => /var\(--/.test(value)), true, 'region colors derive from theme CSS variables');
+assert.strictEqual(regionColors.some((value) => /#[0-9a-f]/i.test(value)), false, 'region colors do not hardcode hex values');
+assert.strictEqual(helpers.regionColorToken(0, 1, '#12ABef'), '#12abef', 'saved admin color overrides automatic assignment');
+assert.match(helpers.regionColorToken(0, 1, 'red'), /var\(--/, 'invalid custom color falls back to a theme-derived token');
 
 console.log('test-region-scope-helper.js: all tests passed');

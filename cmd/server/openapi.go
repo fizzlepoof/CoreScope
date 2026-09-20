@@ -83,8 +83,8 @@ func routeDescriptions() map[string]routeMeta {
 		// Hash-region management: MeshCore transport-scope names (e.g.
 		// "#eu") the ingestor hashes to derive HMAC scope-matching keys.
 		// Distinct from /api/admin/regions above (IATA display names).
-		"GET /api/admin/hash-regions": {Summary: "Get hashRegions for editing", Description: "Returns the current hashRegions string list plus structured hashRegionDefinitions containing saved parent relationships, descriptions, and GeoJSON boundaries.", Tag: "admin", Auth: true},
-		"PUT /api/admin/hash-regions": {Summary: "Replace hashRegions or structured definitions", Description: "Full-replace: accepts the legacy hashRegions string list or hashRegionDefinitions with hierarchy, descriptions, and validated GeoJSON Polygon/MultiPolygon geometry. Legacy name-only updates preserve metadata for retained names. Changes to scope names take effect in the ingestor within ~15s.", Tag: "admin", Auth: true},
+		"GET /api/admin/hash-regions": {Summary: "Get hashRegions for editing", Description: "Returns the current hashRegions string list plus structured hashRegionDefinitions containing saved parent relationships, descriptions, display colors, and GeoJSON boundaries.", Tag: "admin", Auth: true},
+		"PUT /api/admin/hash-regions": {Summary: "Replace hashRegions or structured definitions", Description: "Full-replace: accepts the legacy hashRegions string list or hashRegionDefinitions with hierarchy, descriptions, optional #RRGGBB display colors, and validated GeoJSON Polygon/MultiPolygon geometry. Legacy name-only updates preserve metadata for retained names. Changes to scope names take effect in the ingestor within ~15s.", Tag: "admin", Auth: true},
 
 		// Packets
 		"GET /api/packets": {Summary: "List packets", Description: "Returns decoded packets with filtering, sorting, and pagination.", Tag: "packets",
