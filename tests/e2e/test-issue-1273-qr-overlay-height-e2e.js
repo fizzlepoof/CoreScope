@@ -16,7 +16,7 @@
  * but still allocates space because the wrap doesn't have a content-fit
  * height.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1273-qr-overlay-height-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1273-qr-overlay-height-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

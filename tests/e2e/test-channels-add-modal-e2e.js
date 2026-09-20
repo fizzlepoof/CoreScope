@@ -9,7 +9,7 @@
  *   - Section 3: Monitor Hashtag (with and without leading `#`)
  *   - Escape closes the modal
  *
- * Usage: BASE_URL=http://localhost:13581 node test-channels-add-modal-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-channels-add-modal-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

@@ -7,7 +7,7 @@
  * preview / relative-time; no inline action chips on rows; tap a row
  * to slide into a full-screen messages view; back chevron + title.
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1367-channels-chat-app-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1367-channels-chat-app-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

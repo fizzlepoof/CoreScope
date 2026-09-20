@@ -7,7 +7,7 @@
  * tryDecryptLive, buildKeyMap, save/get/removeKey, labels, message
  * cache). Mirrors how channels.js uses the module.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-channel-decrypt-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-channel-decrypt-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

@@ -11,7 +11,7 @@
  *   - Clear button removes the assignment (when one exists)
  *   - active-class highlights the currently assigned color
  *
- * Usage: BASE_URL=http://localhost:13581 node test-channel-color-picker-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-channel-color-picker-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

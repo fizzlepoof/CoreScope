@@ -5,7 +5,7 @@
  * the PSK fields.
  *
  * Pure source-string + targeted-snippet assertions (no browser).
- * E2E behavior is covered by test-channel-modal-e2e.js extensions.
+ * E2E behavior is covered by tests/e2e/test-channel-modal-e2e.js extensions.
  */
 'use strict';
 const { repositoryRoot } = require('../helpers/repository-root');

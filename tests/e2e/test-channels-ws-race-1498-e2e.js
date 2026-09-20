@@ -1,6 +1,6 @@
 /**
  * #1498 — Deterministic regression test for the WS-vs-REST race that
- * makes test-channels-ws-batch-e2e.js flaky.
+ * makes tests/e2e/test-channels-ws-batch-e2e.js flaky.
  *
  * Bug: selectChannel() sets selectedHash + header synchronously, then
  * awaits a REST fetch that unconditionally replaces `messages` with the

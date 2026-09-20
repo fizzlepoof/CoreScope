@@ -11,7 +11,7 @@
  *   - unread badge bump on a non-selected channel
  *   - scroll-button reveal when user is NOT at bottom
  *
- * Usage: BASE_URL=http://localhost:13581 node test-channels-ws-batch-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-channels-ws-batch-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

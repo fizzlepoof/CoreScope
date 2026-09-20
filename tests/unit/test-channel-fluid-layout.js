@@ -6,7 +6,7 @@
  * space, and that narrow stacking is driven by a container query (not a
  * hardcoded fixed-px breakpoint baked into the channels layout).
  *
- * Companion E2E (real viewport assertions): test-channel-fluid-e2e.js.
+ * Companion E2E (real viewport assertions): tests/e2e/test-channel-fluid-e2e.js.
  */
 'use strict';
 const { repositoryRoot } = require('../helpers/repository-root');

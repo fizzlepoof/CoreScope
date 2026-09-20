@@ -7,7 +7,7 @@
  *     non-overlapping horizontal regions (true side-by-side).
  *   - At narrow (<700px) widths: layout stacks (sidebar above OR overlay).
  *
- * Usage: BASE_URL=http://localhost:13581 node test-channel-fluid-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-channel-fluid-e2e.js
  */
 'use strict';
 
