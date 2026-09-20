@@ -1,5 +1,6 @@
 /* Unit tests for geofilter-builder draft save/load + download config */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const assert = require('assert');
 
 let passed = 0, failed = 0;
@@ -46,7 +47,7 @@ const vm = require('vm');
 const path = require('path');
 
 function loadModule(localStorage, document) {
-  const code = fs.readFileSync(path.join(__dirname, 'public', 'geofilter-draft.js'), 'utf8');
+  const code = fs.readFileSync(path.join(repositoryRoot, 'public', 'geofilter-draft.js'), 'utf8');
   const sandbox = { localStorage, document, window: {}, URL: { createObjectURL() { return 'blob:mock'; }, revokeObjectURL() {} }, Blob: class { constructor(parts, opts) { this.parts = parts; this.opts = opts; } } };
   vm.runInNewContext(code, sandbox);
   sandbox.GeofilterDraft = sandbox.window.GeofilterDraft;

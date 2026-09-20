@@ -10,6 +10,7 @@
  * (no DOM, no fetch). Mirrors the pattern from test-area-filter.js.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
@@ -37,7 +38,7 @@ function buildCtx(initialStorage) {
   };
   ctx.window = ctx;
   vm.createContext(ctx);
-  const src = fs.readFileSync(__dirname + '/public/region-filter.js', 'utf8');
+  const src = fs.readFileSync(repositoryRoot + '/public/region-filter.js', 'utf8');
   vm.runInContext(src, ctx);
   return ctx;
 }

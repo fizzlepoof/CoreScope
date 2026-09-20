@@ -1,4 +1,4 @@
-/* test-issue-1825-observer-node-cross-links.js — Issue #1825 regression test.
+/* tests/unit/test-issue-1825-observer-node-cross-links.js — Issue #1825 regression test.
  *
  * Asserts cross-navigation links exist between the observer detail page and
  * the node detail page for the same pubkey:
@@ -12,6 +12,7 @@
  * Static-source test (grep the file text). No server, no DOM.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -25,8 +26,8 @@ function test(name, fn) {
 
 console.log('\u2500\u2500 Observer <-> Node cross-links (#1825) \u2500\u2500');
 
-const obsSrc = fs.readFileSync(path.join(__dirname, 'public', 'observer-detail.js'), 'utf8');
-const nodesSrc = fs.readFileSync(path.join(__dirname, 'public', 'nodes.js'), 'utf8');
+const obsSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'observer-detail.js'), 'utf8');
+const nodesSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'nodes.js'), 'utf8');
 
 // Note: #1836 introduced case-normalization on these hrefs (currentId →
 // currentId.toLowerCase(), n.public_key → n.public_key.toUpperCase()). The

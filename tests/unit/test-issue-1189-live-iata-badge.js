@@ -3,7 +3,7 @@
  * IATA pill. Earlier R1 fix only updated the /packets table; mesh operators
  * live on /live and were missing the SAME-region vs CROSS-region affordance.
  *
- * Strategy mirrors test-observer-iata-1188.js — extract the helper from
+ * Strategy mirrors tests/unit/test-observer-iata-1188.js — extract the helper from
  * public/live.js, evaluate it in a Node sandbox, and assert the rendered
  * HTML contains the expected `.badge-iata` markup. Mutating live.js to
  * drop the badge (revert to ${obsBadge} without ${iataBadge}) MUST flip

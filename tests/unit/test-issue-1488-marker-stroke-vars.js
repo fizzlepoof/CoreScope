@@ -15,6 +15,7 @@
  *   - public/customize-v2.js has marker-stroke controls + routes them to CSS
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -25,11 +26,11 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const rolesSrc     = fs.readFileSync(path.join(__dirname, 'public', 'roles.js'),        'utf8');
-const mapSrc       = fs.readFileSync(path.join(__dirname, 'public', 'map.js'),          'utf8');
-const liveSrc      = fs.readFileSync(path.join(__dirname, 'public', 'live.js'),         'utf8');
-const styleSrc     = fs.readFileSync(path.join(__dirname, 'public', 'style.css'),       'utf8');
-const customizeSrc = fs.readFileSync(path.join(__dirname, 'public', 'customize-v2.js'), 'utf8');
+const rolesSrc     = fs.readFileSync(path.join(repositoryRoot, 'public', 'roles.js'),        'utf8');
+const mapSrc       = fs.readFileSync(path.join(repositoryRoot, 'public', 'map.js'),          'utf8');
+const liveSrc      = fs.readFileSync(path.join(repositoryRoot, 'public', 'live.js'),         'utf8');
+const styleSrc     = fs.readFileSync(path.join(repositoryRoot, 'public', 'style.css'),       'utf8');
+const customizeSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'customize-v2.js'), 'utf8');
 
 console.log('\n=== #1488 A: style.css declares marker-stroke CSS vars ===');
 {
@@ -118,7 +119,7 @@ console.log('\n=== #1506 F: server defaults restored to v3.7.2 (solid white, 2px
 
   // config.example.json defaults must also match so fresh deploys ship
   // the v3.7.2 visual without operator action.
-  var configSrc = fs.readFileSync(path.join(__dirname, 'config.example.json'), 'utf8');
+  var configSrc = fs.readFileSync(path.join(repositoryRoot, 'config.example.json'), 'utf8');
   var cfg = JSON.parse(configSrc);
   assert(cfg.markerStroke && /^(#fff|#ffffff|white|rgb\(\s*255\s*,\s*255\s*,\s*255\s*\))$/i.test(String(cfg.markerStroke.color || '').trim()),
     'config.example.json markerStroke.color is solid white (got: ' + (cfg.markerStroke && cfg.markerStroke.color) + ')');

@@ -10,7 +10,7 @@
  *   - https://github.com/Kpa-clawbot/CoreScope/issues/1356#issuecomment-4535244400
  *   - https://github.com/Kpa-clawbot/CoreScope/issues/1356#issuecomment-4535849354
  *
- * Pure-string assertions (mirrors test-issue-1293-marker-shapes.js pattern)
+ * Pure-string assertions (mirrors tests/unit/test-issue-1293-marker-shapes.js pattern)
  * so this runs in the JS-unit-tests CI step without a browser.
  */
 'use strict';

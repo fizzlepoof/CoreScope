@@ -180,4 +180,4 @@ assert.strictEqual(regionColors.some((value) => /#[0-9a-f]/i.test(value)), false
 assert.strictEqual(helpers.regionColorToken(0, 1, '#12ABef'), '#12abef', 'saved admin color overrides automatic assignment');
 assert.match(helpers.regionColorToken(0, 1, 'red'), /var\(--/, 'invalid custom color falls back to a theme-derived token');
 
-console.log('test-region-scope-helper.js: all tests passed');
+console.log('tests/unit/test-region-scope-helper.js: all tests passed');

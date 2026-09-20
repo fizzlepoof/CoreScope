@@ -66,4 +66,4 @@ assert.match(adminJS, /orderDefinitionsParentFirst/, 'admin presents definitions
 assert.match(adminJS, /corescope-hash-regions-version/, 'saving definitions invalidates the public helper cache');
 assert.doesNotMatch(adminJS, /\.innerHTML\s*=\s*[^'"`]/, 'admin does not inject untrusted values through innerHTML');
 
-console.log('test-region-scope-ui.js: all tests passed');
+console.log('tests/unit/test-region-scope-ui.js: all tests passed');

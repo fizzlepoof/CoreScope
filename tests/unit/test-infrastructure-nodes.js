@@ -16,6 +16,7 @@
  * DOM/browser required (same harness style as test-issue-1293).
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -27,10 +28,10 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const rolesSrc = fs.readFileSync(path.join(__dirname, 'public', 'roles.js'), 'utf8');
-const nodesSrc = fs.readFileSync(path.join(__dirname, 'public', 'nodes.js'), 'utf8');
-const mapSrc   = fs.readFileSync(path.join(__dirname, 'public', 'map.js'),   'utf8');
-const cssSrc   = fs.readFileSync(path.join(__dirname, 'public', 'style.css'), 'utf8');
+const rolesSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'roles.js'), 'utf8');
+const nodesSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'nodes.js'), 'utf8');
+const mapSrc   = fs.readFileSync(path.join(repositoryRoot, 'public', 'map.js'),   'utf8');
+const cssSrc   = fs.readFileSync(path.join(repositoryRoot, 'public', 'style.css'), 'utf8');
 
 console.log('\n=== roles.js: shared helper ===');
 
@@ -113,10 +114,10 @@ assert(/aria-expanded/.test(nodesSrc),
 
 console.log('\n=== infrastructure.js: dedicated page ===');
 
-const infraPageSrc = fs.readFileSync(path.join(__dirname, 'public', 'infrastructure.js'), 'utf8');
-const indexSrc = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
-const navDrawerSrc = fs.readFileSync(path.join(__dirname, 'public', 'nav-drawer.js'), 'utf8');
-const bottomNavSrc = fs.readFileSync(path.join(__dirname, 'public', 'bottom-nav.js'), 'utf8');
+const infraPageSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'infrastructure.js'), 'utf8');
+const indexSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'index.html'), 'utf8');
+const navDrawerSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'nav-drawer.js'), 'utf8');
+const bottomNavSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'bottom-nav.js'), 'utf8');
 
 assert(/registerPage\('infrastructure',\s*\{\s*init,\s*destroy\s*\}\)/.test(infraPageSrc),
   'infrastructure.js registers the page module');

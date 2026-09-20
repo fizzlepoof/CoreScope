@@ -7,6 +7,7 @@
  * without a DOM) + render-string assertions for the header HTML.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -51,7 +52,7 @@ function makeSandbox() {
   return ctx;
 }
 function load(ctx, file) {
-  vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync(path.join(repositoryRoot, file), 'utf8'), ctx);
   for (const k of Object.keys(ctx.window)) ctx[k] = ctx.window[k];
 }
 
@@ -136,7 +137,7 @@ t('renderHeader still renders cleanly when fetchedAt is null/0 (graceful degrade
 
 console.log('\n=== #1562 DOM-grep checks ===');
 
-const observersSrc = fs.readFileSync(path.join(__dirname, 'public', 'observers.js'), 'utf8');
+const observersSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'observers.js'), 'utf8');
 
 t('observers.js exposes ObserversSummary global', () => {
   assert.ok(/window\.ObserversSummary\s*=/.test(observersSrc),
@@ -158,7 +159,7 @@ t('observers.js bypasses cache on manual refresh (bust: true)', () => {
     'expected api(..., { bust: true }) on the manual refresh path');
 });
 
-const styleSrc = fs.readFileSync(path.join(__dirname, 'public', 'style.css'), 'utf8');
+const styleSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'style.css'), 'utf8');
 t('style.css defines .obs-updated-stale visual rule', () => {
   assert.ok(/\.obs-updated-stale\b/.test(styleSrc),
     'expected .obs-updated-stale class in style.css');

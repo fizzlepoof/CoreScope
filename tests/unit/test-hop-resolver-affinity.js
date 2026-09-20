@@ -2,11 +2,12 @@
  * Unit tests for HopResolver affinity-aware hop resolution.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const vm = require('vm');
 
 // Load hop-resolver.js in a sandboxed context
-const code = fs.readFileSync(__dirname + '/public/hop-resolver.js', 'utf8');
+const code = fs.readFileSync(repositoryRoot + '/public/hop-resolver.js', 'utf8');
 const sandbox = { window: {}, console, Math, Object, Array, Number, Date, Map, Set, parseInt, parseFloat, encodeURIComponent };
 vm.createContext(sandbox);
 vm.runInContext(code, sandbox);
