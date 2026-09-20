@@ -6,7 +6,7 @@ if [ -e "$INSTRUMENTED_DIR" ]; then
   printf 'ERROR: instrumented frontend target already exists: %s\n' "$INSTRUMENTED_DIR" >&2
   exit 1
 fi
-npx nyc instrument public/ "$INSTRUMENTED_DIR" --compact=false
+node scripts/instrument-frontend.js public "$INSTRUMENTED_DIR"
 # Copy non-JS files (CSS, HTML, images) as-is
 cp public/*.css "$INSTRUMENTED_DIR/" 2>/dev/null
 cp public/*.html "$INSTRUMENTED_DIR/" 2>/dev/null
