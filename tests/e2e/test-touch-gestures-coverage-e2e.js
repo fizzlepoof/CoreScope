@@ -149,10 +149,10 @@ async function main() {
     });
   } catch (err) {
     if (requireChromium) {
-      console.error(`test-touch-gestures-coverage-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-touch-gestures-coverage-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
       process.exit(1);
     }
-    console.log(`test-touch-gestures-coverage-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-touch-gestures-coverage-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 
@@ -495,11 +495,11 @@ async function main() {
   }
 
   await browser.close();
-  console.log(`\ntest-touch-gestures-coverage-e2e.js: ${passes} passed, ${failures} failed`);
+  console.log(`\ntests/e2e/test-touch-gestures-coverage-e2e.js: ${passes} passed, ${failures} failed`);
   process.exit(failures > 0 ? 1 : 0);
 }
 
 main().catch((err) => {
-  console.error('test-touch-gestures-coverage-e2e.js: FAIL —', err);
+  console.error('tests/e2e/test-touch-gestures-coverage-e2e.js: FAIL —', err);
   process.exit(1);
 });

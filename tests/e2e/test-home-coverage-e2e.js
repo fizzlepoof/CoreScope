@@ -16,7 +16,7 @@
  * not exhaustive assertions — but each step has at least one assertion
  * so a regression breaks the test.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-home-coverage-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-home-coverage-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');
@@ -49,10 +49,10 @@ async function pickAnyPubkey(page) {
     });
   } catch (err) {
     if (requireChromium) {
-      console.error('test-home-coverage-e2e.js: FAIL — Chromium required but unavailable: ' + err.message);
+      console.error('tests/e2e/test-home-coverage-e2e.js: FAIL — Chromium required but unavailable: ' + err.message);
       process.exit(1);
     }
-    console.log('test-home-coverage-e2e.js: SKIP (Chromium unavailable: ' + err.message.split('\n')[0] + ')');
+    console.log('tests/e2e/test-home-coverage-e2e.js: SKIP (Chromium unavailable: ' + err.message.split('\n')[0] + ')');
     process.exit(0);
   }
 

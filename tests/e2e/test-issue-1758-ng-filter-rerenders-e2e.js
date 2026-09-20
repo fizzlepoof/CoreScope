@@ -22,7 +22,7 @@
  * Usage:
  *   BASE_URL=http://localhost:13581 \
  *   CHROMIUM_PATH=/path/to/chromium \
- *   node test-issue-1758-ng-filter-rerenders-e2e.js
+ *   node tests/e2e/test-issue-1758-ng-filter-rerenders-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

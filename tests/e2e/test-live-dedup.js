@@ -3,7 +3,7 @@
  * Injects packets by intercepting WebSocket before page loads.
  *
  * Usage:
- *   CHROMIUM_PATH=/usr/bin/chromium-browser BASE_URL=http://localhost:13581 node test-live-dedup.js
+ *   CHROMIUM_PATH=/usr/bin/chromium-browser BASE_URL=http://localhost:13581 node tests/e2e/test-live-dedup.js
  */
 const { chromium } = require('playwright');
 

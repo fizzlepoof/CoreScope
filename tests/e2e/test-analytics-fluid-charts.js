@@ -16,15 +16,16 @@
  *
  * Pure file:// harness — does not require the Go server.
  *
- * Usage: node test-analytics-fluid-charts.js
+ * Usage: node tests/e2e/test-analytics-fluid-charts.js
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const CSS_PATH = path.join(__dirname, 'public', 'style.css');
+const CSS_PATH = path.join(repositoryRoot, 'public', 'style.css');
 const cssHref = 'file://' + CSS_PATH;
 
 // Minimal harness: a sized wrapper that defines the available width

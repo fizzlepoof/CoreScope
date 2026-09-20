@@ -5,7 +5,7 @@
  * empty-state rendering, channel color clear, and sidebar resize handle.
  * Pure coverage suite — does not change channels.js logic.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-channels-list-render-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-channels-list-render-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');
