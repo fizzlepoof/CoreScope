@@ -7,6 +7,7 @@
  * tests/unit/test-frontend-helpers.js. No Playwright needed for the FE-only contract.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
@@ -27,7 +28,7 @@ async function test(name, fn) {
 function loadPureModule() {
   const ctx = { window: {}, module: { exports: {} }, console, Date };
   vm.createContext(ctx);
-  const src = fs.readFileSync(path.join(__dirname, 'public', 'warmup-banner.js'), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'warmup-banner.js'), 'utf8');
   vm.runInContext(src, ctx);
   return ctx.window.__warmupBanner || ctx.module.exports;
 }
@@ -88,7 +89,7 @@ function bootDomSandbox(initialHealthz, initialHeader) {
   };
   ctx.window.fetch = ctx.fetch;
   vm.createContext(ctx);
-  const src = fs.readFileSync(path.join(__dirname, 'public', 'warmup-banner.js'), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'warmup-banner.js'), 'utf8');
   vm.runInContext(src, ctx);
   const sapi = ctx.window.__warmupBanner;
   return {
@@ -268,7 +269,7 @@ function bootDomSandbox(initialHealthz, initialHeader) {
     };
     ctx.window.fetch = baseFetch;
     vm.createContext(ctx);
-    const src = fs.readFileSync(path.join(__dirname, 'public', 'warmup-banner.js'), 'utf8');
+    const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'warmup-banner.js'), 'utf8');
     vm.runInContext(src, ctx);
     const a = ctx.window.__warmupBanner;
     // First install

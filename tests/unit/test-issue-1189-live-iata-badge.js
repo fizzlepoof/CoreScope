@@ -13,6 +13,7 @@
  * emit ${iataBadge} — protects against partial-fix regressions.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -23,7 +24,7 @@ function assert(cond, msg) {
   else { failed++; console.error('  \u274c ' + msg); }
 }
 
-const src = fs.readFileSync(path.join(__dirname, 'public/live.js'), 'utf8');
+const src = fs.readFileSync(path.join(repositoryRoot, 'public/live.js'), 'utf8');
 
 // ── Extract obsIataBadgeHtml(pkt) ─────────────────────────────────────────
 function extractFn(name) {

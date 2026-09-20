@@ -1,9 +1,10 @@
-/* test-live-multibyte-filter.js
+/* tests/unit/test-live-multibyte-filter.js
  * feat(live): packet-level multibyte classifier used by the "Multibyte only"
  * live filter. Pure function — no DOM. Mirrors app.js hash-size math:
  *   hashSize = (pathByte >> 6) + 1, pathByte at offset 5 (transport) else 1.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -25,7 +26,7 @@ function load() {
   };
   ctx.window.localStorage = ctx.localStorage;
   vm.createContext(ctx);
-  const src = fs.readFileSync(path.join(__dirname, 'public/hop-filter.js'), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, 'public/hop-filter.js'), 'utf8');
   vm.runInContext(src, ctx, { filename: 'hop-filter.js' });
   return ctx.module.exports.packetHashSize;
 }

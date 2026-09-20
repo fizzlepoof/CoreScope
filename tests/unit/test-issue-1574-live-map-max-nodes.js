@@ -14,6 +14,7 @@
  * this test red.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const path = require('path');
 
@@ -23,8 +24,8 @@ function assert(cond, msg) {
   else { failed++; console.error('  \u274c ' + msg); }
 }
 
-const liveSrc = fs.readFileSync(path.join(__dirname, 'public', 'live.js'), 'utf8');
-const rolesSrc = fs.readFileSync(path.join(__dirname, 'public', 'roles.js'), 'utf8');
+const liveSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'live.js'), 'utf8');
+const rolesSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'roles.js'), 'utf8');
 
 // ── 1. The hardcoded /api/nodes?limit=2000 literal must be gone ─────────
 const nodesLiteralHits = (liveSrc.match(/\/api\/nodes\?limit=2000/g) || []).length;
@@ -41,7 +42,7 @@ assert(/liveMapMaxNodes/.test(rolesSrc),
   'public/roles.js reads `liveMapMaxNodes` from /api/config/client and exposes LIVE_MAP_MAX_NODES');
 
 // ── 4. config.example.json documents the knob ────────────────────────────
-const cfgExample = fs.readFileSync(path.join(__dirname, 'config.example.json'), 'utf8');
+const cfgExample = fs.readFileSync(path.join(repositoryRoot, 'config.example.json'), 'utf8');
 assert(/"maxNodes"\s*:/.test(cfgExample),
   'config.example.json declares liveMap.maxNodes default');
 

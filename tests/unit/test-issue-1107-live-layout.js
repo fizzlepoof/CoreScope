@@ -12,7 +12,7 @@
  *   3. Theming uses existing CSS variables only — no new hex colors.
  *
  * Source-invariant assertions on public/live.css, same approach as
- * test-issue-1532-live-fullscreen.js (runs in the JS unit test gate).
+ * tests/unit/test-issue-1532-live-fullscreen.js (runs in the JS unit test gate).
  */
 'use strict';
 const { repositoryRoot } = require('../helpers/repository-root');

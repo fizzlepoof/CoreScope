@@ -2,6 +2,7 @@
  * Part of #344 — live.js coverage
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
@@ -319,7 +320,7 @@ console.log('\n=== live.js: expandToBufferEntriesAsync ===');
   });
 
   test('VCR_CHUNK_SIZE is defined and async function yields via setTimeout', () => {
-    const src = fs.readFileSync(__dirname + '/public/live.js', 'utf8');
+    const src = fs.readFileSync(repositoryRoot + '/public/live.js', 'utf8');
     assert.ok(src.includes('VCR_CHUNK_SIZE'), 'VCR_CHUNK_SIZE constant must exist');
     assert.ok(src.includes('expandToBufferEntriesAsync'), 'async version must exist');
     assert.ok(src.includes('setTimeout(processChunk, 0)'), 'must yield via setTimeout between chunks');

@@ -25,6 +25,7 @@
  * and assert addTo()/L.layerGroup() receive the pane option.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -35,7 +36,7 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const liveSrc = fs.readFileSync(path.join(__dirname, 'public', 'live.js'), 'utf8');
+const liveSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'live.js'), 'utf8');
 
 console.log('\n=== #1485 live anim z-order A: custom pane created ===');
 

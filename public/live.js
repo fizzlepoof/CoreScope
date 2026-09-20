@@ -169,7 +169,7 @@
 
   // #1804 r1 item 7 (adv3): legend builder extracted from the live-overlay
   // template IIFE so it is testable in isolation. See
-  // test-live-legend-helper.js. Emits one <li data-enum="<ENUM>">…</li>
+  // tests/unit/test-live-legend-helper.js. Emits one <li data-enum="<ENUM>">…</li>
   // per entry in ORDER, each row formatted as `SHORT — LONG`.
   //
   // #1804 r1 item 9 (adv6): inline fallback dropped. The top-of-file
