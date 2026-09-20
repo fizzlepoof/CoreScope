@@ -100,7 +100,7 @@ jobs:
         run: npm run test:ci
 
       - name: 🛡️ Preflight XSS gate — actual --diff check (PR only)
-        # The fixture self-test above (test-preflight-xss-gate.js) only
+        # The fixture self-test above (tests/integration/test-preflight-xss-gate.js) only
         # asserts the script's behavior against fixtures. It does NOT scan
         # the PR's own changes. This step closes that gap by running the
         # gate against added lines in public/**/*.{js,html} on the PR.

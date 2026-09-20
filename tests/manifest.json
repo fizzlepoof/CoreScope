@@ -8073,11 +8073,11 @@
       ]
     },
     {
-      "path": "test-preflight-xss-gate.js",
+      "path": "tests/integration/test-preflight-xss-gate.js",
       "suite": "integration",
       "command": [
         "node",
-        "test-preflight-xss-gate.js"
+        "tests/integration/test-preflight-xss-gate.js"
       ],
       "requirements": {
         "environment": [],
@@ -8092,7 +8092,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-preflight-xss-gate.js",
+          "source": "tests/integration/test-preflight-xss-gate.js",
           "detail": "spawns scripts/check-xss-sinks.sh against multiple filesystem fixtures"
         }
       ]
