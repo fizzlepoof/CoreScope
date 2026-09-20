@@ -333,7 +333,7 @@ async function setTheme(page, theme) {
     try {
       localStorage.setItem('meshcore-theme', t);
       // Live page collapses controls by default; keep them visible
-      // (matches test-e2e-playwright.js convention).
+      // (matches tests/e2e/test-e2e-playwright.js convention).
       localStorage.setItem('live-controls-expanded', 'true');
       // Default time window wide enough to render content.
       localStorage.setItem('meshcore-time-window', '525600');

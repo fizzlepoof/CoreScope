@@ -2087,11 +2087,11 @@
       ]
     },
     {
-      "path": "test-e2e-playwright.js",
+      "path": "tests/e2e/test-e2e-playwright.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-e2e-playwright.js"
+        "tests/e2e/test-e2e-playwright.js"
       ],
       "requirements": {
         "environment": [
@@ -2137,7 +2137,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-e2e-playwright.js",
+          "source": "tests/e2e/test-e2e-playwright.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -2609,11 +2609,11 @@
       ]
     },
     {
-      "path": "test-issue-1109-hamburger-dropdown-visible-e2e.js",
+      "path": "tests/e2e/test-issue-1109-hamburger-dropdown-visible-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1109-hamburger-dropdown-visible-e2e.js"
+        "tests/e2e/test-issue-1109-hamburger-dropdown-visible-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -2646,7 +2646,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1109-hamburger-dropdown-visible-e2e.js",
+          "source": "tests/e2e/test-issue-1109-hamburger-dropdown-visible-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -2688,11 +2688,11 @@
       ]
     },
     {
-      "path": "test-issue-1128-multi-viewport-e2e.js",
+      "path": "tests/e2e/test-issue-1128-multi-viewport-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1128-multi-viewport-e2e.js"
+        "tests/e2e/test-issue-1128-multi-viewport-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -2718,7 +2718,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1128-multi-viewport-e2e.js",
+          "source": "tests/e2e/test-issue-1128-multi-viewport-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -2857,11 +2857,11 @@
       ]
     },
     {
-      "path": "test-issue-1147-section-order-e2e.js",
+      "path": "tests/e2e/test-issue-1147-section-order-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1147-section-order-e2e.js"
+        "tests/e2e/test-issue-1147-section-order-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -2887,17 +2887,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1147-section-order-e2e.js",
+          "source": "tests/e2e/test-issue-1147-section-order-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-issue-1150-404-state-e2e.js",
+      "path": "tests/e2e/test-issue-1150-404-state-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1150-404-state-e2e.js"
+        "tests/e2e/test-issue-1150-404-state-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -2923,17 +2923,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1150-404-state-e2e.js",
+          "source": "tests/e2e/test-issue-1150-404-state-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-issue-1151-orphan-separators-e2e.js",
+      "path": "tests/e2e/test-issue-1151-orphan-separators-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1151-orphan-separators-e2e.js"
+        "tests/e2e/test-issue-1151-orphan-separators-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -2959,7 +2959,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1151-orphan-separators-e2e.js",
+          "source": "tests/e2e/test-issue-1151-orphan-separators-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -3442,11 +3442,11 @@
       ]
     },
     {
-      "path": "test-issue-1279-legend-p2-e2e.js",
+      "path": "tests/e2e/test-issue-1279-legend-p2-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1279-legend-p2-e2e.js"
+        "tests/e2e/test-issue-1279-legend-p2-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -3472,7 +3472,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1279-legend-p2-e2e.js",
+          "source": "tests/e2e/test-issue-1279-legend-p2-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -3503,11 +3503,11 @@
       ]
     },
     {
-      "path": "test-issue-1281-location-row-e2e.js",
+      "path": "tests/e2e/test-issue-1281-location-row-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1281-location-row-e2e.js"
+        "tests/e2e/test-issue-1281-location-row-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -3533,7 +3533,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1281-location-row-e2e.js",
+          "source": "tests/e2e/test-issue-1281-location-row-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -3564,11 +3564,11 @@
       ]
     },
     {
-      "path": "test-issue-1306-collisions-terminology-e2e.js",
+      "path": "tests/e2e/test-issue-1306-collisions-terminology-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1306-collisions-terminology-e2e.js"
+        "tests/e2e/test-issue-1306-collisions-terminology-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -3601,7 +3601,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1306-collisions-terminology-e2e.js",
+          "source": "tests/e2e/test-issue-1306-collisions-terminology-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -4602,11 +4602,11 @@
       ]
     },
     {
-      "path": "test-issue-1486-collapse-reopens-detail-e2e.js",
+      "path": "tests/e2e/test-issue-1486-collapse-reopens-detail-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1486-collapse-reopens-detail-e2e.js"
+        "tests/e2e/test-issue-1486-collapse-reopens-detail-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -4632,7 +4632,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1486-collapse-reopens-detail-e2e.js",
+          "source": "tests/e2e/test-issue-1486-collapse-reopens-detail-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -5036,11 +5036,11 @@
       ]
     },
     {
-      "path": "test-issue-1599-replay-freeze-e2e.js",
+      "path": "tests/e2e/test-issue-1599-replay-freeze-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1599-replay-freeze-e2e.js"
+        "tests/e2e/test-issue-1599-replay-freeze-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -5073,7 +5073,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1599-replay-freeze-e2e.js",
+          "source": "tests/e2e/test-issue-1599-replay-freeze-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -6129,11 +6129,11 @@
       ]
     },
     {
-      "path": "test-issue-1799-label-vocab-e2e.js",
+      "path": "tests/e2e/test-issue-1799-label-vocab-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1799-label-vocab-e2e.js"
+        "tests/e2e/test-issue-1799-label-vocab-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -6159,7 +6159,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1799-label-vocab-e2e.js",
+          "source": "tests/e2e/test-issue-1799-label-vocab-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -8110,11 +8110,11 @@
       ]
     },
     {
-      "path": "test-show-neighbors.js",
+      "path": "tests/e2e/test-show-neighbors.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-show-neighbors.js"
+        "tests/e2e/test-show-neighbors.js"
       ],
       "requirements": {
         "environment": [
@@ -8140,7 +8140,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-show-neighbors.js",
+          "source": "tests/e2e/test-show-neighbors.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]

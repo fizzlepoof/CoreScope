@@ -16,7 +16,7 @@
  *     cross-reference link back to `#/analytics?tab=prefix-tool`
  *     framed around "actually observed" / packet traffic wording.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1306-collisions-terminology-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1306-collisions-terminology-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');
@@ -56,10 +56,10 @@ async function openCollisions(page) {
     });
   } catch (err) {
     if (requireChromium) {
-      console.error('test-issue-1306-collisions-terminology-e2e.js: FAIL — Chromium required but unavailable: ' + err.message);
+      console.error('tests/e2e/test-issue-1306-collisions-terminology-e2e.js: FAIL — Chromium required but unavailable: ' + err.message);
       process.exit(1);
     }
-    console.log('test-issue-1306-collisions-terminology-e2e.js: SKIP (Chromium unavailable: ' + err.message.split('\n')[0] + ')');
+    console.log('tests/e2e/test-issue-1306-collisions-terminology-e2e.js: SKIP (Chromium unavailable: ' + err.message.split('\n')[0] + ')');
     process.exit(0);
   }
 
@@ -112,8 +112,8 @@ async function openCollisions(page) {
 
   console.log('\n' + passed + ' passed, ' + failed + ' failed');
   if (failed > 0) {
-    console.error('test-issue-1306-collisions-terminology-e2e.js: FAIL');
+    console.error('tests/e2e/test-issue-1306-collisions-terminology-e2e.js: FAIL');
     process.exit(1);
   }
-  console.log('test-issue-1306-collisions-terminology-e2e.js: PASS');
+  console.log('tests/e2e/test-issue-1306-collisions-terminology-e2e.js: PASS');
 })();

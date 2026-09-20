@@ -231,7 +231,7 @@ node tools/e2e-test.js            # E2E: temp server + synthetic packets
 node tools/frontend-test.js       # frontend smoke: HTML, JS refs, API shapes
 
 # Frontend E2E (requires running server or Playwright)
-node test-e2e-playwright.js       # 8 Playwright browser tests (default: localhost:3000)
+node tests/e2e/test-e2e-playwright.js       # 8 Playwright browser tests (default: localhost:3000)
 ```
 
 ### Rules
@@ -246,14 +246,14 @@ node test-e2e-playwright.js       # 8 Playwright browser tests (default: localho
 2. Write unit tests for the logic
 3. Write/update Playwright tests if it's a UI change
 4. Run `npm test` — all tests must pass
-5. Run `node test-e2e-playwright.js` against a local server — E2E must pass
+5. Run `node tests/e2e/test-e2e-playwright.js` against a local server — E2E must pass
 6. THEN push to master
 
 ### Testing infrastructure
 - **Backend coverage**: c8 tracks server-side code in-process
 - **Frontend coverage**: Istanbul instruments `public/*.js` → Playwright exercises them → `window.__coverage__` extracted → nyc reports. Instrumented files are generated fresh each CI run, never checked in.
 - **CI pipeline**: backend tests + coverage → instrument frontend → start local server → Playwright E2E + coverage collection → badges update → deploy (only if all pass)
-- **Playwright tests default to localhost:3000** — NEVER run against prod. CI sets `BASE_URL=http://localhost:13581`. Running locally: start your server, then `node test-e2e-playwright.js`
+- **Playwright tests default to localhost:3000** — NEVER run against prod. CI sets `BASE_URL=http://localhost:13581`. Running locally: start your server, then `node tests/e2e/test-e2e-playwright.js`
 - **ARM machines**: Basic Playwright tests work with system chromium (`CHROMIUM_PATH=/usr/bin/chromium-browser`). Heavy coverage collection scripts may crash — use CI for those.
 
 Tests that need live mesh data can use `https://analyzer.00id.net` — all API endpoints are public, no auth required.

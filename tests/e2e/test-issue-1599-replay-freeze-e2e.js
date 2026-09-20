@@ -39,10 +39,10 @@ async function main() {
     });
   } catch (err) {
     if (requireChromium) {
-      console.error(`test-issue-1599-replay-freeze-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-issue-1599-replay-freeze-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
       process.exit(1);
     }
-    console.log(`test-issue-1599-replay-freeze-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-issue-1599-replay-freeze-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 
@@ -134,7 +134,7 @@ async function main() {
     try { await browser.close(); } catch (_) {}
   }
 
-  console.log(`\ntest-issue-1599-replay-freeze-e2e.js: ${passes} pass, ${failures} fail`);
+  console.log(`\ntests/e2e/test-issue-1599-replay-freeze-e2e.js: ${passes} pass, ${failures} fail`);
   process.exit(failures === 0 ? 0 : 1);
 }
 

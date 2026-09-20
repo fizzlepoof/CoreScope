@@ -63,7 +63,7 @@ function assert(c, m) { if (!c) throw new Error(m || 'assertion failed'); }
   });
 
   await step(`first table row appears < ${FIRST_ROW_BUDGET_MS}ms despite ${OBSERVERS_DELAY_MS}ms /api/observers stub`, async () => {
-    // Clean SPA state — mirrors gotoPackets() pattern from test-e2e-playwright.js.
+    // Clean SPA state — mirrors gotoPackets() pattern from tests/e2e/test-e2e-playwright.js.
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
     await page.evaluate(() => {
       localStorage.removeItem('meshcore-groupbyhash');

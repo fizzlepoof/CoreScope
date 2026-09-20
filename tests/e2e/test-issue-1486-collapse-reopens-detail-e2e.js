@@ -23,7 +23,7 @@
  * page renders a grouped (toggle-select) row.  When running locally,
  * seed the same row (see .github/workflows/deploy.yml for the SQL).
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1486-collapse-reopens-detail-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1486-collapse-reopens-detail-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

@@ -12,7 +12,7 @@
  *   2. Body content surfaces an error state mentioning "not found" / "unknown".
  *   3. There is a link back to /#/nodes (in addition to the existing back arrow).
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1150-404-state-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1150-404-state-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

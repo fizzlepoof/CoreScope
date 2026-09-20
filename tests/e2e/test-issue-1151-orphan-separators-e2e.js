@@ -13,7 +13,7 @@
  * deterministic observer rows with all three null/non-null permutations
  * (the fixture DB has no real observers attached to a single node).
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1151-orphan-separators-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1151-orphan-separators-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

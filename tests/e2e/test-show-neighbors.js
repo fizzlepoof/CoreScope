@@ -1,7 +1,7 @@
 /**
  * Show Neighbors E2E tests (#484 fix)
  * Tests that selectReferenceNode() uses the affinity API instead of client-side path walking.
- * Usage: CHROMIUM_PATH=/usr/bin/chromium-browser BASE_URL=http://localhost:13590 node test-show-neighbors.js
+ * Usage: CHROMIUM_PATH=/usr/bin/chromium-browser BASE_URL=http://localhost:13590 node tests/e2e/test-show-neighbors.js
  */
 const { chromium } = require('playwright');
 

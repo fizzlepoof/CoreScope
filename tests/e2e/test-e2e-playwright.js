@@ -1,7 +1,8 @@
+const { repositoryRoot } = require('../helpers/repository-root');
 /**
  * Playwright E2E tests — proof of concept
  * Runs against prod (analyzer.00id.net), read-only.
- * Usage: node test-e2e-playwright.js
+ * Usage: node tests/e2e/test-e2e-playwright.js
  */
 const { chromium } = require('playwright');
 
@@ -2313,7 +2314,7 @@ async function run() {
     if (coverage) {
       const fs = require('fs');
       const path = require('path');
-      const outDir = path.join(__dirname, '.nyc_output');
+      const outDir = path.join(repositoryRoot, '.nyc_output');
       if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
       fs.writeFileSync(path.join(outDir, 'e2e-coverage.json'), JSON.stringify(coverage));
       console.log(`Frontend coverage from E2E: ${Object.keys(coverage).length} files`);
