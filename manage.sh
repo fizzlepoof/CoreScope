@@ -76,31 +76,26 @@ is_true() {
 }
 
 dc_prod() {
-  if is_true "${DISABLE_MOSQUITTO:-false}"; then
+  if is_true "${DISABLE_MOSQUITTO:-true}"; then
     $DC -f docker-compose.no-mosquitto.yml "$@"
   else
     $DC "$@"
   fi
 }
 
+launch_prod() {
+  preflight_require_mqtt_source "$PROD_DATA/config.json" || return 1
+  dc_prod up "$@"
+}
+
 dc_staging() {
-  if is_true "${DISABLE_MOSQUITTO:-false}"; then
-    $DC -f docker-compose.staging.no-mosquitto.yml -p corescope-staging "$@"
-  else
-    $DC -f "$STAGING_COMPOSE_FILE" -p corescope-staging "$@"
-  fi
+  $DC -f "$STAGING_COMPOSE_FILE" -p corescope-staging "$@"
 }
 
 confirm() {
   read -p "   $1 [y/N] " -n 1 -r
   echo
   [[ $REPLY =~ ^[Yy]$ ]]
-}
-
-confirm_yes_default() {
-  read -p "   $1 [Y/n] " -n 1 -r
-  echo
-  [[ -z "$REPLY" || $REPLY =~ ^[Yy]$ ]]
 }
 
 # State tracking — marks completed steps so re-runs skip them
@@ -242,18 +237,43 @@ is_valid_port() {
   [[ "$value" =~ ^[0-9]+$ ]] && [ "$value" -ge 1 ] && [ "$value" -le 65535 ]
 }
 
+sanitize_broker_url_for_display() {
+  local broker="$1"
+  local scheme="${broker%%://*}"
+  local remainder="${broker#*://}"
+  if [ "$remainder" = "$broker" ]; then
+    printf '%s\n' '<invalid broker URL>'
+    return 0
+  fi
+
+  remainder="${remainder%%#*}"
+  remainder="${remainder%%\?*}"
+
+  local authority="${remainder%%/*}"
+  local path="${remainder#"$authority"}"
+  authority="${authority##*@}"
+
+  printf '%s://%s%s\n' "$scheme" "$authority" "$path"
+}
+
 show_env_port_summary() {
   local http_port="$1"
   local https_port="$2"
   local mqtt_port="$3"
   local data_dir="$4"
   local disable_mosquitto="$5"
+  local mqtt_broker="${6:-}"
   echo ""
   echo "   Current .env values:"
   echo "     PROD_HTTP_PORT=${http_port}"
   echo "     PROD_HTTPS_PORT=${https_port}"
   echo "     PROD_MQTT_PORT=${mqtt_port}"
   echo "     DISABLE_MOSQUITTO=${disable_mosquitto}"
+  if [ -n "$mqtt_broker" ]; then
+    echo "     MQTT_BROKER=$(sanitize_broker_url_for_display "$mqtt_broker")"
+  else
+    echo "     MQTT_BROKER=<configured in config.json or bundled localhost>"
+  fi
   echo "     PROD_DATA_DIR=${data_dir}"
   echo ""
 }
@@ -274,8 +294,13 @@ write_env_managed_values() {
   local mqtt_port="$3"
   local data_dir="$4"
   local disable_mosquitto="$5"
+  local mqtt_broker="${6:-}"
   local env_file=".env"
   local tmp_file=".env.tmp.$$"
+
+  if ! is_true "$disable_mosquitto"; then
+    mqtt_broker=""
+  fi
 
   if [ ! -f "$env_file" ]; then
     cp .env.example "$env_file"
@@ -286,6 +311,7 @@ write_env_managed_values() {
   local seen_mqtt=0
   local seen_data=0
   local seen_disable_mosquitto=0
+  local seen_mqtt_broker=0
 
   : > "$tmp_file"
   while IFS= read -r line || [ -n "$line" ]; do
@@ -310,6 +336,10 @@ write_env_managed_values() {
         echo "DISABLE_MOSQUITTO=${disable_mosquitto}" >> "$tmp_file"
         seen_disable_mosquitto=1
         ;;
+      MQTT_BROKER=*)
+        echo "MQTT_BROKER=${mqtt_broker}" >> "$tmp_file"
+        seen_mqtt_broker=1
+        ;;
       *)
         echo "$line" >> "$tmp_file"
         ;;
@@ -321,8 +351,160 @@ write_env_managed_values() {
   [ "$seen_mqtt" -eq 1 ] || echo "PROD_MQTT_PORT=${mqtt_port}" >> "$tmp_file"
   [ "$seen_data" -eq 1 ] || echo "PROD_DATA_DIR=${data_dir}" >> "$tmp_file"
   [ "$seen_disable_mosquitto" -eq 1 ] || echo "DISABLE_MOSQUITTO=${disable_mosquitto}" >> "$tmp_file"
+  [ "$seen_mqtt_broker" -eq 1 ] || echo "MQTT_BROKER=${mqtt_broker}" >> "$tmp_file"
 
   mv "$tmp_file" "$env_file"
+}
+
+is_local_broker_host() {
+  local host="$1"
+  host="${host%.}"
+  host="${host%%%*}"
+  case "$host" in
+    ""|localhost|127.*|::1|0:0:0:0:0:0:0:1) return 0 ;;
+  esac
+
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "$host" <<'PY'
+import ipaddress, sys
+try:
+    address = ipaddress.ip_address(sys.argv[1])
+except ValueError:
+    raise SystemExit(1)
+mapped = getattr(address, "ipv4_mapped", None)
+raise SystemExit(0 if address.is_loopback or (mapped and mapped.is_loopback) else 1)
+PY
+    return $?
+  fi
+
+  local mapped=""
+  case "$host" in
+    ::ffff:*) mapped="${host#::ffff:}" ;;
+    0:0:0:0:0:ffff:*) mapped="${host#0:0:0:0:0:ffff:}" ;;
+    *) return 1 ;;
+  esac
+  case "$mapped" in
+    127.*) return 0 ;;
+  esac
+  if [[ "$mapped" =~ ^([0-9a-f]{1,4}):([0-9a-f]{1,4})$ ]]; then
+    local high=$((16#${BASH_REMATCH[1]}))
+    [ "$high" -ge $((16#7f00)) ] && [ "$high" -le $((16#7fff)) ]
+    return $?
+  fi
+  return 1
+}
+
+is_external_mqtt_broker_url() {
+  local broker="$1"
+  [[ "$broker" =~ ^(mqtt|mqtts|ws|wss|tcp|ssl):// ]] || return 1
+  local authority="${broker#*://}"
+  authority="${authority%%[/?#]*}"
+  authority="${authority##*@}"
+  local host=""
+  if [[ "$authority" == \[* ]]; then
+    [[ "$authority" == *\]* ]] || return 1
+    host="${authority%%]*}"
+    host="${host#[}"
+  else
+    host="${authority%%:*}"
+  fi
+  host="${host,,}"
+  is_local_broker_host "$host" && return 1
+  return 0
+}
+
+config_has_external_mqtt_broker() {
+  local config="$1"
+  [ -f "$config" ] || return 1
+  local brokers=""
+  if command -v python3 >/dev/null 2>&1; then
+    brokers=$(python3 - "$config" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as handle:
+    cfg = json.load(handle)
+values = []
+legacy = cfg.get("mqtt") or {}
+if isinstance(legacy, dict):
+    values.append(legacy.get("broker", ""))
+for source in cfg.get("mqttSources") or []:
+    if isinstance(source, dict):
+        credentials = (source.get("username", ""), source.get("password", ""))
+        if not any(isinstance(value, str) and (value.startswith("your-") or value == "changeme") for value in credentials):
+            values.append(source.get("broker", ""))
+print("\n".join(value for value in values if isinstance(value, str)))
+PY
+    )
+  elif command -v node >/dev/null 2>&1; then
+    brokers=$(node -e 'const c=JSON.parse(require("fs").readFileSync(process.argv[1])); const valid=s=>![s?.username,s?.password].some(v=>typeof v==="string"&&(v.startsWith("your-")||v==="changeme")); const b=[c.mqtt?.broker,...(c.mqttSources||[]).filter(valid).map(s=>s?.broker)]; console.log(b.filter(v=>typeof v==="string").join("\n"))' "$config")
+  else
+    return 1
+  fi
+  while IFS= read -r broker; do
+    is_external_mqtt_broker_url "$broker" && return 0
+  done <<< "$brokers"
+  return 1
+}
+
+config_is_valid_json() {
+  local config="$1"
+  [ -f "$config" ] || return 1
+
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "$config" >/dev/null 2>&1 <<'PY'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as handle:
+    json.load(handle, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
+PY
+    return $?
+  fi
+  if command -v node >/dev/null 2>&1; then
+    node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$config" >/dev/null 2>&1
+    return $?
+  fi
+  return 1
+}
+
+preflight_require_mqtt_source() {
+  local config="$1"
+  if ! config_is_valid_json "$config"; then
+    err "Configuration must be a readable, valid JSON file: ${config}"
+    return 1
+  fi
+  if ! is_true "${DISABLE_MOSQUITTO:-true}"; then
+    return 0
+  fi
+  if [ -n "${MQTT_BROKER:-}" ]; then
+    if is_external_mqtt_broker_url "$MQTT_BROKER"; then
+      return 0
+    fi
+    err "MQTT_BROKER must identify a non-local external MQTT broker while bundled Mosquitto is disabled."
+    return 1
+  fi
+  if config_has_external_mqtt_broker "$config"; then
+    return 0
+  fi
+  err "An external MQTT broker is required while bundled Mosquitto is disabled."
+  echo "   Set MQTT_BROKER in .env, configure a non-local source in ${config},"
+  echo "   or explicitly opt into the bundled broker with DISABLE_MOSQUITTO=false."
+  return 1
+}
+
+prompt_for_external_mqtt_broker() {
+  local current="${1:-}"
+  local broker=""
+  while true; do
+    if [ -n "$current" ]; then
+      read -r -p "   External MQTT broker URL [$(sanitize_broker_url_for_display "$current")]: " broker
+      broker=${broker:-$current}
+    else
+      read -r -p "   External MQTT broker URL (mqtts://host:port): " broker
+    fi
+    if is_external_mqtt_broker_url "$broker"; then
+      echo "$broker"
+      return 0
+    fi
+    warn "Enter a non-local mqtt://, mqtts://, ws://, wss://, tcp://, or ssl:// broker URL." >&2
+  done
 }
 
 prompt_for_port() {
@@ -370,7 +552,7 @@ preflight_validate_prod_ports() {
   local http_port="${PROD_HTTP_PORT:-80}"
   local https_port="${PROD_HTTPS_PORT:-443}"
   local mqtt_port=""
-  if ! is_true "${DISABLE_MOSQUITTO:-false}"; then
+  if ! is_true "${DISABLE_MOSQUITTO:-true}"; then
     mqtt_port="${PROD_MQTT_PORT:-1883}"
   fi
   local failed=0
@@ -484,6 +666,8 @@ cmd_setup() {
     echo ""
   fi
 
+  local created_config=false
+
   # ── Step 1: Check Docker ──
   step 1 "Checking Docker"
 
@@ -554,6 +738,7 @@ cmd_setup() {
     info "Creating config.json in data directory from example..."
     mkdir -p "$PROD_DATA"
     cp config.example.json "$PROD_DATA/config.json"
+    created_config=true
 
     # Generate a random API key
     if command -v openssl &> /dev/null; then
@@ -584,14 +769,16 @@ cmd_setup() {
   local selected_http="$default_http"
   local selected_https="$default_https"
   local selected_mqtt="$default_mqtt"
-  local selected_disable_mosquitto="${DISABLE_MOSQUITTO:-false}"
+  local selected_disable_mosquitto="${DISABLE_MOSQUITTO:-true}"
   local selected_data_dir="${PROD_DATA_DIR:-$HOME/meshcore-data}"
+  local selected_mqtt_broker="${MQTT_BROKER:-}"
 
   local env_http=""
   local env_https=""
   local env_mqtt=""
   local env_disable_mosquitto=""
   local env_data_dir=""
+  local env_mqtt_broker=""
 
   if [ -f .env ]; then
     env_http=$(get_env_value "PROD_HTTP_PORT" ".env")
@@ -599,10 +786,12 @@ cmd_setup() {
     env_mqtt=$(get_env_value "PROD_MQTT_PORT" ".env")
     env_disable_mosquitto=$(get_env_value "DISABLE_MOSQUITTO" ".env")
     env_data_dir=$(get_env_value "PROD_DATA_DIR" ".env")
+    env_mqtt_broker=$(get_env_value "MQTT_BROKER" ".env")
     env_data_dir="${env_data_dir/#\~/$HOME}"
     [ -n "$env_data_dir" ] && selected_data_dir="$env_data_dir"
     [ -n "$env_disable_mosquitto" ] && selected_disable_mosquitto="$env_disable_mosquitto"
-    show_env_port_summary "${env_http:-<unset>}" "${env_https:-<unset>}" "${env_mqtt:-<unset>}" "${env_data_dir:-<unset>}" "${env_disable_mosquitto:-<unset>}"
+    [ -n "$env_mqtt_broker" ] && selected_mqtt_broker="$env_mqtt_broker"
+    show_env_port_summary "${env_http:-<unset>}" "${env_https:-<unset>}" "${env_mqtt:-<unset>}" "${env_data_dir:-<unset>}" "${env_disable_mosquitto:-<unset>}" "$env_mqtt_broker"
   else
     info ".env not found. It will be created from .env.example."
   fi
@@ -663,8 +852,9 @@ cmd_setup() {
     selected_http=$(prompt_for_port "HTTP" "$default_http" "$suggested_http")
     selected_https=$(prompt_for_port "HTTPS" "$default_https" "$suggested_https")
 
-    if confirm_yes_default "Use built-in MQTT broker?"; then
+    if confirm "Use built-in anonymous plaintext MQTT broker?"; then
       selected_disable_mosquitto="false"
+      selected_mqtt_broker="" # bundled broker uses config localhost
       if is_port_in_use "$default_mqtt"; then
         warn "Port ${default_mqtt} is in use."
         local details_mqtt
@@ -677,6 +867,26 @@ cmd_setup() {
     else
       selected_disable_mosquitto="true"
       log "Internal MQTT broker disabled."
+    fi
+  fi
+
+  if is_true "$selected_disable_mosquitto"; then
+    if is_external_mqtt_broker_url "$selected_mqtt_broker"; then
+      log "Using external MQTT broker from .env."
+    elif ! $created_config && config_has_external_mqtt_broker "$PROD_DATA/config.json"; then
+      selected_mqtt_broker=""
+      log "Using external MQTT broker source from existing config.json."
+    else
+      echo ""
+      if [ ! -t 0 ]; then
+        err "An external MQTT broker is required while bundled Mosquitto is disabled."
+        echo "   Noninteractive setup cannot prompt for MQTT_BROKER. Set it in .env,"
+        echo "   configure a non-local source in ${PROD_DATA}/config.json, or set"
+        echo "   DISABLE_MOSQUITTO=false to explicitly use the bundled broker."
+        return 1
+      fi
+      info "The bundled broker is disabled; an external MQTT broker URL is required."
+      selected_mqtt_broker=$(prompt_for_external_mqtt_broker "$selected_mqtt_broker")
     fi
   fi
 
@@ -759,17 +969,21 @@ cmd_setup() {
     esac
   fi
 
-  write_env_managed_values "$selected_http" "$selected_https" "$selected_mqtt" "$selected_data_dir" "$selected_disable_mosquitto"
-  log "Saved negotiated ports to .env"
-  show_env_port_summary "$selected_http" "$selected_https" "$selected_mqtt" "$selected_data_dir" "$selected_disable_mosquitto"
+  write_env_managed_values "$selected_http" "$selected_https" "$selected_mqtt" "$selected_data_dir" "$selected_disable_mosquitto" "$selected_mqtt_broker"
+  log "Saved ports and MQTT selection to .env"
+  show_env_port_summary "$selected_http" "$selected_https" "$selected_mqtt" "$selected_data_dir" "$selected_disable_mosquitto" "$selected_mqtt_broker"
 
   echo "   Resolved port mapping:"
   echo "     UI HTTP:  ${selected_http}"
   echo "     UI HTTPS: ${selected_https}"
   if is_true "$selected_disable_mosquitto"; then
-    echo "     MQTT:     disabled (external broker)"
+    if [ -n "$selected_mqtt_broker" ]; then
+      echo "     External MQTT broker: $(sanitize_broker_url_for_display "$selected_mqtt_broker")"
+    else
+      echo "     External MQTT broker: configured in existing config.json"
+    fi
   else
-    echo "     MQTT:     ${selected_mqtt}"
+    echo "     Bundled MQTT broker: localhost:${selected_mqtt} (host loopback only)"
   fi
   echo ""
   if ! confirm "Proceed to build/start with these ports?"; then
@@ -781,8 +995,10 @@ cmd_setup() {
   export PROD_HTTPS_PORT="$selected_https"
   export PROD_MQTT_PORT="$selected_mqtt"
   export DISABLE_MOSQUITTO="$selected_disable_mosquitto"
+  export MQTT_BROKER="$selected_mqtt_broker"
   export PROD_DATA_DIR="$selected_data_dir"
   PROD_DATA="$PROD_DATA_DIR"
+  preflight_require_mqtt_source "$PROD_DATA/config.json" || return 1
   mark_done "caddyfile"
 
   # ── Step 4: Build ──
@@ -823,7 +1039,7 @@ cmd_setup() {
     log "Container already running."
   else
     mkdir -p "$PROD_DATA"
-    dc_prod up -d prod
+    launch_prod -d prod
     log "Container started."
   fi
   mark_done "container"
@@ -849,7 +1065,11 @@ cmd_setup() {
     fi
     echo ""
     echo "   Next steps:"
-    echo "   • Connect an observer to start receiving packets"
+    if is_true "$selected_disable_mosquitto"; then
+      echo "   • Point observers at the configured external MQTT broker"
+    else
+      echo "   • Point local observers at localhost:${selected_mqtt}"
+    fi
     echo "   • Customize branding in config.json"
     echo "   • Set up backups: ./manage.sh backup"
     echo ""
@@ -1045,6 +1265,7 @@ cmd_start() {
   migrate_config || exit 1
   # Always check prod config
   ensure_config "$PROD_DATA"
+  preflight_require_mqtt_source "$PROD_DATA/config.json" || exit 1
 
   if $WITH_STAGING; then
     # Prepare staging data and config
@@ -1053,18 +1274,17 @@ cmd_start() {
 
     info "Starting production container (corescope-prod) on ports ${PROD_HTTP_PORT:-80}/${PROD_HTTPS_PORT:-443}..."
     info "Starting staging container (${STAGING_CONTAINER}) on port ${STAGING_GO_HTTP_PORT:-82}..."
-    dc_prod up -d prod
+    launch_prod -d prod
     dc_staging up -d staging-go
-    if is_true "${DISABLE_MOSQUITTO:-false}"; then
-      log "Production started on ports ${PROD_HTTP_PORT:-80}/${PROD_HTTPS_PORT:-443} (MQTT disabled)"
-      log "Staging started on port ${STAGING_GO_HTTP_PORT:-82} (MQTT disabled)"
+    if is_true "${DISABLE_MOSQUITTO:-true}"; then
+      log "Production started on ports ${PROD_HTTP_PORT:-80}/${PROD_HTTPS_PORT:-443} (external MQTT broker)"
     else
       log "Production started on ports ${PROD_HTTP_PORT:-80}/${PROD_HTTPS_PORT:-443}/${PROD_MQTT_PORT:-1883}"
-      log "Staging started on port ${STAGING_GO_HTTP_PORT:-82} (MQTT: ${STAGING_GO_MQTT_PORT:-1885})"
     fi
+    log "Staging started on port ${STAGING_GO_HTTP_PORT:-82} (external MQTT broker)"
   else
     info "Starting production container (corescope-prod) on ports ${PROD_HTTP_PORT:-80}/${PROD_HTTPS_PORT:-443}..."
-    dc_prod up -d prod
+    launch_prod -d prod
     log "Production started. Staging NOT running (use --with-staging to start both)."
   fi
 }
@@ -1103,7 +1323,7 @@ cmd_restart() {
   case "$TARGET" in
     prod)
       info "Restarting production container (corescope-prod)..."
-      dc_prod up -d --force-recreate prod
+      launch_prod -d --force-recreate prod
       log "Production restarted."
       ;;
     staging)
@@ -1131,7 +1351,7 @@ cmd_restart() {
       ;;
     all)
       info "Restarting all containers..."
-      dc_prod up -d --force-recreate prod
+      launch_prod -d --force-recreate prod
       dc_staging rm -sf staging-go 2>/dev/null || true
       docker rm -f "$STAGING_CONTAINER" 2>/dev/null || true
       dc_staging up -d staging-go
@@ -1189,6 +1409,15 @@ cmd_status() {
 
   # Production
   show_container_status "corescope-prod" "Production"
+  if is_true "${DISABLE_MOSQUITTO:-true}"; then
+    if [ -n "${MQTT_BROKER:-}" ]; then
+      info "Production MQTT: external broker $(sanitize_broker_url_for_display "$MQTT_BROKER")"
+    else
+      info "Production MQTT: external source from config.json"
+    fi
+  else
+    info "Production MQTT: bundled localhost broker (host loopback ${PROD_MQTT_PORT:-1883})"
+  fi
   echo ""
 
   # Staging
@@ -1284,7 +1513,7 @@ cmd_promote() {
 
   # Restart prod with latest image
   info "Restarting production with latest image..."
-  dc_prod up -d --force-recreate prod
+  launch_prod -d --force-recreate prod
 
   # Wait for health
   info "Waiting for production health check..."
@@ -1354,7 +1583,7 @@ cmd_update() {
   dc_prod build prod
 
   info "Restarting with new image..."
-  dc_prod up -d --force-recreate prod
+  launch_prod -d --force-recreate prod
 
   log "Updated and restarted. Data preserved."
   # Show current version
@@ -1458,6 +1687,15 @@ cmd_restore() {
     exit 1
   fi
 
+  # Validate candidate JSON syntax and the effective post-restore MQTT topology
+  # before backup, stop, or file replacement. After syntax validation, a
+  # bundled broker or valid runtime MQTT_BROKER can satisfy the topology.
+  local candidate_config="$PROD_DATA/config.json"
+  if [ -n "$CONFIG_FILE" ] && [ -f "$CONFIG_FILE" ]; then
+    candidate_config="$CONFIG_FILE"
+  fi
+  preflight_require_mqtt_source "$candidate_config" || return 1
+
   echo ""
   info "Will restore from: $1"
   [ -f "$DB_FILE" ] && echo "   • Database"
@@ -1503,7 +1741,7 @@ cmd_restore() {
     log "theme.json restored"
   fi
 
-  dc_prod up -d prod
+  launch_prod -d prod
   log "Restored and restarted."
 }
 
@@ -1515,7 +1753,24 @@ cmd_mqtt_test() {
     exit 1
   fi
 
-  info "Listening for MQTT messages (10 second timeout)..."
+  if is_true "${DISABLE_MOSQUITTO:-true}"; then
+    info "External MQTT mode: checking CoreScope ingestion through the server API..."
+    local stats packets nodes
+    stats=$(docker exec corescope-prod wget -qO- http://localhost:3000/api/stats 2>/dev/null || true)
+    packets=$(echo "$stats" | grep -oP '"totalPackets":\K[0-9]+' 2>/dev/null || true)
+    nodes=$(echo "$stats" | grep -oP '"totalNodes":\K[0-9]+' 2>/dev/null || true)
+    if [ -n "$packets" ] && [ -n "$nodes" ]; then
+      log "Ingestion status: ${packets} packets, ${nodes} nodes recorded."
+      echo "   External broker connectivity is handled by the configured MQTT source."
+      echo "   Use './manage.sh logs prod' to inspect current connection or ingestion errors."
+      return 0
+    fi
+    err "Could not read ingestion status from the CoreScope API."
+    echo "   Use './manage.sh logs prod' to inspect external MQTT connectivity."
+    return 1
+  fi
+
+  info "Listening for messages on the bundled MQTT broker (10 second timeout)..."
   MSG=$(docker exec corescope-prod mosquitto_sub -h localhost -t 'meshcore/#' -C 1 -W 10 2>/dev/null)
   if [ -n "$MSG" ]; then
     log "Received MQTT message:"
@@ -1524,7 +1779,7 @@ cmd_mqtt_test() {
   else
     warn "No messages received in 10 seconds."
     echo ""
-    echo "   This means no observer is publishing packets."
+    echo "   This means no observer is publishing packets to the bundled broker."
     echo "   See the deployment guide for connecting observers."
   fi
 }
@@ -1582,6 +1837,7 @@ cmd_help() {
 
 # ─── Main ─────────────────────────────────────────────────────────────────
 
+if ! is_true "${CORESCOPE_MANAGE_LIBRARY_MODE:-false}"; then
 case "${1:-help}" in
   setup)     cmd_setup ;;
   start)     cmd_start "$2" ;;
@@ -1597,3 +1853,4 @@ case "${1:-help}" in
   reset)     cmd_reset ;;
   help|*)    cmd_help ;;
 esac
+fi

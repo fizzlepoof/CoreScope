@@ -26,6 +26,7 @@ COPY internal/mbcapqueue/ ../../internal/mbcapqueue/
 COPY internal/lora/ ../../internal/lora/
 COPY internal/admindb/ ../../internal/admindb/
 COPY internal/infraqueue/ ../../internal/infraqueue/
+COPY internal/pprofconfig/ ../../internal/pprofconfig/
 RUN go mod download
 COPY cmd/server/ ./
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
@@ -43,6 +44,7 @@ COPY internal/prunequeue/ ../../internal/prunequeue/
 COPY internal/perfio/ ../../internal/perfio/
 COPY internal/mbcapqueue/ ../../internal/mbcapqueue/
 COPY internal/infraqueue/ ../../internal/infraqueue/
+COPY internal/pprofconfig/ ../../internal/pprofconfig/
 RUN go mod download
 COPY cmd/ingestor/ ./
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
@@ -107,6 +109,7 @@ RUN mkdir -p /app/data /var/lib/mosquitto /data/caddy && \
 
 # Entrypoint
 COPY docker/entrypoint-go.sh /entrypoint.sh
+COPY docker/entrypoint-env.sh /app/docker/entrypoint-env.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 80 443 1883

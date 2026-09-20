@@ -12,11 +12,8 @@
 # The `.no-mosquitto` variants assume you supply the broker; this file
 # assumes the broker is already running on a shared external network.
 #
-# SEMANTIC CHANGE (v3.7+): `DISABLE_MOSQUITTO` here defaults to `true`
-# because the standalone broker is authoritative on staging. Third-party
-# operators who want the OLD single-container behavior (in-container
-# mosquitto + host-published 1883) should override the env AND re-add
-# the port mapping — see the concrete snippet inline below.
+# The bundled Mosquitto is always disabled here because the standalone
+# broker is authoritative on staging.
 #
 # Override defaults via .env or environment variables.
 
@@ -41,28 +38,23 @@ services:
       # NOTE: host port 1883 is intentionally NOT published here. The
       # standalone mqtt-broker container (managed out-of-band on the
       # staging VM) owns MQTT and is reachable to staging-go via the
-      # external "meshcore-net" docker network below. Operators who
-      # need the legacy in-container mosquitto can re-enable it by
-      # setting DISABLE_MOSQUITTO=false in the env AND re-adding the
-      # host port mapping. Copy-paste snippet for the ports: list:
-      #
-      #     - "${STAGING_GO_MQTT_PORT:-1883}:1883"
-      #
-      # (drop it in-between the :80 mapping and the pprof ports below).
-      - "6060:6060"   # pprof server
-      - "6061:6061"   # pprof ingestor
+      # external "meshcore-net" docker network below.
+      - "127.0.0.1:6060:6060"   # pprof server (host loopback only)
+      - "127.0.0.1:6061:6061"   # pprof ingestor (host loopback only)
     volumes:
       - ${STAGING_DATA_DIR:-~/meshcore-staging-data}:/app/data
       - caddy-data-staging-go:/data/caddy
     environment:
       - NODE_ENV=staging
       - ENABLE_PPROF=true
-      # Default TRUE: the standalone mqtt-broker container owns MQTT on
-      # the staging VM (semantic flip vs. pre-v3.7). Override to false
-      # only if you intend to run the legacy in-container mosquitto
-      # instead — and remember to also re-add the 1883 port mapping
-      # snippet above so external clients can reach it.
-      - DISABLE_MOSQUITTO=${DISABLE_MOSQUITTO:-true}
+      # Docker forwarding requires a container-interface listener. The host
+      # mappings above remain loopback-only; omit this outside containers.
+      - PPROF_HOST=0.0.0.0
+      - SERVER_PPROF_PORT=6060
+      - INGESTOR_PPROF_PORT=6061
+      # The standalone mqtt-broker container owns MQTT on the staging VM.
+      - DISABLE_MOSQUITTO=true
+      - MQTT_BROKER=mqtt://mqtt-broker:1883
       - DISABLE_CADDY=${DISABLE_CADDY:-false}
     networks:
       # Default compose network for intra-stack DNS (unchanged).
