@@ -169,6 +169,7 @@ type Config struct {
 	obsBlacklistOnce      sync.Once
 
 	Compression *CompressionConfig `json:"compression,omitempty"`
+	WebSocket   *WebSocketConfig   `json:"websocket,omitempty"`
 
 	// ClientRxCoverage gates the opt-in mobile client-RX coverage feature
 	// (corescope-rx companions publishing GPS-tagged receptions). Absent/nil
@@ -259,6 +260,13 @@ type CompressionConfig struct {
 	ContentTypes []string `json:"contentTypes,omitempty"`
 }
 
+// WebSocketConfig controls server-side WebSocket resource limits.
+type WebSocketConfig struct {
+	MaxClients        int      `json:"maxClients,omitempty"`
+	MaxClientsPerIP   int      `json:"maxClientsPerIP,omitempty"`
+	TrustedProxyCIDRs []string `json:"trustedProxyCIDRs,omitempty"`
+}
+
 // GZipEnabled returns true when HTTP gzip compression is explicitly enabled.
 func (c *Config) GZipEnabled() bool {
 	return c.Compression != nil && c.Compression.GZip
@@ -278,6 +286,34 @@ func (c *Config) ClientRxCoverageEnabled() bool {
 // WSCompressionEnabled returns true when WebSocket permessage-deflate is explicitly enabled.
 func (c *Config) WSCompressionEnabled() bool {
 	return c.Compression != nil && c.Compression.Websocket
+}
+
+// WebSocketMaxClients returns the concurrent client ceiling. Non-positive
+// values retain the safe default rather than disabling admission control.
+func (c *Config) WebSocketMaxClients() int {
+	if c != nil && c.WebSocket != nil && c.WebSocket.MaxClients > 0 {
+		return c.WebSocket.MaxClients
+	}
+	return defaultWebSocketMaxClients
+}
+
+// WebSocketMaxClientsPerIP returns the concurrent client ceiling for one
+// resolved client IP. Non-positive values retain the safe default.
+func (c *Config) WebSocketMaxClientsPerIP() int {
+	if c != nil && c.WebSocket != nil && c.WebSocket.MaxClientsPerIP > 0 {
+		return c.WebSocket.MaxClientsPerIP
+	}
+	return defaultWebSocketMaxClientsPerIP
+}
+
+// WebSocketTrustedProxyCIDRs returns configured proxy networks in addition to
+// the loopback networks trusted by default. The returned slice is independent
+// of the loaded config so callers cannot mutate shared configuration state.
+func (c *Config) WebSocketTrustedProxyCIDRs() []string {
+	if c == nil || c.WebSocket == nil {
+		return nil
+	}
+	return append([]string(nil), c.WebSocket.TrustedProxyCIDRs...)
 }
 
 // ResolvedPathConfig controls async backfill behavior.

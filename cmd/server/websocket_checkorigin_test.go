@@ -27,6 +27,9 @@ func dialWS(t *testing.T, srv *httptest.Server, origin string) (int, error) {
 	if resp != nil {
 		status = resp.StatusCode
 	}
+	if err != nil && resp != nil {
+		defer resp.Body.Close()
+	}
 	return status, err
 }
 
