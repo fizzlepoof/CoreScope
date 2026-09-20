@@ -1,14 +1,15 @@
-/* test-clear-filters.js — behavioral tests for clear-filters button (#964)
+/* tests/unit/test-clear-filters.js — behavioral tests for clear-filters button (#964)
  * Uses vm.createContext to exercise the actual clear handler logic,
  * not source-grep tautology.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
 
-console.log('--- test-clear-filters.js ---');
+console.log('--- tests/unit/test-clear-filters.js ---');
 
 let passed = 0, failed = 0;
 function test(name, fn) {
@@ -109,7 +110,7 @@ function makeSandbox() {
  * This is more robust than loading the entire IIFE (which needs full DOM).
  */
 function extractClearHandler() {
-  const src = fs.readFileSync(__dirname + '/public/packets.js', 'utf-8');
+  const src = fs.readFileSync(repositoryRoot + '/public/packets.js', 'utf-8');
 
   // Find the clear handler
   const marker = "if (clearBtn) clearBtn.addEventListener('click', function()";
@@ -131,7 +132,7 @@ function extractClearHandler() {
  * Extract updatePacketsUrl function body
  */
 function extractUpdatePacketsUrl() {
-  const src = fs.readFileSync(__dirname + '/public/packets.js', 'utf-8');
+  const src = fs.readFileSync(repositoryRoot + '/public/packets.js', 'utf-8');
   const marker = 'function updatePacketsUrl()';
   const idx = src.indexOf(marker);
   assert(idx !== -1, 'updatePacketsUrl not found');

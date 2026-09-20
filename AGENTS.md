@@ -90,7 +90,7 @@ Every change must consider performance impact BEFORE implementation. This codeba
 No proof = no merge.
 
 ### 1. No commit without tests
-Every change that touches logic MUST have tests. For Go backend: `cd cmd/server && go test ./...` and `cd cmd/ingestor && go test ./...`. For frontend: `node test-packet-filter.js && node tests/unit/test-aging.js && node tests/unit/test-frontend-helpers.js`. If you add new logic, add tests. No exceptions.
+Every change that touches logic MUST have tests. For Go backend: `cd cmd/server && go test ./...` and `cd cmd/ingestor && go test ./...`. For frontend: `node tests/unit/test-packet-filter.js && node tests/unit/test-aging.js && node tests/unit/test-frontend-helpers.js`. If you add new logic, add tests. No exceptions.
 
 ### 2. No commit without browser validation
 After pushing, verify the change works in an actual browser. Use `browser profile=openclaw` against the running instance. Take a screenshot if the change is visual. If you can't validate it, say so — don't claim it works.
@@ -200,7 +200,7 @@ All colors MUST use CSS variables. Never hardcode `#hex` values outside of `:roo
 ### Packet Filter (packet-filter.js)
 Standalone module. No dependencies on app globals (copies what it needs). Testable in Node.js:
 ```bash
-node test-packet-filter.js
+node tests/unit/test-packet-filter.js
 ```
 Uses firmware-standard type names (GRP_TXT, TXT_MSG, REQ) with aliases for convenience.
 
@@ -217,7 +217,7 @@ npm run test:full-coverage  # backend + instrumented frontend coverage via Playw
 ### Test Files
 ```bash
 # Backend (deterministic, run before every push)
-node test-packet-filter.js        # filter engine
+node tests/unit/test-packet-filter.js        # filter engine
 node tests/unit/test-aging.js                # node aging system
 node test-regional-filter.js      # regional observer filtering
 node test-decoder.js              # packet decoder

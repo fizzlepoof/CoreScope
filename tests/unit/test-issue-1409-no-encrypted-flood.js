@@ -11,6 +11,7 @@
  * user-toggle handler that writes BOTH 'true' and 'false' under a condition.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
@@ -21,7 +22,7 @@ function test(name, fn) {
   catch (e) { failed++; console.log('  \u274c ' + name + ': ' + e.message); }
 }
 
-const src = fs.readFileSync(path.join(__dirname, 'public/channels.js'), 'utf8');
+const src = fs.readFileSync(path.join(repositoryRoot, 'public/channels.js'), 'utf8');
 
 console.log('Issue #1409 — no force-enable of channels-show-encrypted');
 
