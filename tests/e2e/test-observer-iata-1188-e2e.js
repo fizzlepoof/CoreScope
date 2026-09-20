@@ -8,7 +8,7 @@
  * so once the UI changes land, at least one rendered packet row must
  * carry one of those codes next to its observer name.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-observer-iata-1188-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-observer-iata-1188-e2e.js
  */
 const { chromium } = require('playwright');
 

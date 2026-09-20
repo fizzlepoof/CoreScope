@@ -19,7 +19,7 @@
  * page.route, so it runs against any static host at BASE_URL (the CI fixture
  * server, or a plain static server locally).
  *
- * Run: BASE_URL=http://localhost:13581 node test-map-nodes-pagination-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-map-nodes-pagination-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

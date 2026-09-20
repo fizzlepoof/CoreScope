@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const assert = require('assert');
 const fs = require('fs');
@@ -7,7 +8,7 @@ const http = require('http');
 const path = require('path');
 const { chromium } = require('playwright');
 
-const root = path.join(__dirname, 'public');
+const root = path.join(repositoryRoot, 'public');
 let savedPayload = null;
 let delayNextDefinitions = false;
 let failCounties = false;
@@ -392,7 +393,7 @@ async function clipboardText(page) {
     assert((await mobile.locator('#region-scope-map').boundingBox()).height >= 300, 'mobile map remains usable');
     await mobileContext.close();
 
-    console.log('test-region-scope-e2e.js: all tests passed');
+    console.log('tests/e2e/test-region-scope-e2e.js: all tests passed');
   } finally {
     await browser.close();
     server.close();

@@ -33,7 +33,7 @@ Running tests/e2e/test-map-modal-fluid-e2e.js
   ✓ keyboard escape
 
 === Results: 4 passed, 0 failed ===
-Running test-observer-iata-1188-e2e.js
+Running tests/e2e/test-observer-iata-1188-e2e.js
   ✓ observer IATA resolves
   ✓ observer IATA missing handled
   ✓ observer IATA legacy
@@ -229,7 +229,7 @@ Running tests/e2e/test-issue-1279-legend-p2-e2e.js
   ✓ legend p2
 
 === Results: 1 passed, 0 failed ===
-Running test-issue-1206-resize-observer-leak-e2e.js
+Running tests/e2e/test-issue-1206-resize-observer-leak-e2e.js
   ✓ resize observer
 
 #1206 ResizeObserver leak: 1 passed, 0 failed

@@ -12,7 +12,7 @@
  * outstanding (constructed but not disconnected) observers and assert it
  * does NOT grow with each /live mount.
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1206-resize-observer-leak-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1206-resize-observer-leak-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

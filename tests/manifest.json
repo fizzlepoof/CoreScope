@@ -3126,11 +3126,11 @@
       ]
     },
     {
-      "path": "test-issue-1206-resize-observer-leak-e2e.js",
+      "path": "tests/e2e/test-issue-1206-resize-observer-leak-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1206-resize-observer-leak-e2e.js"
+        "tests/e2e/test-issue-1206-resize-observer-leak-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -3163,7 +3163,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1206-resize-observer-leak-e2e.js",
+          "source": "tests/e2e/test-issue-1206-resize-observer-leak-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -3607,11 +3607,11 @@
       ]
     },
     {
-      "path": "test-issue-1329-map-controls-accordion-e2e.js",
+      "path": "tests/e2e/test-issue-1329-map-controls-accordion-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1329-map-controls-accordion-e2e.js"
+        "tests/e2e/test-issue-1329-map-controls-accordion-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -3637,7 +3637,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1329-map-controls-accordion-e2e.js",
+          "source": "tests/e2e/test-issue-1329-map-controls-accordion-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -5226,11 +5226,11 @@
       ]
     },
     {
-      "path": "test-issue-1639-observers-sort-e2e.js",
+      "path": "tests/e2e/test-issue-1639-observers-sort-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-issue-1639-observers-sort-e2e.js"
+        "tests/e2e/test-issue-1639-observers-sort-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -5256,7 +5256,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1639-observers-sort-e2e.js",
+          "source": "tests/e2e/test-issue-1639-observers-sort-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -6867,11 +6867,11 @@
       ]
     },
     {
-      "path": "test-map-nodes-pagination-e2e.js",
+      "path": "tests/e2e/test-map-nodes-pagination-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-map-nodes-pagination-e2e.js"
+        "tests/e2e/test-map-nodes-pagination-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -6904,19 +6904,19 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-map-nodes-pagination-e2e.js",
+          "source": "tests/e2e/test-map-nodes-pagination-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-marker-outline-weight.js",
+      "path": "tests/e2e/test-marker-outline-weight.js",
       "suite": "e2e",
       "command": [
         "npx",
         "playwright",
         "test",
-        "test-marker-outline-weight.js"
+        "tests/e2e/test-marker-outline-weight.js"
       ],
       "requirements": {
         "environment": [],
@@ -6938,7 +6938,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-marker-outline-weight.js",
+          "source": "tests/e2e/test-marker-outline-weight.js",
           "detail": "imports the Playwright test runner and drives a browser to measure the rendered pulse outline lifecycle"
         }
       ]
@@ -6969,11 +6969,11 @@
       ]
     },
     {
-      "path": "test-region-scope-e2e.js",
+      "path": "tests/e2e/test-region-scope-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-region-scope-e2e.js"
+        "tests/e2e/test-region-scope-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -6994,7 +6994,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-region-scope-e2e.js",
+          "source": "tests/e2e/test-region-scope-e2e.js",
           "detail": "imports Playwright browser automation and exercises Region Scope admin/helper behavior"
         }
       ]
@@ -7502,11 +7502,11 @@
       ]
     },
     {
-      "path": "test-node-reach-e2e.js",
+      "path": "tests/e2e/test-node-reach-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-node-reach-e2e.js"
+        "tests/e2e/test-node-reach-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -7527,17 +7527,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-node-reach-e2e.js",
+          "source": "tests/e2e/test-node-reach-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
     },
     {
-      "path": "test-observer-iata-1188-e2e.js",
+      "path": "tests/e2e/test-observer-iata-1188-e2e.js",
       "suite": "e2e",
       "command": [
         "node",
-        "test-observer-iata-1188-e2e.js"
+        "tests/e2e/test-observer-iata-1188-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -7563,7 +7563,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-observer-iata-1188-e2e.js",
+          "source": "tests/e2e/test-observer-iata-1188-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]
@@ -7824,13 +7824,13 @@
       ]
     },
     {
-      "path": "test-path-inspector-e2e.js",
+      "path": "tests/e2e/test-path-inspector-e2e.js",
       "suite": "e2e",
       "command": [
         "npx",
         "playwright",
         "test",
-        "test-path-inspector-e2e.js"
+        "tests/e2e/test-path-inspector-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -7858,7 +7858,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-path-inspector-e2e.js",
+          "source": "tests/e2e/test-path-inspector-e2e.js",
           "detail": "imports Playwright browser automation and exercises rendered browser behavior"
         }
       ]

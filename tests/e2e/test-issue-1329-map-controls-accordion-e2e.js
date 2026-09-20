@@ -17,7 +17,7 @@
  *  - Existing layout unchanged: all sections visible by default,
  *    panel position:absolute, modest width.
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1329-map-controls-accordion-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1329-map-controls-accordion-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');
