@@ -7,7 +7,7 @@
  * This test:
  *  1. Parses public/style.css and extracts `--accent`, `--accent-strong`,
  *     `--text-on-accent` per theme (with the same one-level var() resolver
- *     as test-issue-1668-m2-contrast.js).
+ *     as tests/unit/test-issue-1668-m2-contrast.js).
  *  2. Reads the declared `background` for `.subpath-selected` and the
  *     declared `color` for `.subpath-selected .hop-prefix`.
  *  3. Properly composites rgba() foregrounds against the resolved
@@ -31,7 +31,7 @@ const assert = require('assert');
 const CSS_PATH = 'public/style.css';
 const css = fs.readFileSync(CSS_PATH, 'utf8');
 
-// ── Token extraction (mirrors test-issue-1668-m2-contrast.js) ─────────────
+// ── Token extraction (mirrors tests/unit/test-issue-1668-m2-contrast.js) ─────────────
 // MF5 (review r1): throw loudly when the block regex does not match the
 // scoped `selector { ... \n}` shape — silent {} previously let the test
 // pass falsely if `style.css` were minified or its closing brace style

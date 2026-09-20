@@ -13,7 +13,7 @@
  * and asserts that block declares a `.col-details` clamp rule with
  * `white-space: nowrap`. Cheap to run, no browser required.
  *
- * Pattern borrowed from test-issue-1364-pill-no-clamp.js.
+ * Pattern borrowed from tests/unit/test-issue-1364-pill-no-clamp.js.
  */
 'use strict';
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * test-a11y-1716-rf-range-btn-active.js — Issue #1716 regression gate.
+ * tests/unit/test-a11y-1716-rf-range-btn-active.js — Issue #1716 regression gate.
  *
  * Scope: a single, focused assertion that `.rf-range-btn.active`
  * (rendered as `button[data-range="..."]` on the rf-health analytics tab)
@@ -28,14 +28,15 @@
  * Pure CSS parse — no browser required. The live axe gate
  * (test-a11y-axe-1668.js) remains the umbrella net.
  *
- * Usage:  node test-a11y-1716-rf-range-btn-active.js
+ * Usage:  node tests/unit/test-a11y-1716-rf-range-btn-active.js
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = __dirname;
+const ROOT = repositoryRoot;
 const STYLE_CSS = process.env.STYLE_CSS_PATH || path.join(ROOT, 'public', 'style.css');
 
 // ---- WCAG helpers (copied small, no shared import) ----

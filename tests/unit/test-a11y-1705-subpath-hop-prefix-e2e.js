@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * test-a11y-1705-subpath-hop-prefix-e2e.js — Issue #1705 regression gate.
+ * tests/unit/test-a11y-1705-subpath-hop-prefix-e2e.js — Issue #1705 regression gate.
  *
  * Asserts that `.subpath-selected .hop-prefix` (the secondary line of a
  * subpath-detail table row in /#/analytics?tab=subpaths) meets WCAG AA
@@ -37,7 +37,7 @@
  *   signal for this BLOCKER.
  *
  * Usage:
- *   node test-a11y-1705-subpath-hop-prefix-e2e.js
+ *   node tests/unit/test-a11y-1705-subpath-hop-prefix-e2e.js
  *
  * Env:
  *   STYLE_CSS_PATH    optional override; defaults to public/style.css next
@@ -45,11 +45,12 @@
  *                     serves from).
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 
-const STYLE_CSS_PATH = process.env.STYLE_CSS_PATH || path.join(__dirname, 'public', 'style.css');
+const STYLE_CSS_PATH = process.env.STYLE_CSS_PATH || path.join(repositoryRoot, 'public', 'style.css');
 const THEMES = ['dark', 'light'];
 
 // -------------------- Pure helpers (unit-testable) --------------------

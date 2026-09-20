@@ -1,4 +1,4 @@
-/* test-issue-1697-mqtt-mobile-e2e.js (#1697)
+/* tests/unit/test-issue-1697-mqtt-mobile-e2e.js (#1697)
  *
  * Asserts that public/mqtt-status-panel.js renders a *card* layout at
  * mobile viewports (≤640px) instead of the 7-column desktop table that
@@ -11,6 +11,7 @@
  * Failure on current master (before #1697 fix) is the RED commit gate.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const vm = require('vm');
 const fs = require('fs');
@@ -41,7 +42,7 @@ function loadPanel(innerWidth) {
     Promise
   };
   vm.createContext(ctx);
-  const src = fs.readFileSync(path.resolve(__dirname, 'public/mqtt-status-panel.js'), 'utf8');
+  const src = fs.readFileSync(path.resolve(repositoryRoot, 'public/mqtt-status-panel.js'), 'utf8');
   vm.runInContext(src, ctx);
   return { Panel: ctx.window.MqttStatusPanel, container: container, win: win };
 }

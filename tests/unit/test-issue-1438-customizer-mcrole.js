@@ -26,6 +26,7 @@
  * fix in customize-v2.js breaks it.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -37,9 +38,9 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const cv2Src     = fs.readFileSync(path.join(__dirname, 'public', 'customize-v2.js'), 'utf8');
-const rolesSrc   = fs.readFileSync(path.join(__dirname, 'public', 'roles.js'), 'utf8');
-const presetsSrc = fs.readFileSync(path.join(__dirname, 'public', 'cb-presets.js'), 'utf8');
+const cv2Src     = fs.readFileSync(path.join(repositoryRoot, 'public', 'customize-v2.js'), 'utf8');
+const rolesSrc   = fs.readFileSync(path.join(repositoryRoot, 'public', 'roles.js'), 'utf8');
+const presetsSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'cb-presets.js'), 'utf8');
 
 // ─── Extract the nodeColors-processing block from customize-v2.js. ───
 function extractBlock(src, anchor) {

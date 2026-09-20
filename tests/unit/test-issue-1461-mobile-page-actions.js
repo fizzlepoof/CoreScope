@@ -1,4 +1,4 @@
-/* test-issue-1461-mobile-page-actions.js — behavioral test for the mobile
+/* tests/unit/test-issue-1461-mobile-page-actions.js — behavioral test for the mobile
  * page-actions wiring shipped in #1471. Loads mobile-page-actions.js into
  * a vm sandbox with a minimal DOM mock (no jsdom dep), then exercises the
  * public observable surfaces:
@@ -15,6 +15,7 @@
  * No source-grep. All assertions are on real function side effects.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
@@ -212,7 +213,7 @@ function makeSandbox(opts) {
 }
 
 function loadMPA(ctx) {
-  const src = fs.readFileSync(path.join(__dirname, 'public', 'mobile-page-actions.js'), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'mobile-page-actions.js'), 'utf8');
   vm.runInContext(src, ctx);
 }
 

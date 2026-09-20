@@ -17,12 +17,13 @@
  * each named line currently contains the offending codepoint.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-const ROOT = path.resolve(__dirname, 'public');
+const ROOT = path.resolve(repositoryRoot, 'public');
 
 // File-by-file expected codepoint-free regions.
 // We scan the WHOLE file for nav/UI emoji rather than specific lines so

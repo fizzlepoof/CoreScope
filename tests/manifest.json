@@ -98,11 +98,11 @@
       ]
     },
     {
-      "path": "test-a11y-1705-subpath-hop-prefix-e2e.js",
+      "path": "tests/unit/test-a11y-1705-subpath-hop-prefix-e2e.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-a11y-1705-subpath-hop-prefix-e2e.js"
+        "tests/unit/test-a11y-1705-subpath-hop-prefix-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -123,17 +123,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-a11y-1705-subpath-hop-prefix-e2e.js",
+          "source": "tests/unit/test-a11y-1705-subpath-hop-prefix-e2e.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-a11y-1715-dark-role-swatches.js",
+      "path": "tests/unit/test-a11y-1715-dark-role-swatches.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-a11y-1715-dark-role-swatches.js"
+        "tests/unit/test-a11y-1715-dark-role-swatches.js"
       ],
       "requirements": {
         "environment": [
@@ -154,17 +154,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-a11y-1715-dark-role-swatches.js",
+          "source": "tests/unit/test-a11y-1715-dark-role-swatches.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-a11y-1716-rf-range-btn-active.js",
+      "path": "tests/unit/test-a11y-1716-rf-range-btn-active.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-a11y-1716-rf-range-btn-active.js"
+        "tests/unit/test-a11y-1716-rf-range-btn-active.js"
       ],
       "requirements": {
         "environment": [
@@ -185,17 +185,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-a11y-1716-rf-range-btn-active.js",
+          "source": "tests/unit/test-a11y-1716-rf-range-btn-active.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-a11y-1719-contrast-root-causes-e2e.js",
+      "path": "tests/unit/test-a11y-1719-contrast-root-causes-e2e.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-a11y-1719-contrast-root-causes-e2e.js"
+        "tests/unit/test-a11y-1719-contrast-root-causes-e2e.js"
       ],
       "requirements": {
         "environment": [
@@ -216,17 +216,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-a11y-1719-contrast-root-causes-e2e.js",
+          "source": "tests/unit/test-a11y-1719-contrast-root-causes-e2e.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-a11y-axe-1668-selftest.js",
+      "path": "tests/unit/test-a11y-axe-1668-selftest.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-a11y-axe-1668-selftest.js"
+        "tests/unit/test-a11y-axe-1668-selftest.js"
       ],
       "requirements": {
         "environment": [],
@@ -241,7 +241,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-a11y-axe-1668-selftest.js",
+          "source": "tests/unit/test-a11y-axe-1668-selftest.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -1664,11 +1664,11 @@
       ]
     },
     {
-      "path": "test-color-picker-ux.js",
+      "path": "tests/unit/test-color-picker-ux.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-color-picker-ux.js"
+        "tests/unit/test-color-picker-ux.js"
       ],
       "requirements": {
         "environment": [],
@@ -1683,7 +1683,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-color-picker-ux.js",
+          "source": "tests/unit/test-color-picker-ux.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -1933,11 +1933,11 @@
       ]
     },
     {
-      "path": "test-customizer-v2.js",
+      "path": "tests/unit/test-customizer-v2.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-customizer-v2.js"
+        "tests/unit/test-customizer-v2.js"
       ],
       "requirements": {
         "environment": [],
@@ -1952,7 +1952,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-customizer-v2.js",
+          "source": "tests/unit/test-customizer-v2.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -2229,11 +2229,11 @@
       ]
     },
     {
-      "path": "test-fluid-scaffolding.js",
+      "path": "tests/unit/test-fluid-scaffolding.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-fluid-scaffolding.js"
+        "tests/unit/test-fluid-scaffolding.js"
       ],
       "requirements": {
         "environment": [],
@@ -2248,7 +2248,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-fluid-scaffolding.js",
+          "source": "tests/unit/test-fluid-scaffolding.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -2584,11 +2584,11 @@
       ]
     },
     {
-      "path": "test-issue-1107-live-layout.js",
+      "path": "tests/unit/test-issue-1107-live-layout.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1107-live-layout.js"
+        "tests/unit/test-issue-1107-live-layout.js"
       ],
       "requirements": {
         "environment": [],
@@ -2603,7 +2603,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1107-live-layout.js",
+          "source": "tests/unit/test-issue-1107-live-layout.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -3643,11 +3643,11 @@
       ]
     },
     {
-      "path": "test-issue-1356-map-a11y.js",
+      "path": "tests/unit/test-issue-1356-map-a11y.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1356-map-a11y.js"
+        "tests/unit/test-issue-1356-map-a11y.js"
       ],
       "requirements": {
         "environment": [],
@@ -3662,17 +3662,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1356-map-a11y.js",
+          "source": "tests/unit/test-issue-1356-map-a11y.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-issue-1360-pill-letter-count.js",
+      "path": "tests/unit/test-issue-1360-pill-letter-count.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1360-pill-letter-count.js"
+        "tests/unit/test-issue-1360-pill-letter-count.js"
       ],
       "requirements": {
         "environment": [],
@@ -3687,7 +3687,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1360-pill-letter-count.js",
+          "source": "tests/unit/test-issue-1360-pill-letter-count.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -3718,11 +3718,11 @@
       ]
     },
     {
-      "path": "test-issue-1364-pill-no-clamp.js",
+      "path": "tests/unit/test-issue-1364-pill-no-clamp.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1364-pill-no-clamp.js"
+        "tests/unit/test-issue-1364-pill-no-clamp.js"
       ],
       "requirements": {
         "environment": [],
@@ -3737,7 +3737,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1364-pill-no-clamp.js",
+          "source": "tests/unit/test-issue-1364-pill-no-clamp.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4002,11 +4002,11 @@
       ]
     },
     {
-      "path": "test-issue-1412-customizer-no-override.js",
+      "path": "tests/unit/test-issue-1412-customizer-no-override.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1412-customizer-no-override.js"
+        "tests/unit/test-issue-1412-customizer-no-override.js"
       ],
       "requirements": {
         "environment": [],
@@ -4021,7 +4021,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1412-customizer-no-override.js",
+          "source": "tests/unit/test-issue-1412-customizer-no-override.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4070,11 +4070,11 @@
       ]
     },
     {
-      "path": "test-issue-1415-packets-layout.js",
+      "path": "tests/unit/test-issue-1415-packets-layout.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1415-packets-layout.js"
+        "tests/unit/test-issue-1415-packets-layout.js"
       ],
       "requirements": {
         "environment": [],
@@ -4089,7 +4089,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1415-packets-layout.js",
+          "source": "tests/unit/test-issue-1415-packets-layout.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4298,11 +4298,11 @@
       ]
     },
     {
-      "path": "test-issue-1438-customizer-mcrole.js",
+      "path": "tests/unit/test-issue-1438-customizer-mcrole.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1438-customizer-mcrole.js"
+        "tests/unit/test-issue-1438-customizer-mcrole.js"
       ],
       "requirements": {
         "environment": [],
@@ -4317,7 +4317,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1438-customizer-mcrole.js",
+          "source": "tests/unit/test-issue-1438-customizer-mcrole.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4377,11 +4377,11 @@
       ]
     },
     {
-      "path": "test-issue-1450-logo-aspect.js",
+      "path": "tests/unit/test-issue-1450-logo-aspect.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1450-logo-aspect.js"
+        "tests/unit/test-issue-1450-logo-aspect.js"
       ],
       "requirements": {
         "environment": [],
@@ -4396,7 +4396,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1450-logo-aspect.js",
+          "source": "tests/unit/test-issue-1450-logo-aspect.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4452,11 +4452,11 @@
       ]
     },
     {
-      "path": "test-issue-1461-mobile-page-actions.js",
+      "path": "tests/unit/test-issue-1461-mobile-page-actions.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1461-mobile-page-actions.js"
+        "tests/unit/test-issue-1461-mobile-page-actions.js"
       ],
       "requirements": {
         "environment": [],
@@ -4471,17 +4471,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1461-mobile-page-actions.js",
+          "source": "tests/unit/test-issue-1461-mobile-page-actions.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-issue-1470-card-bg-contrast.js",
+      "path": "tests/unit/test-issue-1470-card-bg-contrast.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1470-card-bg-contrast.js"
+        "tests/unit/test-issue-1470-card-bg-contrast.js"
       ],
       "requirements": {
         "environment": [],
@@ -4496,7 +4496,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1470-card-bg-contrast.js",
+          "source": "tests/unit/test-issue-1470-card-bg-contrast.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -5380,11 +5380,11 @@
       ]
     },
     {
-      "path": "test-issue-1648-m1-emoji-scan.js",
+      "path": "tests/unit/test-issue-1648-m1-emoji-scan.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1648-m1-emoji-scan.js"
+        "tests/unit/test-issue-1648-m1-emoji-scan.js"
       ],
       "requirements": {
         "environment": [],
@@ -5399,7 +5399,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1648-m1-emoji-scan.js",
+          "source": "tests/unit/test-issue-1648-m1-emoji-scan.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -5448,11 +5448,11 @@
       ]
     },
     {
-      "path": "test-issue-1648-m2-emoji-scan.js",
+      "path": "tests/unit/test-issue-1648-m2-emoji-scan.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1648-m2-emoji-scan.js"
+        "tests/unit/test-issue-1648-m2-emoji-scan.js"
       ],
       "requirements": {
         "environment": [],
@@ -5467,7 +5467,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1648-m2-emoji-scan.js",
+          "source": "tests/unit/test-issue-1648-m2-emoji-scan.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -5516,11 +5516,11 @@
       ]
     },
     {
-      "path": "test-issue-1648-m3-emoji-scan.js",
+      "path": "tests/unit/test-issue-1648-m3-emoji-scan.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1648-m3-emoji-scan.js"
+        "tests/unit/test-issue-1648-m3-emoji-scan.js"
       ],
       "requirements": {
         "environment": [],
@@ -5535,7 +5535,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1648-m3-emoji-scan.js",
+          "source": "tests/unit/test-issue-1648-m3-emoji-scan.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -5584,11 +5584,11 @@
       ]
     },
     {
-      "path": "test-issue-1648-m4-emoji-scan.js",
+      "path": "tests/unit/test-issue-1648-m4-emoji-scan.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1648-m4-emoji-scan.js"
+        "tests/unit/test-issue-1648-m4-emoji-scan.js"
       ],
       "requirements": {
         "environment": [],
@@ -5603,7 +5603,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1648-m4-emoji-scan.js",
+          "source": "tests/unit/test-issue-1648-m4-emoji-scan.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -5652,11 +5652,11 @@
       ]
     },
     {
-      "path": "test-issue-1648-m5-emoji-scan.js",
+      "path": "tests/unit/test-issue-1648-m5-emoji-scan.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1648-m5-emoji-scan.js"
+        "tests/unit/test-issue-1648-m5-emoji-scan.js"
       ],
       "requirements": {
         "environment": [],
@@ -5671,7 +5671,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1648-m5-emoji-scan.js",
+          "source": "tests/unit/test-issue-1648-m5-emoji-scan.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -5808,11 +5808,11 @@
       ]
     },
     {
-      "path": "test-issue-1668-m2-contrast.js",
+      "path": "tests/unit/test-issue-1668-m2-contrast.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1668-m2-contrast.js"
+        "tests/unit/test-issue-1668-m2-contrast.js"
       ],
       "requirements": {
         "environment": [],
@@ -5827,7 +5827,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1668-m2-contrast.js",
+          "source": "tests/unit/test-issue-1668-m2-contrast.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -5919,11 +5919,11 @@
       ]
     },
     {
-      "path": "test-issue-1697-mqtt-mobile-e2e.js",
+      "path": "tests/unit/test-issue-1697-mqtt-mobile-e2e.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1697-mqtt-mobile-e2e.js"
+        "tests/unit/test-issue-1697-mqtt-mobile-e2e.js"
       ],
       "requirements": {
         "environment": [],
@@ -5938,7 +5938,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1697-mqtt-mobile-e2e.js",
+          "source": "tests/unit/test-issue-1697-mqtt-mobile-e2e.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]

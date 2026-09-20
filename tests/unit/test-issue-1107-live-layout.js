@@ -15,6 +15,7 @@
  * test-issue-1532-live-fullscreen.js (runs in the JS unit test gate).
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -25,7 +26,7 @@ function assert(cond, msg) {
   else { failed++; console.error('  \u2717 ' + msg); }
 }
 
-const liveCss = fs.readFileSync(path.join(__dirname, 'public', 'live.css'), 'utf8');
+const liveCss = fs.readFileSync(path.join(repositoryRoot, 'public', 'live.css'), 'utf8');
 
 // Extract the .live-legend base block (first occurrence, not the media
 // queries, not the .matrix-theme override, not .live-legend.hidden).
