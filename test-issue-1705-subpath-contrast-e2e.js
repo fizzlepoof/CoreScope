@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* Issue #1705 — WCAG AA contrast E2E guard for `.subpath-selected .hop-prefix`.
  *
- * Companion to test-issue-1705-subpath-contrast.js (parser-only). The
+ * Companion to tests/unit/test-issue-1705-subpath-contrast.js (parser-only). The
  * parser test is a fast pre-CI smoke; it inspects DECLARED cascade in
  * style.css text but cannot resolve real browser specificity, `!important`
  * ordering, or `color: inherit` resolution. A higher-specificity

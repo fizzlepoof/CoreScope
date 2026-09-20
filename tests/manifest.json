@@ -5982,11 +5982,11 @@
       ]
     },
     {
-      "path": "test-issue-1705-subpath-contrast.js",
+      "path": "tests/unit/test-issue-1705-subpath-contrast.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1705-subpath-contrast.js"
+        "tests/unit/test-issue-1705-subpath-contrast.js"
       ],
       "requirements": {
         "environment": [],
@@ -6001,7 +6001,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1705-subpath-contrast.js",
+          "source": "tests/unit/test-issue-1705-subpath-contrast.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -6075,11 +6075,11 @@
       ]
     },
     {
-      "path": "test-issue-1770-mobile-row-clamp.js",
+      "path": "tests/unit/test-issue-1770-mobile-row-clamp.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1770-mobile-row-clamp.js"
+        "tests/unit/test-issue-1770-mobile-row-clamp.js"
       ],
       "requirements": {
         "environment": [],
@@ -6098,7 +6098,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1770-mobile-row-clamp.js",
+          "source": "tests/unit/test-issue-1770-mobile-row-clamp.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -8410,11 +8410,11 @@
       ]
     },
     {
-      "path": "test-table-sort.js",
+      "path": "tests/unit/test-table-sort.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-table-sort.js"
+        "tests/unit/test-table-sort.js"
       ],
       "requirements": {
         "environment": [],
@@ -8436,7 +8436,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-table-sort.js",
+          "source": "tests/unit/test-table-sort.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
