@@ -1,10 +1,11 @@
-// test-path-inspector.js — vm.createContext sandbox tests for path-inspector.js
+// tests/unit/test-path-inspector.js — vm.createContext sandbox tests for path-inspector.js
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
 
-const src = fs.readFileSync(__dirname + '/public/path-inspector.js', 'utf8');
+const src = fs.readFileSync(repositoryRoot + '/public/path-inspector.js', 'utf8');
 
 function createSandbox() {
   const sandbox = {

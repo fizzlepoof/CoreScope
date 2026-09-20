@@ -1,4 +1,4 @@
-/* test-issue-1789-observer-firmware-cols.js — Issue #1789 regression test.
+/* tests/unit/test-issue-1789-observer-firmware-cols.js — Issue #1789 regression test.
  *
  * Asserts the observers table renders Firmware and Client (client_version)
  * columns from data already on the wire from /api/observers. Both headers
@@ -10,15 +10,16 @@
  * text must be truncated, with the full string preserved in a title=
  * attribute.
  *
- * Static-source test (like test-observers-headings.js) — no server needed.
+ * Static-source test (like tests/unit/test-observers-headings.js) — no server needed.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-const src = fs.readFileSync(path.join(__dirname, 'public', 'observers.js'), 'utf8');
+const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'observers.js'), 'utf8');
 
 let passed = 0, failed = 0;
 function test(name, fn) {

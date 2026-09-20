@@ -16,11 +16,12 @@
  * updating this test.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 
-const css = fs.readFileSync(path.join(__dirname, 'public', 'style.css'), 'utf8');
+const css = fs.readFileSync(path.join(repositoryRoot, 'public', 'style.css'), 'utf8');
 
 let passed = 0, failed = 0;
 function assert(cond, msg) {

@@ -1,4 +1,4 @@
-/* test-issue-1633-hide-1byte-hops.js
+/* tests/unit/test-issue-1633-hide-1byte-hops.js
  * #1633 — customizer toggle that hides 1-byte path hops at every
  * render site. Render-time only; firmware/store untouched.
  *
@@ -14,6 +14,7 @@
  *     multi-byte hop hexes when ON.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const assert = require('assert');
 const fs = require('fs');
@@ -60,7 +61,7 @@ function makeSandbox() {
 }
 
 function load(ctx, file) {
-  const src = fs.readFileSync(path.join(__dirname, file), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, file), 'utf8');
   vm.runInContext(src, ctx, { filename: file });
 }
 
@@ -332,7 +333,7 @@ test('[adv #1] route-view.js: all-1-byte paths do NOT collide on empty key', () 
 test('[adv #1] route-view.js source: key derivation uses sentinel for all-1-byte buckets', () => {
   // Source-grep guard: if a future refactor reverts to `hops.join("-")`
   // bare aggregation, this test catches it.
-  const src = fs.readFileSync(path.join(__dirname, 'public/route-view.js'), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, 'public/route-view.js'), 'utf8');
   assert.ok(src.indexOf('__all1byte__::') !== -1 || src.indexOf('⟨all-1byte⟩::') !== -1,
     'route-view.js must include a sentinel for all-1-byte aggregation buckets');
 });
@@ -341,7 +342,7 @@ test('[adv #2] map.js source: drawPacketRoute propagates hopsHiddenCount to rend
   // Source-grep guard: the polyline MUST carry the redacted-count down
   // to the renderer so it can dash + badge. A revert that drops the
   // `hopsHiddenCount` option from the render call regresses operator UX.
-  const src = fs.readFileSync(path.join(__dirname, 'public/map.js'), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, 'public/map.js'), 'utf8');
   assert.ok(/hopsHiddenCount\s*:\s*hopsHiddenCount/.test(src),
     'map.js must pass hopsHiddenCount into the route renderer opts');
   assert.ok(/var\s+hopsHiddenCount\s*=\s*0/.test(src) || /let\s+hopsHiddenCount\s*=\s*0/.test(src),
@@ -349,7 +350,7 @@ test('[adv #2] map.js source: drawPacketRoute propagates hopsHiddenCount to rend
 });
 
 test('[adv #2] route-render.js: redacted edges use dashed + reduced opacity + emit badge', () => {
-  const src = fs.readFileSync(path.join(__dirname, 'public/route-render.js'), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, 'public/route-render.js'), 'utf8');
   assert.ok(src.indexOf('mc-route-edge-redacted') !== -1,
     'route-render.js must add a .mc-route-edge-redacted className when hopsHiddenCount > 0');
   assert.ok(src.indexOf('mc-route-redacted-badge') !== -1,
@@ -359,7 +360,7 @@ test('[adv #2] route-render.js: redacted edges use dashed + reduced opacity + em
 });
 
 test('[adv #3] observer-detail.js source: hop count honors MC_filterPathHops', () => {
-  const src = fs.readFileSync(path.join(__dirname, 'public/observer-detail.js'), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, 'public/observer-detail.js'), 'utf8');
   assert.ok(src.indexOf('MC_filterPathHops') !== -1,
     'observer-detail.js renderRecentPackets must call MC_filterPathHops');
 });
@@ -393,14 +394,14 @@ test('[r2 MAJOR] live.js packetInvolvesFilterNode: node-filter search is INDEPEN
 });
 
 test('[adv #4] customize-v2.js still dispatches mc-hide-1byte-hops-changed', () => {
-  const src = fs.readFileSync(path.join(__dirname, 'public/customize-v2.js'), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, 'public/customize-v2.js'), 'utf8');
   assert.ok(src.indexOf('mc-hide-1byte-hops-changed') !== -1,
     'customizer must continue to dispatch the event');
 });
 
 test('[adv #4] map.js + packets.js subscribe to mc-hide-1byte-hops-changed', () => {
-  const mapSrc = fs.readFileSync(path.join(__dirname, 'public/map.js'), 'utf8');
-  const pktSrc = fs.readFileSync(path.join(__dirname, 'public/packets.js'), 'utf8');
+  const mapSrc = fs.readFileSync(path.join(repositoryRoot, 'public/map.js'), 'utf8');
+  const pktSrc = fs.readFileSync(path.join(repositoryRoot, 'public/packets.js'), 'utf8');
   assert.ok(/addEventListener\(['"]mc-hide-1byte-hops-changed['"]/.test(mapSrc),
     'map.js must subscribe to mc-hide-1byte-hops-changed');
   assert.ok(/addEventListener\(['"]mc-hide-1byte-hops-changed['"]/.test(pktSrc),
@@ -426,7 +427,7 @@ test('[kb #2] (1-byte filtered) chip text is emitted by every render boundary', 
     'public/route-view.js'
   ];
   for (const f of files) {
-    const src = fs.readFileSync(path.join(__dirname, f), 'utf8');
+    const src = fs.readFileSync(path.join(repositoryRoot, f), 'utf8');
     assert.ok(src.indexOf('1-byte filtered') !== -1,
       f + ' must render the literal "(1-byte filtered)" chip text');
   }

@@ -1,4 +1,4 @@
-/* test-issue-1470-node-tile-helper.js — behavioral test for the
+/* tests/unit/test-issue-1470-node-tile-helper.js — behavioral test for the
  * _applyTilesToNodeMap helper shipped in #1471 and roles.js
  * getActiveTileProvider() / getTileUrl() integration with the
  * MC_TILE_PROVIDERS registry.
@@ -17,6 +17,7 @@
  * code path end-to-end. Reverting the fix (re-hardcoding OSM) breaks this.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
@@ -104,7 +105,7 @@ function makeSandbox(opts) {
 }
 
 function loadInto(ctx, relPath) {
-  const src = fs.readFileSync(path.join(__dirname, relPath), 'utf8');
+  const src = fs.readFileSync(path.join(repositoryRoot, relPath), 'utf8');
   vm.runInContext(src, ctx, { filename: relPath });
   // Mirror window.* back to sandbox globals so code that uses bare names
   // (which in a browser are window.X) can still resolve them in vm. We do
@@ -117,7 +118,7 @@ function loadInto(ctx, relPath) {
 }
 
 function extractApplyTilesHelper() {
-  const nodesSrc = fs.readFileSync(path.join(__dirname, 'public', 'nodes.js'), 'utf8');
+  const nodesSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'nodes.js'), 'utf8');
   // Match the function _applyTilesToNodeMap(map) { ... } block. Brace-count.
   const startMatch = nodesSrc.match(/function\s+_applyTilesToNodeMap\s*\(map\)\s*\{/);
   if (!startMatch) throw new Error('_applyTilesToNodeMap definition not found in public/nodes.js');

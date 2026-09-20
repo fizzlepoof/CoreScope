@@ -12,11 +12,11 @@
   },
   "tests": [
     {
-      "path": "test-1108-region-hide-nodes.js",
+      "path": "tests/unit/test-1108-region-hide-nodes.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-1108-region-hide-nodes.js"
+        "tests/unit/test-1108-region-hide-nodes.js"
       ],
       "requirements": {
         "environment": [],
@@ -31,7 +31,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-1108-region-hide-nodes.js",
+          "source": "tests/unit/test-1108-region-hide-nodes.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -2168,11 +2168,11 @@
       ]
     },
     {
-      "path": "test-fetch-all-nodes-pagination.js",
+      "path": "tests/unit/test-fetch-all-nodes-pagination.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-fetch-all-nodes-pagination.js"
+        "tests/unit/test-fetch-all-nodes-pagination.js"
       ],
       "requirements": {
         "environment": [],
@@ -2187,7 +2187,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-fetch-all-nodes-pagination.js",
+          "source": "tests/unit/test-fetch-all-nodes-pagination.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -2287,11 +2287,11 @@
       ]
     },
     {
-      "path": "test-geofilter-draft.js",
+      "path": "tests/unit/test-geofilter-draft.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-geofilter-draft.js"
+        "tests/unit/test-geofilter-draft.js"
       ],
       "requirements": {
         "environment": [],
@@ -2306,7 +2306,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-geofilter-draft.js",
+          "source": "tests/unit/test-geofilter-draft.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -2509,11 +2509,11 @@
       ]
     },
     {
-      "path": "test-hop-resolver-affinity.js",
+      "path": "tests/unit/test-hop-resolver-affinity.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-hop-resolver-affinity.js"
+        "tests/unit/test-hop-resolver-affinity.js"
       ],
       "requirements": {
         "environment": [],
@@ -2528,17 +2528,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-hop-resolver-affinity.js",
+          "source": "tests/unit/test-hop-resolver-affinity.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-infrastructure-nodes.js",
+      "path": "tests/unit/test-infrastructure-nodes.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-infrastructure-nodes.js"
+        "tests/unit/test-infrastructure-nodes.js"
       ],
       "requirements": {
         "environment": [],
@@ -2553,7 +2553,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-infrastructure-nodes.js",
+          "source": "tests/unit/test-infrastructure-nodes.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -2796,11 +2796,11 @@
       ]
     },
     {
-      "path": "test-issue-1136-observer-iata-map.js",
+      "path": "tests/unit/test-issue-1136-observer-iata-map.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1136-observer-iata-map.js"
+        "tests/unit/test-issue-1136-observer-iata-map.js"
       ],
       "requirements": {
         "environment": [],
@@ -2815,7 +2815,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1136-observer-iata-map.js",
+          "source": "tests/unit/test-issue-1136-observer-iata-map.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -3539,11 +3539,11 @@
       ]
     },
     {
-      "path": "test-issue-1293-marker-shapes.js",
+      "path": "tests/unit/test-issue-1293-marker-shapes.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1293-marker-shapes.js"
+        "tests/unit/test-issue-1293-marker-shapes.js"
       ],
       "requirements": {
         "environment": [],
@@ -3558,7 +3558,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1293-marker-shapes.js",
+          "source": "tests/unit/test-issue-1293-marker-shapes.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4323,11 +4323,11 @@
       ]
     },
     {
-      "path": "test-issue-1438-marker-css-vars.js",
+      "path": "tests/unit/test-issue-1438-marker-css-vars.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1438-marker-css-vars.js"
+        "tests/unit/test-issue-1438-marker-css-vars.js"
       ],
       "requirements": {
         "environment": [],
@@ -4346,7 +4346,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1438-marker-css-vars.js",
+          "source": "tests/unit/test-issue-1438-marker-css-vars.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4502,11 +4502,11 @@
       ]
     },
     {
-      "path": "test-issue-1470-node-tile-helper.js",
+      "path": "tests/unit/test-issue-1470-node-tile-helper.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1470-node-tile-helper.js"
+        "tests/unit/test-issue-1470-node-tile-helper.js"
       ],
       "requirements": {
         "environment": [],
@@ -4521,7 +4521,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1470-node-tile-helper.js",
+          "source": "tests/unit/test-issue-1470-node-tile-helper.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4681,11 +4681,11 @@
       ]
     },
     {
-      "path": "test-issue-1488-marker-stroke-vars.js",
+      "path": "tests/unit/test-issue-1488-marker-stroke-vars.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1488-marker-stroke-vars.js"
+        "tests/unit/test-issue-1488-marker-stroke-vars.js"
       ],
       "requirements": {
         "environment": [],
@@ -4700,7 +4700,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1488-marker-stroke-vars.js",
+          "source": "tests/unit/test-issue-1488-marker-stroke-vars.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -4918,11 +4918,11 @@
       ]
     },
     {
-      "path": "test-issue-1562-observers-summary.js",
+      "path": "tests/unit/test-issue-1562-observers-summary.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1562-observers-summary.js"
+        "tests/unit/test-issue-1562-observers-summary.js"
       ],
       "requirements": {
         "environment": [],
@@ -4937,7 +4937,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1562-observers-summary.js",
+          "source": "tests/unit/test-issue-1562-observers-summary.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -5201,11 +5201,11 @@
       ]
     },
     {
-      "path": "test-issue-1633-hide-1byte-hops.js",
+      "path": "tests/unit/test-issue-1633-hide-1byte-hops.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1633-hide-1byte-hops.js"
+        "tests/unit/test-issue-1633-hide-1byte-hops.js"
       ],
       "requirements": {
         "environment": [],
@@ -5220,7 +5220,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1633-hide-1byte-hops.js",
+          "source": "tests/unit/test-issue-1633-hide-1byte-hops.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -6104,11 +6104,11 @@
       ]
     },
     {
-      "path": "test-issue-1789-observer-firmware-cols.js",
+      "path": "tests/unit/test-issue-1789-observer-firmware-cols.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1789-observer-firmware-cols.js"
+        "tests/unit/test-issue-1789-observer-firmware-cols.js"
       ],
       "requirements": {
         "environment": [],
@@ -6123,7 +6123,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1789-observer-firmware-cols.js",
+          "source": "tests/unit/test-issue-1789-observer-firmware-cols.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -6165,11 +6165,11 @@
       ]
     },
     {
-      "path": "test-issue-1825-observer-node-cross-links.js",
+      "path": "tests/unit/test-issue-1825-observer-node-cross-links.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1825-observer-node-cross-links.js"
+        "tests/unit/test-issue-1825-observer-node-cross-links.js"
       ],
       "requirements": {
         "environment": [],
@@ -6184,7 +6184,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1825-observer-node-cross-links.js",
+          "source": "tests/unit/test-issue-1825-observer-node-cross-links.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -6265,11 +6265,11 @@
       ]
     },
     {
-      "path": "test-issue-1846-observers-width.js",
+      "path": "tests/unit/test-issue-1846-observers-width.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-issue-1846-observers-width.js"
+        "tests/unit/test-issue-1846-observers-width.js"
       ],
       "requirements": {
         "environment": [],
@@ -6284,7 +6284,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-issue-1846-observers-width.js",
+          "source": "tests/unit/test-issue-1846-observers-width.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -6806,11 +6806,11 @@
       ]
     },
     {
-      "path": "test-map-clustering.js",
+      "path": "tests/unit/test-map-clustering.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-map-clustering.js"
+        "tests/unit/test-map-clustering.js"
       ],
       "requirements": {
         "environment": [],
@@ -6825,7 +6825,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-map-clustering.js",
+          "source": "tests/unit/test-map-clustering.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -6969,11 +6969,11 @@
       ]
     },
     {
-      "path": "test-my-repeaters-dashboard.js",
+      "path": "tests/unit/test-my-repeaters-dashboard.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-my-repeaters-dashboard.js"
+        "tests/unit/test-my-repeaters-dashboard.js"
       ],
       "requirements": {
         "environment": [],
@@ -6988,7 +6988,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-my-repeaters-dashboard.js",
+          "source": "tests/unit/test-my-repeaters-dashboard.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -7438,11 +7438,11 @@
       ]
     },
     {
-      "path": "test-observer-iata-1188.js",
+      "path": "tests/unit/test-observer-iata-1188.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-observer-iata-1188.js"
+        "tests/unit/test-observer-iata-1188.js"
       ],
       "requirements": {
         "environment": [],
@@ -7457,17 +7457,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-observer-iata-1188.js",
+          "source": "tests/unit/test-observer-iata-1188.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-observer-naive-clock-1478.js",
+      "path": "tests/unit/test-observer-naive-clock-1478.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-observer-naive-clock-1478.js"
+        "tests/unit/test-observer-naive-clock-1478.js"
       ],
       "requirements": {
         "environment": [],
@@ -7482,17 +7482,17 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-observer-naive-clock-1478.js",
+          "source": "tests/unit/test-observer-naive-clock-1478.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
     },
     {
-      "path": "test-observers-headings.js",
+      "path": "tests/unit/test-observers-headings.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-observers-headings.js"
+        "tests/unit/test-observers-headings.js"
       ],
       "requirements": {
         "environment": [],
@@ -7507,7 +7507,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-observers-headings.js",
+          "source": "tests/unit/test-observers-headings.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
@@ -7733,11 +7733,11 @@
       ]
     },
     {
-      "path": "test-path-inspector.js",
+      "path": "tests/unit/test-path-inspector.js",
       "suite": "unit",
       "command": [
         "node",
-        "test-path-inspector.js"
+        "tests/unit/test-path-inspector.js"
       ],
       "requirements": {
         "environment": [],
@@ -7752,7 +7752,7 @@
       ],
       "classificationEvidence": [
         {
-          "source": "test-path-inspector.js",
+          "source": "tests/unit/test-path-inspector.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]

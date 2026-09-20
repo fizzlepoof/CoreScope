@@ -21,6 +21,7 @@
  * in the JS-unit-tests step of the CI workflow (fast red).
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -31,9 +32,9 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const rolesSrc = fs.readFileSync(path.join(__dirname, 'public', 'roles.js'), 'utf8');
-const liveSrc  = fs.readFileSync(path.join(__dirname, 'public', 'live.js'),  'utf8');
-const mapSrc   = fs.readFileSync(path.join(__dirname, 'public', 'map.js'),   'utf8');
+const rolesSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'roles.js'), 'utf8');
+const liveSrc  = fs.readFileSync(path.join(repositoryRoot, 'public', 'live.js'),  'utf8');
+const mapSrc   = fs.readFileSync(path.join(repositoryRoot, 'public', 'map.js'),   'utf8');
 
 console.log('\n=== #1293: ROLE_SHAPES single source of truth ===');
 

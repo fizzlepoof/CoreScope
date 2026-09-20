@@ -1,13 +1,14 @@
-/* test-observers-headings.js — Issue #1039 regression test.
+/* tests/unit/test-observers-headings.js — Issue #1039 regression test.
  * Asserts observer table thead column count matches tbody row column count.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-const src = fs.readFileSync(path.join(__dirname, 'public', 'observers.js'), 'utf8');
+const src = fs.readFileSync(path.join(repositoryRoot, 'public', 'observers.js'), 'utf8');
 
 let passed = 0, failed = 0;
 function test(name, fn) {

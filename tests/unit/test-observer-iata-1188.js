@@ -12,6 +12,7 @@
  * Runs in Node.js — no browser, no jsdom required.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -22,7 +23,7 @@ function assert(cond, msg) {
   else { failed++; console.error('  \u274c ' + msg); }
 }
 
-const src = fs.readFileSync(path.join(__dirname, 'public/packets.js'), 'utf8');
+const src = fs.readFileSync(path.join(repositoryRoot, 'public/packets.js'), 'utf8');
 
 // ── Extract obsIataBadge source. Function spans a small, bounded block. ──
 // We capture everything from the `function obsIataBadge` keyword up to and

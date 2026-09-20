@@ -23,6 +23,7 @@
  * This test is the RED gate: assert the source pattern is the var form.
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -33,10 +34,10 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const liveSrc      = fs.readFileSync(path.join(__dirname, 'public', 'live.js'),      'utf8');
-const mapSrc       = fs.readFileSync(path.join(__dirname, 'public', 'map.js'),       'utf8');
-const rolesSrc     = fs.readFileSync(path.join(__dirname, 'public', 'roles.js'),     'utf8');
-const customizeSrc = fs.readFileSync(path.join(__dirname, 'public', 'customize.js'), 'utf8');
+const liveSrc      = fs.readFileSync(path.join(repositoryRoot, 'public', 'live.js'),      'utf8');
+const mapSrc       = fs.readFileSync(path.join(repositoryRoot, 'public', 'map.js'),       'utf8');
+const rolesSrc     = fs.readFileSync(path.join(repositoryRoot, 'public', 'roles.js'),     'utf8');
+const customizeSrc = fs.readFileSync(path.join(repositoryRoot, 'public', 'customize.js'), 'utf8');
 
 console.log('\n=== #1438 A: roles.js makeRoleMarkerSVG uses CSS-var fill ===');
 {

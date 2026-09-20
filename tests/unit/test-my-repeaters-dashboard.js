@@ -12,6 +12,7 @@
  *    review fixes (escaping, status a11y text, fetch-once caching).
  */
 'use strict';
+const { repositoryRoot } = require('../helpers/repository-root');
 
 const fs = require('fs');
 const path = require('path');
@@ -22,8 +23,8 @@ function assert(cond, msg) {
   else { failed++; console.error('  ✗ ' + msg); }
 }
 
-const a = fs.readFileSync(path.join(__dirname, 'public', 'analytics.js'), 'utf8');
-const app = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+const a = fs.readFileSync(path.join(repositoryRoot, 'public', 'analytics.js'), 'utf8');
+const app = fs.readFileSync(path.join(repositoryRoot, 'public', 'app.js'), 'utf8');
 
 console.log('\n=== tab wiring + dropdown shortcut (structural) ===');
 assert(/data-tab="my-repeaters"[^>]*>\s*My Repeaters\s*</.test(a), 'tab bar has a "My Repeaters" button');
