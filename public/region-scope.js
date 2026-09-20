@@ -179,7 +179,7 @@
         home: element('region-scope-home').value,
         defaultRegion: element('region-scope-default').value,
       });
-      setCommandStage('region-scope-mutations', generated.mutationCommands, 'Select at least one region to generate hierarchy mutations.');
+      setCommandStage('region-scope-mutations', generated.mutationCommands, 'Select at least one region to generate a one-shot region def command.');
       setCommandStage('region-scope-verification', generated.verificationCommands, 'region');
       setCommandStage('region-scope-home-default-commands',
         generated.homeCommands.concat(generated.defaultCommands),
@@ -367,6 +367,7 @@
           '<p>Choose a proposed repeater location, review the recommendation reasons, then inspect each command stage before applying it.</p></header>' +
           '<div class="region-scope-layout">' +
             '<section class="region-scope-card" aria-labelledby="region-map-title"><h3 id="region-map-title">Proposed location</h3>' +
+              '<p class="region-scope-help">Enter coordinates or click the map. The helper compares that point with saved administrative boundaries; it does not estimate radio coverage.</p>' +
               '<form id="region-scope-coordinate-form" class="region-scope-coordinate-form">' +
                 '<label for="region-scope-lat">Latitude</label><input id="region-scope-lat" name="latitude" type="number" min="-90" max="90" step="any" required>' +
                 '<label for="region-scope-lon">Longitude</label><input id="region-scope-lon" name="longitude" type="number" min="-180" max="180" step="any" required>' +
@@ -375,20 +376,23 @@
               '<div id="region-scope-map" role="application" aria-label="Map for choosing a proposed repeater location"></div>' +
               '<p id="region-scope-status" class="region-scope-status" role="status" aria-live="polite"></p></section>' +
             '<section class="region-scope-card" aria-labelledby="region-list-title"><h3 id="region-list-title">Available regions</h3>' +
+              '<p class="region-scope-help">Checked regions are included in the repeater’s forwarding hierarchy. Selecting a child also includes every required ancestor.</p>' +
               '<p class="region-scope-status">Recommendation labels identify direct boundary matches, required ancestors, and nearby borders. Nearby regions are suggestions only and stay unchecked until you choose them.</p>' +
               '<div id="region-scope-list-frame" class="region-scope-list-frame" data-scrollable="false">' +
                 '<div class="region-scope-list-heading"><strong>Select regions</strong><span id="region-scope-list-cue">Loading regions…</span></div>' +
                 '<div id="region-scope-list" class="region-scope-list" tabindex="0" aria-describedby="region-scope-list-cue"></div>' +
               '</div>' +
               '<div class="region-scope-selectors">' +
-                '<label for="region-scope-home">Optional home region</label><select id="region-scope-home"><option value="">No choice</option></select>' +
-                '<label for="region-scope-default">Optional default scope</label><select id="region-scope-default"><option value="">No choice</option></select>' +
+                '<label for="region-scope-home">Optional home region</label><select id="region-scope-home" aria-describedby="region-scope-home-help"><option value="">No choice</option></select>' +
+                '<p id="region-scope-home-help" class="region-scope-help">Home region marks this repeater’s local place in the displayed hierarchy with <code>^</code>. It does not choose the scope for outgoing messages.</p>' +
+                '<label for="region-scope-default">Optional default scope</label><select id="region-scope-default" aria-describedby="region-scope-default-help"><option value="">No choice</option></select>' +
+                '<p id="region-scope-default-help" class="region-scope-help">Default scope is attached to this repeater’s flooded adverts and is used for flood replies when the request’s scope cannot be reused.</p>' +
               '</div>' +
               '<p class="region-scope-warning">The <code>region default</code> command persists immediately. Inspect the hierarchy before applying it.</p>' +
-              '<section class="region-scope-stage" aria-labelledby="region-mutations-title"><div class="region-scope-command-head"><h3 id="region-mutations-title">1. Hierarchy mutations</h3><button type="button" class="btn-secondary" id="copy-region-mutations">Copy mutations</button></div><pre id="region-scope-mutations" class="region-scope-commands" tabindex="0"></pre></section>' +
-              '<section class="region-scope-stage" aria-labelledby="region-verification-title"><div class="region-scope-command-head"><h3 id="region-verification-title">2. Inspect result</h3><button type="button" class="btn-secondary" id="copy-region-verification">Copy verification</button></div><pre id="region-scope-verification" class="region-scope-commands" tabindex="0"></pre></section>' +
-              '<section class="region-scope-stage" aria-labelledby="region-optional-title"><div class="region-scope-command-head"><h3 id="region-optional-title">3. Optional home/default</h3><button type="button" class="btn-secondary" id="copy-region-home-default">Copy optional choices</button></div><pre id="region-scope-home-default-commands" class="region-scope-commands" tabindex="0"></pre></section>' +
-              '<section class="region-scope-stage" aria-labelledby="region-save-title"><div class="region-scope-command-head"><h3 id="region-save-title">4. Persist hierarchy</h3><button type="button" class="btn-secondary" id="copy-region-save">Copy save</button></div><pre id="region-scope-save-command" class="region-scope-commands" tabindex="0"></pre></section>' +
+              '<section class="region-scope-stage" aria-labelledby="region-mutations-title"><div class="region-scope-command-head"><h3 id="region-mutations-title">1. Define hierarchy (one-shot)</h3><button type="button" class="btn-secondary" id="copy-region-mutations">Copy region def</button></div><p class="region-scope-help">Creates or reparents the complete selected tree in one current-firmware command. It does not remove unselected regions already on the repeater. If firmware reports an error, earlier mutations from that command may remain in memory; inspect the result before saving.</p><pre id="region-scope-mutations" class="region-scope-commands" tabindex="0"></pre></section>' +
+              '<section class="region-scope-stage" aria-labelledby="region-verification-title"><div class="region-scope-command-head"><h3 id="region-verification-title">2. Inspect result</h3><button type="button" class="btn-secondary" id="copy-region-verification">Copy verification</button></div><p class="region-scope-help">Displays the repeater’s resulting in-memory tree so you can verify parentage before saving.</p><pre id="region-scope-verification" class="region-scope-commands" tabindex="0"></pre></section>' +
+              '<section class="region-scope-stage" aria-labelledby="region-optional-title"><div class="region-scope-command-head"><h3 id="region-optional-title">3. Optional home/default</h3><button type="button" class="btn-secondary" id="copy-region-home-default">Copy optional choices</button></div><p class="region-scope-help">Applies only the home and default choices selected above. Leave both at “No choice” to skip this step.</p><pre id="region-scope-home-default-commands" class="region-scope-commands" tabindex="0"></pre></section>' +
+              '<section class="region-scope-stage" aria-labelledby="region-save-title"><div class="region-scope-command-head"><h3 id="region-save-title">4. Persist hierarchy</h3><button type="button" class="btn-secondary" id="copy-region-save">Copy save</button></div><p class="region-scope-help">Writes the verified in-memory hierarchy to persistent storage so it survives a reboot.</p><pre id="region-scope-save-command" class="region-scope-commands" tabindex="0"></pre></section>' +
               '<p id="region-scope-warning" class="region-scope-warning"></p>' +
             '</section>' +
           '</div>' +
@@ -404,7 +408,7 @@
       window.addEventListener('resize', listResizeHandler);
       themeColorHandler = showBoundaries;
       window.addEventListener('theme-changed', themeColorHandler);
-      copyStage('copy-region-mutations', 'region-scope-mutations', 'Hierarchy mutations');
+      copyStage('copy-region-mutations', 'region-scope-mutations', 'Region definition command');
       copyStage('copy-region-verification', 'region-scope-verification', 'Verification command');
       copyStage('copy-region-home-default', 'region-scope-home-default-commands', 'Optional home/default commands');
       copyStage('copy-region-save', 'region-scope-save-command', 'Persistence command');

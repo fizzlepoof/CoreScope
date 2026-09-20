@@ -64,11 +64,8 @@ assert.strictEqual(
 
 const generated = helpers.buildCommands(definitions, ['#city', '#west']);
 assert.deepStrictEqual(generated.mutationCommands, [
-  'region put #country',
-  'region put #east #country',
-  'region put #city #east',
-  'region put #west #country',
-], 'mutation commands include ancestors and create parent-before-child');
+  'region def #country #east #city|#country #west',
+], 'hierarchy mutation uses the current one-line region def syntax with a sibling jump');
 assert.deepStrictEqual(generated.verificationCommands, ['region'], 'verification is a separate stage');
 assert.deepStrictEqual(generated.persistenceCommands, ['region save'], 'persistence is a separate stage');
 assert.deepStrictEqual(generated.homeCommands, [], 'home is not chosen by default');
@@ -76,7 +73,14 @@ assert.deepStrictEqual(generated.defaultCommands, [], 'default is not chosen by 
 assert.deepStrictEqual(generated.commands, generated.mutationCommands, 'legacy commands alias contains only the primary mutation block');
 assert.match(generated.warning, /do not remove existing regions/i);
 assert.match(generated.defaultWarning, /persists immediately/i, 'default persistence is explained');
-assert.strictEqual(generated.mutationCommands.every((line) => line.length <= 160), true, 'explicit commands respect serial line limit');
+assert.strictEqual(generated.mutationCommands.every((line) => Buffer.byteLength(line, 'utf8') <= 158), true,
+  'region def commands respect the repeater serial byte limit');
+
+assert.deepStrictEqual(
+  helpers.buildCommands(definitions, ['#manual', '#west']).mutationCommands,
+  ['region def #country #west|* #manual'],
+  'separate root branches jump back to the wildcard in one region def command'
+);
 
 const staged = helpers.buildCommands(definitions, ['#city'], { home: '#east', defaultRegion: '#city' });
 assert.deepStrictEqual(staged.homeCommands, ['region home #east'], 'explicit home selection generates its own stage');
@@ -111,14 +115,55 @@ assert.throws(
   /32 regions/,
   'commands reject a selection larger than the firmware region table'
 );
-const maximumDefinitions = tooManyDefinitions.slice(0, 32);
+const maximumDefinitions = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef'.split('').map((name) => ({ name }));
 assert.doesNotThrow(
   () => helpers.buildCommands(maximumDefinitions, maximumDefinitions.map((definition) => definition.name)),
-  'commands accept the firmware maximum of 32 region entries'
+  'one-shot region def accepts the firmware maximum of 32 short region entries'
+);
+assert.strictEqual(
+  helpers.buildCommands(maximumDefinitions, maximumDefinitions.map((definition) => definition.name)).mutationCommands.length,
+  1,
+  'maximum short selection remains one one-shot command'
+);
+
+function chainWithLengths(lengths) {
+  return lengths.map((length, index) => ({
+    name: '#' + String.fromCharCode(65 + index).repeat(length - 1),
+    parentName: index ? '#' + String.fromCharCode(64 + index).repeat(lengths[index - 1] - 1) : '',
+  }));
+}
+const exactLimitChain = chainWithLengths([29, 29, 29, 28, 28]);
+assert.doesNotThrow(
+  () => helpers.buildCommands(exactLimitChain, [exactLimitChain.at(-1).name]),
+  '158-byte region def command fits the repeater serial input buffer'
+);
+const oversizedASCIIChain = chainWithLengths([29, 29, 29, 28, 29]);
+assert.throws(
+  () => helpers.buildCommands(oversizedASCIIChain, [oversizedASCIIChain.at(-1).name]),
+  /158 UTF-8 bytes/,
+  '159-byte region def command is rejected before serial truncation'
+);
+const oversizedMultibyteRoots = Array.from({ length: 6 }, (_, index) => ({
+  name: '#' + 'é'.repeat(13) + String.fromCharCode(65 + index),
+}));
+assert.throws(
+  () => helpers.buildCommands(oversizedMultibyteRoots, oversizedMultibyteRoots.map((definition) => definition.name)),
+  /158 UTF-8 bytes/,
+  'aggregate command limit is measured in UTF-8 bytes rather than JavaScript code units'
 );
 ['#bad.name', '#bad/name', '#bad:name', '#bad@name', ''].forEach((name) => {
   assert.throws(() => helpers.buildCommands([{ name }], [name]), /firmware/i, 'reject firmware-invalid name bytes: ' + JSON.stringify(name));
 });
+assert.throws(
+  () => helpers.buildCommands([{ name: '#root|jump' }], ['#root|jump']),
+  /region def delimiter/i,
+  'root names cannot inject a region def cursor jump'
+);
+assert.throws(
+  () => helpers.buildCommands([{ name: '#root' }, { name: '#child|jump', parentName: '#root' }], ['#child|jump']),
+  /region def delimiter/i,
+  'child names cannot inject a region def cursor jump'
+);
 ['#GOOD-name', '$private', '#café', '#[odd]'].forEach((name) => {
   assert.doesNotThrow(() => helpers.buildCommands([{ name }], [name]), 'accept every name whose UTF-8 bytes satisfy firmware: ' + name);
 });

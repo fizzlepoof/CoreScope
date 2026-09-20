@@ -18,6 +18,7 @@ html[data-theme="dark"] {
 .region-scope-coordinate-form input, .region-scope-selectors select { width: 100%; min-width: 0; padding: 7px 8px; color: var(--text); background: var(--surface-1); border: 1px solid var(--border); border-radius: 5px; }
 .region-scope-coordinate-form button { grid-column: 1 / -1; justify-self: start; }
 .region-scope-status { min-height: 1.5em; margin: 10px 0 0; color: var(--text-muted); }
+.region-scope-help { margin: 6px 0 10px; color: var(--text-muted); font-size: 12px; line-height: 1.45; }
 .region-scope-list-frame { position: relative; margin-top: 12px; border: 2px solid var(--border); border-radius: 8px; background: var(--surface-2); overflow: hidden; transition: border-color .15s ease, box-shadow .15s ease; }
 .region-scope-list-frame.is-scrollable { border-color: var(--accent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent); }
 .region-scope-list-frame.is-scrollable:not(.is-at-end)::after { content: ''; position: absolute; right: 12px; bottom: 0; left: 0; height: 28px; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--surface-2)); }
@@ -36,6 +37,7 @@ html[data-theme="dark"] {
 .region-scope-description { display: block; color: var(--text-muted); font-size: 12px; margin-top: 3px; white-space: pre-wrap; }
 .region-scope-badge { font-size: 10px; text-transform: uppercase; color: var(--accent); font-weight: var(--fw-bold, 700); }
 .region-scope-selectors { display: grid; grid-template-columns: minmax(130px, auto) minmax(0, 1fr); gap: 8px 10px; align-items: center; margin-top: 14px; }
+.region-scope-selectors .region-scope-help { grid-column: 2; margin: -4px 0 4px; }
 .region-scope-stage { margin-top: 16px; }
 .region-scope-command-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-top: 16px; }
 .region-scope-commands { min-height: 48px; margin: 8px 0; padding: 12px; overflow: auto; white-space: pre; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; }

@@ -178,8 +178,8 @@ async function clipboardText(page) {
     assert.strictEqual(await middle.isChecked(), true, 'manual removal resets when the proposed location changes');
 
     const mutations = await page.locator('#region-scope-mutations').textContent();
-    assert.match(mutations, /region put #tn/);
-    assert.match(mutations, /region put #middle #tn/);
+    assert.match(mutations, /region def #tn #middle/);
+    assert.doesNotMatch(mutations, /region put/, 'helper uses the current one-line hierarchy command');
     assert.doesNotMatch(mutations, /region (home|default|save)/, 'primary mutation stage excludes optional and persistence commands');
     assert.strictEqual((await page.locator('#region-scope-verification').textContent()).trim(), 'region');
     assert.strictEqual((await page.locator('#region-scope-save-command').textContent()).trim(), 'region save');
@@ -191,8 +191,9 @@ async function clipboardText(page) {
     assert.match(optional, /region default #middle/);
     assert.match(await page.locator('.region-scope-card').nth(1).textContent(), /persists immediately/);
 
-    await page.getByRole('button', { name: 'Copy mutations' }).click();
-    assert.doesNotMatch(await clipboardText(page), /region (home|default|save)/, 'mutation copy is staged');
+    await page.getByRole('button', { name: 'Copy region def' }).click();
+    assert.match(await clipboardText(page), /^region def /, 'one-shot hierarchy copy uses region def');
+    assert.doesNotMatch(await clipboardText(page), /region (home|default|save|put)/, 'hierarchy copy is staged');
     await page.getByRole('button', { name: 'Copy verification' }).click();
     assert.strictEqual(await clipboardText(page), 'region', 'verification copy is staged');
     await page.getByRole('button', { name: 'Copy optional choices' }).click();
@@ -209,7 +210,7 @@ async function clipboardText(page) {
     assert.strictEqual(await manual.isChecked(), true, 'manual addition survives a changed/outside location');
     assert.strictEqual(await page.getByLabel('Select #tn').isChecked(), false, 'old automatic geography does not accumulate');
     assert.strictEqual(await page.getByLabel('Select #middle').isChecked(), false, 'old automatic descendants do not accumulate');
-    assert.match(await page.locator('#region-scope-mutations').textContent(), /region put #manual/);
+    assert.match(await page.locator('#region-scope-mutations').textContent(), /region def #manual/);
     assert.doesNotMatch(await page.locator('#region-scope-mutations').textContent(), /#tn|#middle/);
 
     const cachedRequestCount = definitionRequestCount;
