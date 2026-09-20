@@ -6,7 +6,7 @@
  * above the top of the VCR bar — i.e. lastRow.bottom ≤ vcr.top — when both
  * the feed and VCR are visible.
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1206-vcr-overlap-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1206-vcr-overlap-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

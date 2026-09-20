@@ -12,7 +12,7 @@
  * exactly when the MQL listener is registered. After 5 round-trips it
  * MUST be ≤ 1.
  *
- * Run: BASE_URL=http://localhost:13581 node test-live-mql-leak-1180-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-live-mql-leak-1180-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

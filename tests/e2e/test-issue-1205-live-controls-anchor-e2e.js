@@ -8,7 +8,7 @@
  * viewports (issue #1205). The correct fix restores the pre-regression
  * structural pattern where the toggles live inside the MESH LIVE panel.
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1205-live-controls-anchor-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1205-live-controls-anchor-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

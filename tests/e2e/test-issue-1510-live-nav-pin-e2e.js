@@ -42,10 +42,10 @@ async function main() {
     });
   } catch (err) {
     if (process.env.CHROMIUM_REQUIRE === '1') {
-      console.error('test-issue-1510-live-nav-pin-e2e.js: FAIL — Chromium unavailable: ' + err.message);
+      console.error('tests/e2e/test-issue-1510-live-nav-pin-e2e.js: FAIL — Chromium unavailable: ' + err.message);
       process.exit(1);
     }
-    console.log('test-issue-1510-live-nav-pin-e2e.js: SKIP (Chromium unavailable: ' + err.message.split('\n')[0] + ')');
+    console.log('tests/e2e/test-issue-1510-live-nav-pin-e2e.js: SKIP (Chromium unavailable: ' + err.message.split('\n')[0] + ')');
     process.exit(0);
   }
 
@@ -102,11 +102,11 @@ async function main() {
 
   await browser.close();
   const total = passed + failed;
-  console.log(`\ntest-issue-1510-live-nav-pin-e2e.js: ${failed === 0 ? 'OK' : 'FAIL'} — ${passed}/${total} passed`);
+  console.log(`\ntests/e2e/test-issue-1510-live-nav-pin-e2e.js: ${failed === 0 ? 'OK' : 'FAIL'} — ${passed}/${total} passed`);
   process.exit(failed > 0 ? 1 : 0);
 }
 
 main().catch(err => {
-  console.error('test-issue-1510-live-nav-pin-e2e.js: ERROR', err);
+  console.error('tests/e2e/test-issue-1510-live-nav-pin-e2e.js: ERROR', err);
   process.exit(1);
 });

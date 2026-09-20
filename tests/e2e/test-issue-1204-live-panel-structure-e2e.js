@@ -43,7 +43,7 @@
  *       header still happens to lay out; sentinel guards future regressions
  *       that would re-introduce body-stacking on the toggle path).
  *
- * Run: BASE_URL=http://localhost:13581 node test-issue-1204-live-panel-structure-e2e.js
+ * Run: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1204-live-panel-structure-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

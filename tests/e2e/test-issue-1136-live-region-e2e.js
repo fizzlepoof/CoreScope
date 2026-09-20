@@ -21,7 +21,7 @@
  * Before the fix this test FAILS at assertion 2 (map empty) AND at
  * assertion 5 (feed never renders the packet). After the fix both pass.
  *
- * Usage: BASE_URL=http://localhost:13581 node test-issue-1136-live-region-e2e.js
+ * Usage: BASE_URL=http://localhost:13581 node tests/e2e/test-issue-1136-live-region-e2e.js
  */
 'use strict';
 const { chromium } = require('playwright');

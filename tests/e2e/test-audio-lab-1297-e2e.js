@@ -63,10 +63,10 @@ async function main() {
     });
   } catch (err) {
     if (requireChromium) {
-      console.error(`test-audio-lab-1297-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
+      console.error(`tests/e2e/test-audio-lab-1297-e2e.js: FAIL — Chromium required but unavailable: ${err.message}`);
       process.exit(1);
     }
-    console.log(`test-audio-lab-1297-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
+    console.log(`tests/e2e/test-audio-lab-1297-e2e.js: SKIP (Chromium unavailable: ${err.message.split('\n')[0]})`);
     process.exit(0);
   }
 
@@ -263,6 +263,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('test-audio-lab-1297-e2e.js: ERROR', err);
+  console.error('tests/e2e/test-audio-lab-1297-e2e.js: ERROR', err);
   process.exit(1);
 });
