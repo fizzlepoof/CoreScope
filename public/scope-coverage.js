@@ -41,12 +41,33 @@ function scopeCoverageIsDarkTheme() {
     (document.documentElement.getAttribute('data-theme') !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 }
 
+// Structured region definitions may assign an exact display color in the
+// Regions admin tool. Keep those assignments shared at module scope so the
+// coverage polygons, Regions legend, and Regions node markers all resolve a
+// name through the same table. Invalid/automatic colors are deliberately
+// omitted and continue through the deterministic hash fallback below.
+var scopeCoverageAssignedRegionColors = Object.create(null);
+function scopeCoverageSetRegionColors(definitions) {
+  var assigned = Object.create(null);
+  (Array.isArray(definitions) ? definitions : []).forEach(function (definition) {
+    if (!definition || typeof definition.name !== 'string') return;
+    var color = typeof definition.color === 'string' ? definition.color.trim() : '';
+    if (/^#[0-9a-f]{6}$/i.test(color)) assigned[definition.name] = color;
+  });
+  scopeCoverageAssignedRegionColors = assigned;
+}
+
 // The name-to-color mapping itself — the only place a region name becomes
 // an actual color. Every polygon fill, marker fill, and swatch anywhere in
 // the app must go through this so the same region always renders the same
 // color no matter which page/overlay is drawing it.
 function scopeCoverageRegionColor(name) {
+  if (scopeCoverageAssignedRegionColors[name]) return scopeCoverageAssignedRegionColors[name];
   return window.HashColor ? HashColor.hashToHsl(scopeCoverageRegionNameToHex(name), scopeCoverageIsDarkTheme() ? 'dark' : 'light') : '#888';
+}
+function scopeCoverageRegionOutline(name) {
+  if (scopeCoverageAssignedRegionColors[name]) return scopeCoverageAssignedRegionColors[name];
+  return window.HashColor ? HashColor.hashToOutline(scopeCoverageRegionNameToHex(name), scopeCoverageIsDarkTheme() ? 'dark' : 'light') : '#444';
 }
 function scopeCoverageRegionSwatchHtml(name) {
   return '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' +
@@ -161,8 +182,6 @@ function createScopeCoverageOverlay(map, opts) {
     shapesByName = {};
     var visibleRegions = _visibleRegions();
     if (!visibleRegions.length) return;
-    var theme = scopeCoverageIsDarkTheme() ? 'dark' : 'light';
-
     // Largest-area first so smaller/nested regions draw on top — see _hullArea.
     var regionsByZOrder = visibleRegions.slice().sort(function (a, b) {
       return _hullArea(b.hull) - _hullArea(a.hull);
@@ -171,9 +190,8 @@ function createScopeCoverageOverlay(map, opts) {
     var shapes = [];
     regionsByZOrder.forEach(function (region) {
       var hull = region.hull || [];
-      var colorHex = scopeCoverageRegionNameToHex(region.name);
-      var fill = window.HashColor ? HashColor.hashToHsl(colorHex, theme) : '#888';
-      var outline = window.HashColor ? HashColor.hashToOutline(colorHex, theme) : '#444';
+      var fill = scopeCoverageRegionColor(region.name);
+      var outline = scopeCoverageRegionOutline(region.name);
       var shape, baseStyle, hoverStyle;
       if (hull.length >= 3) {
         baseStyle = { color: outline, weight: 2, opacity: 0.8, fillColor: fill, fillOpacity: 0.15 };
@@ -301,7 +319,13 @@ function createScopeCoverageOverlay(map, opts) {
 
   async function load() {
     try {
-      var resp = await api('/scope-coverage', { ttl: 30000 });
+      var results = await Promise.all([
+        api('/scope-coverage', { ttl: 30000 }),
+        api('/config/hash-region-definitions', { ttl: 30000 }).then(function (definitions) {
+          scopeCoverageSetRegionColors(definitions);
+        }).catch(function () { /* color metadata is optional; retain fallback colors */ })
+      ]);
+      var resp = results[0];
       if (!resp || !resp.regions || !resp.regions.length) return;
       data = resp;
       var label = document.getElementById(labelId);

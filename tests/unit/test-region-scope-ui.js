@@ -3,17 +3,22 @@
 
 const assert = require('assert');
 const fs = require('fs');
+const vm = require('vm');
+const { fromRepositoryRoot } = require('../helpers/repository-root');
 
-const index = fs.readFileSync('public/index.html', 'utf8');
-const app = fs.readFileSync('public/app.js', 'utf8');
-const scopeJS = fs.readFileSync('public/region-scope.js', 'utf8');
-const scopeCSS = fs.readFileSync('public/region-scope.css', 'utf8');
-const bottomNav = fs.readFileSync('public/bottom-nav.js', 'utf8');
-const testAll = fs.readFileSync('test-all.sh', 'utf8');
-const packageJSON = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-const testManifest = JSON.parse(fs.readFileSync('tests/manifest.json', 'utf8'));
-const adminHTML = fs.readFileSync('public/admin/hash-regions.html', 'utf8');
-const adminJS = fs.readFileSync('public/admin/hash-regions.js', 'utf8');
+const index = fs.readFileSync(fromRepositoryRoot('public/index.html'), 'utf8');
+const app = fs.readFileSync(fromRepositoryRoot('public/app.js'), 'utf8');
+const scopeJS = fs.readFileSync(fromRepositoryRoot('public/region-scope.js'), 'utf8');
+const scopeCoverageJS = fs.readFileSync(fromRepositoryRoot('public/scope-coverage.js'), 'utf8');
+const liveJS = fs.readFileSync(fromRepositoryRoot('public/live.js'), 'utf8');
+const regionsJS = fs.readFileSync(fromRepositoryRoot('public/regions.js'), 'utf8');
+const scopeCSS = fs.readFileSync(fromRepositoryRoot('public/region-scope.css'), 'utf8');
+const bottomNav = fs.readFileSync(fromRepositoryRoot('public/bottom-nav.js'), 'utf8');
+const testAll = fs.readFileSync(fromRepositoryRoot('test-all.sh'), 'utf8');
+const packageJSON = JSON.parse(fs.readFileSync(fromRepositoryRoot('package.json'), 'utf8'));
+const testManifest = JSON.parse(fs.readFileSync(fromRepositoryRoot('tests/manifest.json'), 'utf8'));
+const adminHTML = fs.readFileSync(fromRepositoryRoot('public/admin/hash-regions.html'), 'utf8');
+const adminJS = fs.readFileSync(fromRepositoryRoot('public/admin/hash-regions.js'), 'utf8');
 
 assert.match(index, /href="#\/tools\/region-scope"/, 'public navigation links the helper');
 assert.match(index, /region-scope-helpers\.js\?v=__BUST__/, 'shared helper is loaded by browser');
@@ -66,4 +71,51 @@ assert.match(adminJS, /orderDefinitionsParentFirst/, 'admin presents definitions
 assert.match(adminJS, /corescope-hash-regions-version/, 'saving definitions invalidates the public helper cache');
 assert.doesNotMatch(adminJS, /\.innerHTML\s*=\s*[^'"`]/, 'admin does not inject untrusted values through innerHTML');
 
-console.log('tests/unit/test-region-scope-ui.js: all tests passed');
+async function verifyCoverageColors() {
+  const hashColor = {
+    hashToHsl: (hex, theme) => `fallback:${hex}:${theme}`,
+    hashToOutline: (hex, theme) => `outline:${hex}:${theme}`,
+  };
+  const context = {
+    window: { HashColor: hashColor, matchMedia: () => ({ matches: false }) },
+    HashColor: hashColor,
+    document: {
+      documentElement: { getAttribute: () => 'light' },
+      getElementById: () => null,
+    },
+    localStorage: { getItem: () => null, setItem: () => {} },
+    console,
+  };
+  vm.createContext(context);
+  vm.runInContext(scopeCoverageJS, context);
+
+  context.scopeCoverageSetRegionColors([
+    { name: '#us-tn', color: '#12abef' },
+    { name: '#invalid', color: 'blue' },
+  ]);
+  assert.strictEqual(context.scopeCoverageRegionColor('#us-tn'), '#12abef', 'saved Regions-tool color overrides the hash fallback');
+  assert.match(context.scopeCoverageRegionColor('#invalid'), /^fallback:/, 'invalid saved colors retain deterministic fallback');
+  assert.match(context.scopeCoverageRegionColor('#automatic'), /^fallback:/, 'regions without an assigned color retain deterministic fallback');
+  assert.match(scopeCoverageJS, /api\('\/config\/hash-region-definitions'/, 'coverage overlay loads Regions-tool color definitions');
+  assert.match(scopeCoverageJS, /var fill = scopeCoverageRegionColor\(region\.name\)/, 'coverage polygons use the shared region color resolver');
+  assert.match(liveJS, /createScopeCoverageOverlay\(/, 'Live map uses the shared coverage overlay');
+  assert.match(regionsJS, /createScopeCoverageOverlay\(/, 'Regions tab uses the shared coverage overlay');
+  assert.match(regionsJS, /scopeCoverageRegionColor\(activeRegionFilter \|\| regions\[0\]\)/, 'Regions node markers use the same color resolver as polygons and legend swatches');
+
+  context.api = async path => {
+    if (path === '/config/hash-region-definitions') throw new Error('definitions unavailable');
+    return { regions: [{ name: '#fallback', nodeCount: 1, hull: [[1, 2]] }] };
+  };
+  const overlay = context.createScopeCoverageOverlay({ on() {}, off() {}, removeLayer() {} }, {
+    checkboxId: 'missing-toggle', labelId: 'missing-label', storageKey: 'test-scope-coverage',
+  });
+  await overlay.load();
+  assert.strictEqual(overlay.getRegions().length, 1, 'definition failure does not suppress scope coverage data');
+}
+
+verifyCoverageColors().then(() => {
+  console.log('tests/unit/test-region-scope-ui.js: all tests passed');
+}).catch(error => {
+  console.error(error);
+  process.exitCode = 1;
+});
