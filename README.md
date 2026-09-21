@@ -229,8 +229,9 @@ corescope/
 │   └── entrypoint-go.sh     # Container entrypoint
 ├── Dockerfile               # Multi-stage Go build + Alpine runtime
 ├── config.example.json      # Example configuration
-├── test-*.js                # Node.js test suite (frontend + legacy)
-└── tools/                   # Generators, E2E tests, utilities
+├── tests/                   # Manifest-backed unit, integration, and E2E tests
+├── scripts/tests/           # Test manifest validator and canonical runner
+└── tools/                   # Generators and utilities
 ```
 
 ## For Developers
