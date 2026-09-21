@@ -87,6 +87,12 @@ async function findPacketDetailByType(page, predicate, maxRows = 40) {
   await step('Non-ADVERT packet detail does NOT render <dt>Location</dt>', async () => {
     await gotoPackets(page);
     // Filter to a non-ADVERT type to make the search efficient.
+    const fInput = await page.$('#packetFilterInput');
+    if (fInput) {
+      await fInput.fill('type != ADVERT');
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(600);
+    }
     const meta = await findPacketDetailByType(
       page,
       (m) => m.typeName && m.typeName !== 'Advert',
