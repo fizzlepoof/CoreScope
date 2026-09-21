@@ -122,6 +122,45 @@ function scopeCoverageGeometryLatLngs(geometry) {
   return null;
 }
 
+function scopeCoverageVisibleNamesFromHash(regions, params) {
+  var configured = new Set((regions || []).map(function (region) { return region.name; }));
+  if (params && params.has('regions')) {
+    return new Set(params.getAll('regions').filter(function (name) { return configured.has(name); }));
+  }
+  return new Set((regions || []).map(function (region) { return region.name; }).filter(function (name) {
+    return name !== '#us' && name !== '#us-southeast';
+  }));
+}
+
+function scopeCoverageWriteVisibleNames(params, names) {
+  params.delete('regions');
+  var selected = Array.from(names || []).sort();
+  if (!selected.length) {
+    params.append('regions', '');
+    return params;
+  }
+  selected.forEach(function (name) { params.append('regions', name); });
+  return params;
+}
+
+function scopeCoverageActiveScopedNodes(nodes, memberships, selectedNames, statusForNode) {
+  var nodeByPubkey = new Map();
+  (nodes || []).forEach(function (node) {
+    if (node && node.public_key) nodeByPubkey.set(String(node.public_key).toLowerCase(), node);
+  });
+  var selected = selectedNames instanceof Set ? selectedNames : new Set(selectedNames || []);
+  var result = [];
+  (memberships || []).forEach(function (membership) {
+    var node = membership && nodeByPubkey.get(String(membership.pubkey || '').toLowerCase());
+    var regions = membership && Array.isArray(membership.regions) ? membership.regions : [];
+    if (!node || !regions.some(function (name) { return selected.has(name); })) return;
+    var lastSeenMs = new Date(node.last_heard || node.last_seen || '').getTime();
+    if (statusForNode(node.role, lastSeenMs) !== 'active') return;
+    result.push({ node: node, regions: regions });
+  });
+  return result;
+}
+
 function createScopeCoverageOverlay(map, opts) {
   var checkboxId = opts.checkboxId;
   var labelId = opts.labelId;
@@ -145,18 +184,20 @@ function createScopeCoverageOverlay(map, opts) {
   // so a page load with the toggle off (the default) does none of that
   // work. See activate() below.
   var activated = false;
+  var destroyed = false;
+  var loadGeneration = 0;
 
   // Region name to isolate, or null to show every region. Set via
   // setRegionFilter() (e.g. from a page-level legend) — consumed by both
   // render() (which shape to draw) and _polygonMatchesAt() (which regions
   // hover/click can find), so a filtered-out region is fully inert, not
   // just invisible.
-  var activeRegionFilter = null;
+  var visibleRegionNames = null;
 
   function _visibleRegions() {
     if (!data || !data.regions) return [];
-    if (!activeRegionFilter) return data.regions;
-    return data.regions.filter(function (r) { return r.name === activeRegionFilter; });
+    if (visibleRegionNames === null) return data.regions;
+    return data.regions.filter(function (r) { return visibleRegionNames.has(r.name); });
   }
 
   // Rough planar polygon area (shoelace formula) — not a real geographic
@@ -406,20 +447,23 @@ function createScopeCoverageOverlay(map, opts) {
   }
 
   async function load() {
+    if (destroyed) return false;
+    var generation = ++loadGeneration;
     try {
       var results = await Promise.all([
         api('/scope-coverage', { ttl: 30000 }),
-        api('/config/hash-region-definitions', { ttl: 30000 }).then(function (definitions) {
-          scopeCoverageSetRegionColors(definitions);
-          return Array.isArray(definitions) ? definitions : [];
-        }).catch(function () { return []; /* keep observed membership/counts, but never infer geometry */ })
+        api('/config/hash-region-definitions', { ttl: 30000 })
+          .then(function (definitions) { return Array.isArray(definitions) ? definitions : []; })
+          .catch(function () { return []; /* keep observed membership/counts, but never infer geometry */ })
       ]);
+      if (destroyed || generation !== loadGeneration) return false;
       var resp = results[0] || { regions: [] };
       var definitions = results[1];
+      scopeCoverageSetRegionColors(definitions);
       data = Array.isArray(definitions)
         ? { regions: scopeCoverageCombineRegions(resp.regions || [], definitions) }
         : resp;
-      if (!data.regions || !data.regions.length) return;
+      if (!data.regions || !data.regions.length) return true;
       var label = document.getElementById(labelId);
       var el = document.getElementById(checkboxId);
       if (label) label.style.display = '';
@@ -440,7 +484,8 @@ function createScopeCoverageOverlay(map, opts) {
         // isn't coming.
         if (el.checked) activate();
       }
-    } catch (e) { /* no hash regions configured / endpoint unavailable */ }
+      return true;
+    } catch (e) { return false; /* no hash regions configured / endpoint unavailable */ }
   }
 
   function refreshTheme() {
@@ -456,10 +501,22 @@ function createScopeCoverageOverlay(map, opts) {
   // clearRegionFilter()) to show every region again. No-op until the
   // overlay is activated — there's no layer to rebuild yet.
   function setRegionFilter(name) {
-    activeRegionFilter = name || null;
+    visibleRegionNames = name ? new Set([name]) : null;
     if (activated) render();
   }
   function clearRegionFilter() { setRegionFilter(null); }
+
+  function setVisibleRegions(names) {
+    visibleRegionNames = new Set(names || []);
+    if (activated) render();
+  }
+
+  function getVisibleRegions() {
+    if (visibleRegionNames === null) {
+      return new Set(((data && data.regions) || []).map(function (region) { return region.name; }));
+    }
+    return new Set(visibleRegionNames);
+  }
 
   // The full, unfiltered region list from the last successful load() — for
   // a page-level legend to enumerate every region the overlay knows about,
@@ -467,17 +524,20 @@ function createScopeCoverageOverlay(map, opts) {
   function getRegions() { return (data && data.regions) || []; }
 
   function destroy() {
+    destroyed = true;
+    loadGeneration++;
     if (layer) { map.removeLayer(layer); layer = null; }
     map.off('mousemove', onMouseMove);
     map.off('click', onMapClick);
     data = null;
     shapesByName = null;
     hoverTooltip = null;
-    activeRegionFilter = null;
+    visibleRegionNames = null;
   }
 
   return {
     load: load, refreshTheme: refreshTheme, destroy: destroy,
-    setRegionFilter: setRegionFilter, clearRegionFilter: clearRegionFilter, getRegions: getRegions
+    setRegionFilter: setRegionFilter, clearRegionFilter: clearRegionFilter,
+    setVisibleRegions: setVisibleRegions, getVisibleRegions: getVisibleRegions, getRegions: getRegions
   };
 }

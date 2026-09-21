@@ -130,7 +130,7 @@ async function verifyCoverageColors() {
   assert.match(scopeCoverageJS, /scopeCoverageGeometryLatLngs\(region\.geometry\)/, 'coverage polygons use saved admin geometry');
   assert.match(liveJS, /createScopeCoverageOverlay\(/, 'Live map uses the shared coverage overlay');
   assert.match(regionsJS, /createScopeCoverageOverlay\(/, 'Regions tab uses the shared coverage overlay');
-  assert.match(regionsJS, /scopeCoverageRegionColor\(activeRegionFilter \|\| regions\[0\]\)/, 'Regions node markers use the same color resolver as polygons and legend swatches');
+  assert.match(regionsJS, /scopeCoverageRegionColor\(primaryRegion \|\| regions\[0\]\)/, 'Regions node markers use the selected scope color resolver shared with polygons and legend swatches');
 
   context.api = async path => {
     if (path === '/config/hash-region-definitions') throw new Error('definitions unavailable');

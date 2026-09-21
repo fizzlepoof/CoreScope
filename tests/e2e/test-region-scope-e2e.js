@@ -57,13 +57,21 @@ const server = http.createServer((request, response) => {
   }
   if (url.pathname === '/api/scope-coverage/nodes') {
     return send(response, 200, 'application/json', JSON.stringify({
-      nodes: [{ pubkey: 'outside-node', regions: ['#tn'] }],
+      nodes: [
+        { pubkey: 'outside-node', regions: ['#tn'] },
+        { pubkey: 'kentucky-node', regions: ['#us-ky'] },
+        { pubkey: 'stale-node', regions: ['#tn'] },
+      ],
     }));
   }
   if (url.pathname === '/api/nodes') {
     return send(response, 200, 'application/json', JSON.stringify({
-      nodes: [{ public_key: 'outside-node', name: 'Outside relay', role: 'repeater', lat: 40, lon: -70 }],
-      total: 1, limit: 1000, offset: 0,
+      nodes: [
+        { public_key: 'outside-node', name: 'Outside relay', role: 'repeater', lat: 40, lon: -70, last_seen: new Date().toISOString() },
+        { public_key: 'kentucky-node', name: 'Kentucky relay', role: 'repeater', lat: 37, lon: -86, last_seen: new Date().toISOString() },
+        { public_key: 'stale-node', name: 'Stale relay', role: 'repeater', lat: 36, lon: -87, last_seen: '2000-01-01T00:00:00Z' },
+      ],
+      total: 3, limit: 1000, offset: 0,
     }));
   }
   if (url.pathname === '/geo/us-counties.geojson' && failCounties) {
@@ -291,6 +299,14 @@ async function clipboardText(page) {
       'Regions tab uses the assigned color for both the saved polygon and an out-of-bound relay marker');
     assert.strictEqual(await page.locator('[class*="regionsNodes"] path[fill="#12abef"]').count(), 1,
       'relay outside the saved boundary remains visible without expanding the polygon');
+    assert.strictEqual(await page.locator('[class*="regionsNodes"] path').count(), 2,
+      'Regions tab renders active scoped nodes and excludes stale scoped nodes');
+    await page.getByLabel('Show #middle').uncheck();
+    await page.getByLabel('Show #manual').uncheck();
+    await page.getByLabel('Show #us-ky').uncheck();
+    await page.waitForFunction(() => document.querySelectorAll('[class*="regionsNodes"] path').length === 1);
+    assert.match(page.url(), /#\/regions\?regions=%23tn/, 'Regions selection is bookmarkable in the hash URL');
+    assert.strictEqual(await page.getByLabel('Show #tn').isChecked(), true, 'selected region remains visible');
 
     await page.evaluate(() => localStorage.setItem('meshcore-live-scope-coverage', 'true'));
     await page.goto(base + '/#/live?lat=35.5&lon=-86&zoom=6', { waitUntil: 'domcontentloaded' });
@@ -308,6 +324,16 @@ async function clipboardText(page) {
     await page.locator('.leaflet-overlay-pane canvas').first().waitFor({ state: 'attached' });
     assert.strictEqual(await liveCoverageToggle.isChecked(), true,
       'Live map activates the shared saved-region coverage renderer');
+    const liveNodeCountBefore = await page.evaluate(() => window._liveNodeMarkers().size);
+    await page.getByLabel('Show #tn boundary').evaluate(input => {
+      input.checked = false;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    assert.match(page.url(), /regions=/, 'Live per-region polygon visibility is bookmarkable in the hash URL');
+    assert.strictEqual(await page.getByLabel('Show #tn boundary').isChecked(), false,
+      'Live region controls hide an individual saved boundary');
+    assert.strictEqual(await page.evaluate(() => window._liveNodeMarkers().size), liveNodeCountBefore,
+      'Live region visibility changes polygons only and leave node markers unchanged');
 
     await page.goto(base + '/admin/hash-regions', { waitUntil: 'domcontentloaded' });
     await page.locator('.region-definition-card').first().waitFor();
@@ -421,6 +447,37 @@ async function clipboardText(page) {
     const relevantErrors = pageErrors.filter(message => !/WebSocket|Failed to fetch|Unexpected end of JSON/.test(message));
     assert.deepStrictEqual(relevantErrors, [], 'no unexpected browser errors: ' + relevantErrors.join('; '));
     await context.close();
+
+    const lifecycleContext = await browser.newContext({ viewport: { width: 1000, height: 700 } });
+    const lifecyclePage = await lifecycleContext.newPage();
+    const lifecycleErrors = [];
+    lifecyclePage.on('pageerror', error => lifecycleErrors.push(error.message));
+    await lifecyclePage.goto(base + '/#/tools', { waitUntil: 'domcontentloaded' });
+    await lifecyclePage.evaluate(() => {
+      window.__regionsToggleChangeBindings = 0;
+      const originalAdd = EventTarget.prototype.addEventListener;
+      EventTarget.prototype.addEventListener = function (type, listener, options) {
+        if (type === 'change' && this && this.id === 'regionsScopeCoverageToggle') {
+          window.__regionsToggleChangeBindings++;
+        }
+        return originalAdd.call(this, type, listener, options);
+      };
+    });
+    delayNextDefinitions = true;
+    const lifecycleRequestStart = definitionRequestCount;
+    await lifecyclePage.evaluate(() => { location.hash = '#/regions'; });
+    for (let attempts = 0; attempts < 20 && definitionRequestCount === lifecycleRequestStart; attempts++) {
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    assert(definitionRequestCount > lifecycleRequestStart, 'delayed Regions load starts before route teardown');
+    await lifecyclePage.evaluate(() => { location.hash = '#/tools'; });
+    await new Promise(resolve => setTimeout(resolve, 20));
+    await lifecyclePage.evaluate(() => { location.hash = '#/regions'; });
+    await lifecyclePage.locator('#regionsLegendList .regions-legend-row').first().waitFor();
+    assert.strictEqual(await lifecyclePage.evaluate(() => window.__regionsToggleChangeBindings), 1,
+      'stale Regions overlay load cannot bind to remounted controls');
+    assert.deepStrictEqual(lifecycleErrors, [], 'delayed Regions teardown/remount has no page errors');
+    await lifecycleContext.close();
 
     const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const mobile = await mobileContext.newPage();
