@@ -780,6 +780,19 @@ console.log('\n=== packets.js: buildFieldTable ===');
     assert(!result.includes('DA2A'));
   });
 
+  test('getWirePathHops treats present but truncated raw bytes as an empty wire path', () => {
+    const hops = api.getWirePathHops('11', 1);
+    assert(Array.isArray(hops));
+    assert.strictEqual(hops.length, 0);
+  });
+
+  test('canUseResolvedPath rejects same-length identities from a different reported path', () => {
+    assert.strictEqual(
+      api.canUseResolvedPath(['7D1D', '1F5D'], ['7D1D', 'DA2A'], ['pubkey-a', 'pubkey-b']),
+      false
+    );
+  });
+
   test('buildFieldTable renders ADVERT payload', () => {
     const pkt = { raw_hex: 'c040', route_type: 1, payload_type: 4 };
     const decoded = {
