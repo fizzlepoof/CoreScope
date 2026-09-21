@@ -62,7 +62,7 @@ assert.match(bottomNav, /region-scope/, 'mobile navigation exposes the helper ro
 assert.match(scopeCSS, /@media \(max-width: 800px\)/, 'helper has mobile layout coverage');
 assert.match(scopeCSS, /scrollbar-gutter:\s*stable/, 'available region list reserves visible scrollbar space');
 assert.match(scopeCSS, /region-scope-list-frame\.is-scrollable/, 'scrollable list has a distinct visual treatment');
-assert.match(scopeCSS, /var\(--region-scope-color\)/, 'region cards visibly use their assigned colors');
+assert.match(scopeCSS, /var\(--region-scope-color,\s*var\(--accent\)\)/, 'region cards visibly use assigned colors with a safe pre-initialization fallback');
 assert.match(testAll, /run-manifest\.js --profile local-package-and-test-all/, 'canonical full test runner delegates to the manifest orchestrator');
 assert.ok(testManifest.tests.some(test => test.path === 'tests/e2e/test-region-scope-e2e.js' && test.suite === 'e2e' && test.status === 'active'), 'canonical manifest includes real Chromium coverage');
 assert.doesNotMatch(packageJSON.scripts['test:unit'], /region-scope-e2e/, 'fast unit runner does not require a browser');
