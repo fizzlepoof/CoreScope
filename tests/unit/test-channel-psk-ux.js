@@ -90,9 +90,9 @@ async function run() {
   // E2E DOM: distinct badge class/marker for user-added channels
   assert(chSrc.includes('ch-user-added'),
     'renderChannelList emits ch-user-added marker for keyed channels');
-  // Distinct icon
-  assert(chSrc.includes('🔓'),
-    'user-added rows use a distinct unlocked icon (🔓) from server-encrypted (🔒)');
+  // Distinct unlocked icon
+  assert(chSrc.includes('ph-lock-open'),
+    'user-added rows use a distinct unlocked icon from server-encrypted lock');
 
   // addUserChannel accepts label
   assert(/addUserChannel\s*\(\s*val\s*,\s*\w*label/i.test(chSrc) ||

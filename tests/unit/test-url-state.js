@@ -2,7 +2,8 @@
 'use strict';
 
 const assert = require('assert');
-const URLState = require('./public/url-state.js');
+const { fromRepositoryRoot } = require('../helpers/repository-root');
+const URLState = require(fromRepositoryRoot('public/url-state.js'));
 
 let passed = 0, failed = 0;
 function test(name, fn) {

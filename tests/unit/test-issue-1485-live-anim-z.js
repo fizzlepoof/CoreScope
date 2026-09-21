@@ -78,14 +78,17 @@ assert(pathsLayerRe.test(liveSrc),
 
 console.log('\n=== #1485 live anim z-order C: per-shape inheritance ===');
 
-// At least one polyline/circleMarker addTo(animLayer) call exists — we're
-// trusting Leaflet pane inheritance from the LayerGroup parent. Sanity
-// check that the four animLayer / pathsLayer addTo sites still exist
-// (regression detector if someone moves circles to the default pane).
+// The two current animLayer shape sites are the ghost-hop circleMarker and
+// matrix-rain character marker. Pin both concrete classes so removing either
+// site or moving it to the default pane is detected.
 const animAddTo = (liveSrc.match(/\.addTo\(animLayer\)/g) || []).length;
 const pathsAddTo = (liveSrc.match(/\.addTo\(pathsLayer\)/g) || []).length;
-assert(animAddTo >= 3,
-  'animLayer still hosts >=3 .addTo() animation shapes (got ' + animAddTo + ')');
+assert(animAddTo === 2,
+  'animLayer hosts exactly its two current animation shape sites (got ' + animAddTo + ')');
+assert(/L\.circleMarker\(hp\.pos,[\s\S]{0,220}?\.addTo\(animLayer\)/.test(liveSrc),
+  'ghost-hop L.circleMarker shape is added to animLayer');
+assert(/L\.marker\(\[lat, lon\],[\s\S]{0,600}?\.addTo\(animLayer\)/.test(liveSrc),
+  'matrix-character L.marker shape is added to animLayer');
 assert(pathsAddTo >= 3,
   'pathsLayer still hosts >=3 .addTo() trail shapes (got ' + pathsAddTo + ')');
 

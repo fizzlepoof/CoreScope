@@ -304,58 +304,21 @@ function createScopeCoverageOverlay(map, opts) {
 
     var shapes = [];
     regionsByZOrder.forEach(function (region) {
-      var hull = region.hull || [];
       var fill = scopeCoverageRegionColor(region.name);
       var outline = scopeCoverageRegionOutline(region.name);
-      var shape, baseStyle, hoverStyle, isPolygon = false;
-      var hasAuthoritativeGeometry = Object.prototype.hasOwnProperty.call(region, 'geometry');
-      if (hasAuthoritativeGeometry) {
-        var latlngs = scopeCoverageGeometryLatLngs(region.geometry);
-        if (!latlngs) return; // Count/membership remains visible; no inferred polygon.
-        baseStyle = { color: outline, weight: 2, opacity: 0.8, fillColor: fill, fillOpacity: 0.15 };
-        hoverStyle = { weight: 4, opacity: 1, fillOpacity: 0.4 };
-        shape = L.polygon(latlngs, baseStyle);
-        isPolygon = true;
-      } else if (hull.length >= 3) {
-        // Compatibility fallback only when definition metadata could not load.
-        baseStyle = { color: outline, weight: 2, opacity: 0.8, fillColor: fill, fillOpacity: 0.15 };
-        hoverStyle = { weight: 4, opacity: 1, fillOpacity: 0.4 };
-        shape = L.polygon(hull, baseStyle);
-        isPolygon = true;
-      } else if (hull.length === 2) {
-        baseStyle = { color: outline, weight: 3, opacity: 0.8, dashArray: '4 4' };
-        hoverStyle = { weight: 5, opacity: 1 };
-        shape = L.polyline(hull, baseStyle);
-      } else if (hull.length === 1) {
-        baseStyle = { radius: 10, color: outline, weight: 2, fillColor: fill, fillOpacity: 0.6 };
-        hoverStyle = { weight: 4, fillOpacity: 0.9 };
-        shape = L.circleMarker(hull[0], baseStyle);
-      } else {
-        return;
-      }
+      var shape, baseStyle, hoverStyle;
+      var latlngs = scopeCoverageGeometryLatLngs(region.geometry);
+      if (!latlngs) return; // Count/membership remains visible; no inferred polygon.
+      baseStyle = { color: outline, weight: 2, opacity: 0.8, fillColor: fill, fillOpacity: 0.15 };
+      hoverStyle = { weight: 4, opacity: 1, fillOpacity: 0.4 };
+      shape = L.polygon(latlngs, baseStyle);
 
       shape._scopeBaseStyle = baseStyle;
       shape._scopeHoverStyle = hoverStyle;
 
-      if (isPolygon) {
-        // Polygons: no native hover/click bindings here at all — with
-        // overlapping boundaries, Leaflet would only ever reach whichever shape
-        // happens to be topmost at that pixel, exactly the "can't hover
-        // it, too many layers on top" problem. Real selection instead
-        // happens via the map-level mousemove/click handlers below, which
-        // do their own point-in-polygon test against every region, so a
-        // fully-buried region is still reachable.
-      } else {
-        // Lines (2-point hulls) and single-point markers don't have the
-        // same overlap problem in practice, so they keep simple native
-        // Leaflet hover/click — routed through the same shared highlight
-        // function so all hover paths agree on state.
-        var label = esc(region.name) + ' <span style="opacity:0.75">(' + region.nodeCount + ' node' + (region.nodeCount === 1 ? '' : 's') + ')</span>';
-        shape.bindTooltip(label, { sticky: true, direction: 'top', opacity: 0.95 });
-        shape.bindPopup('<strong>' + esc(region.name) + '</strong><br>' + region.nodeCount + ' node' + (region.nodeCount === 1 ? '' : 's'));
-        shape.on('mouseover', function () { _setHighlighted([region.name]); });
-        shape.on('mouseout', function () { _setHighlighted([]); });
-      }
+      // No native hover/click bindings here: with overlapping boundaries,
+      // Leaflet would only reach whichever polygon is topmost at that pixel.
+      // Map-level handlers below test every saved geometry instead.
 
       shapes.push(shape);
       shapesByName[region.name] = shape;
@@ -449,7 +412,7 @@ function createScopeCoverageOverlay(map, opts) {
         api('/config/hash-region-definitions', { ttl: 30000 }).then(function (definitions) {
           scopeCoverageSetRegionColors(definitions);
           return Array.isArray(definitions) ? definitions : [];
-        }).catch(function () { return null; /* preserve legacy fallback if metadata is unavailable */ })
+        }).catch(function () { return []; /* keep observed membership/counts, but never infer geometry */ })
       ]);
       var resp = results[0] || { regions: [] };
       var definitions = results[1];

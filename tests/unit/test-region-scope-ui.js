@@ -142,6 +142,34 @@ async function verifyCoverageColors() {
   await overlay.load();
   assert.strictEqual(overlay.getRegions().length, 1, 'definition failure does not suppress scope coverage data');
 
+  const inferredShapeCalls = [];
+  const failedDefinitionToggle = { checked: true, addEventListener() {} };
+  context.document.getElementById = id => id === 'failed-definition-toggle'
+    ? failedDefinitionToggle
+    : (id === 'failed-definition-label' ? { style: {} } : null);
+  context.L = {
+    polygon() { inferredShapeCalls.push('polygon'); return {}; },
+    polyline() { inferredShapeCalls.push('polyline'); return {}; },
+    circleMarker() { inferredShapeCalls.push('circleMarker'); return {}; },
+    layerGroup() { return { addTo() {} }; },
+  };
+  context.api = async path => {
+    if (path === '/config/hash-region-definitions') throw new Error('definitions unavailable');
+    return { regions: [{ name: '#observed-only', nodeCount: 4, hull: [[35, -88], [36, -87], [35, -86]] }] };
+  };
+  const failedDefinitionOverlay = context.createScopeCoverageOverlay({
+    on() {}, off() {}, removeLayer() {}, hasLayer() { return true; },
+  }, {
+    checkboxId: 'failed-definition-toggle', labelId: 'failed-definition-label', storageKey: 'failed-definition-coverage',
+  });
+  await failedDefinitionOverlay.load();
+  assert.deepStrictEqual(inferredShapeCalls, [], 'definition failure cannot render an observed hull as a polygon, line, or marker');
+  assert.deepStrictEqual(
+    JSON.parse(JSON.stringify(failedDefinitionOverlay.getRegions())),
+    [{ name: '#observed-only', nodeCount: 4, geometry: null }],
+    'definition failure preserves observed region membership and counts without treating its hull as geometry'
+  );
+
   let renderedPolygon = null;
   const toggle = { checked: true, addEventListener() {} };
   const label = { style: {} };

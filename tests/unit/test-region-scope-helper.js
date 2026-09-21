@@ -2,7 +2,8 @@
 'use strict';
 
 const assert = require('assert');
-const helpers = require('./public/region-scope-helpers.js');
+const { fromRepositoryRoot } = require('../helpers/repository-root');
+const helpers = require(fromRepositoryRoot('public/region-scope-helpers.js'));
 
 const squareWithHole = {
   type: 'Polygon',

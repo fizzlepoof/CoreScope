@@ -1,6 +1,11 @@
 package main
 
-import "log"
+import (
+	"log"
+	"time"
+)
+
+const mandatoryBackgroundRecomputeRetryInterval = 100 * time.Millisecond
 
 func (s *PacketStore) initBackgroundRecomputeGate() {
 	s.backgroundRecomputeGateOnce.Do(func() {
@@ -10,14 +15,30 @@ func (s *PacketStore) initBackgroundRecomputeGate() {
 
 // runBackgroundRecompute waits for the gate. It is used for mandatory startup
 // warmups, where every cache must be populated before Start returns.
-func (s *PacketStore) runBackgroundRecompute(compute func() interface{}) interface{} {
+func (s *PacketStore) runBackgroundRecompute(name string, compute func() interface{}) interface{} {
 	if compute == nil {
 		return nil
 	}
 	s.initBackgroundRecomputeGate()
+	if s.backgroundRecomputeAttemptHook != nil {
+		s.backgroundRecomputeAttemptHook(name)
+	}
 	s.backgroundRecomputeGate <- struct{}{}
 	defer func() { <-s.backgroundRecomputeGate }()
 	return compute()
+}
+
+// runMandatoryBackgroundRecompute retries until a complete generation is
+// built. Each failed attempt releases the shared gate before the bounded
+// backoff so unrelated refreshers can make progress.
+func (s *PacketStore) runMandatoryBackgroundRecompute(name string, compute func() bool) {
+	for {
+		result := s.runBackgroundRecompute(name, func() interface{} { return compute() })
+		if ok, _ := result.(bool); ok {
+			return
+		}
+		time.Sleep(mandatoryBackgroundRecomputeRetryInterval)
+	}
 }
 
 // tryBackgroundRecompute runs one allocation-heavy background refresh at a
@@ -29,6 +50,9 @@ func (s *PacketStore) tryBackgroundRecompute(name string, compute func() interfa
 		return nil, false
 	}
 	s.initBackgroundRecomputeGate()
+	if s.backgroundRecomputeAttemptHook != nil {
+		s.backgroundRecomputeAttemptHook(name)
+	}
 	select {
 	case s.backgroundRecomputeGate <- struct{}{}:
 		defer func() { <-s.backgroundRecomputeGate }()
