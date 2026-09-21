@@ -7050,6 +7050,56 @@
       ]
     },
     {
+      "path": "tests/unit/test-region-visibility.js",
+      "suite": "unit",
+      "command": [
+        "node",
+        "tests/unit/test-region-visibility.js"
+      ],
+      "requirements": {
+        "environment": [],
+        "flags": []
+      },
+      "status": "active",
+      "statusEvidence": [
+        {
+          "source": "package.json",
+          "detail": "explicitly listed in the focused Region Scope test command"
+        }
+      ],
+      "classificationEvidence": [
+        {
+          "source": "tests/unit/test-region-visibility.js",
+          "detail": "runs isolated Node assertions for visibility defaults, hash selection, and active scoped-node filtering"
+        }
+      ]
+    },
+    {
+      "path": "tests/unit/test-region-visibility-overlay.js",
+      "suite": "unit",
+      "command": [
+        "node",
+        "tests/unit/test-region-visibility-overlay.js"
+      ],
+      "requirements": {
+        "environment": [],
+        "flags": []
+      },
+      "status": "active",
+      "statusEvidence": [
+        {
+          "source": "package.json",
+          "detail": "explicitly listed in the focused Region Scope test command"
+        }
+      ],
+      "classificationEvidence": [
+        {
+          "source": "tests/unit/test-region-visibility-overlay.js",
+          "detail": "runs isolated Node assertions against the shared saved-polygon overlay"
+        }
+      ]
+    },
+    {
       "path": "tests/unit/test-mini-markdown-security.js",
       "suite": "unit",
       "command": [

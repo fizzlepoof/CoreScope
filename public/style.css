@@ -5666,7 +5666,8 @@ body { touch-action: pan-y; }
   cursor: pointer;
 }
 .regions-legend-row:hover { background: rgba(128, 128, 128, 0.15); }
-.regions-legend-row:focus-visible { outline: 2px solid #06b6d4; outline-offset: -2px; }
+.regions-legend-row input { margin: 0; }
+.regions-legend-row:focus-within { outline: 2px solid var(--accent); outline-offset: -2px; }
 .regions-legend-row.active { background: rgba(6, 182, 212, 0.18); font-weight: 700; }
 .regions-legend-name {
   flex: 1 1 auto;
@@ -5677,6 +5678,14 @@ body { touch-action: pan-y; }
 .regions-legend-count { opacity: 0.75; }
 @media (max-width: 640px) {
   .regions-legend { width: 150px; max-height: 45%; font-size: 11px; }
+}
+.live-scope-region-visibility {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  width: 100%;
+  padding-left: 18px;
+  font-size: 11px;
 }
 
 .mc-route-resolved-badge {
