@@ -50,6 +50,15 @@ jobs:
             cmd/server/go.sum
             cmd/ingestor/go.sum
 
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci --production=false
+
       - name: Build and test Go server (with coverage)
         run: |
           set -e -o pipefail

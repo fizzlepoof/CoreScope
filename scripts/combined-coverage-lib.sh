@@ -38,6 +38,8 @@ Environment:
   COVERAGE_PORT    localhost port for the temporary server (default: free port)
   COVERAGE_DIR     report directory (default: coverage)
   GO_IMAGE         fallback Docker image when go is unavailable
+  COVERAGE_FORCE_DOCKER
+                   use the Docker Go runner even when go is installed
   CHROMIUM_PATH    optional Playwright Chromium executable
 EOF
 }
@@ -259,7 +261,7 @@ run_go() {
   module=$1
   shift
   printf '+ %s go %s\n' "$module" "$*" >&2
-  if command -v go >/dev/null 2>&1; then
+  if [ "${COVERAGE_FORCE_DOCKER:-0}" != 1 ] && command -v go >/dev/null 2>&1; then
     run_tracked_in_dir "$REPO_ROOT/$module" go "$@"
     return
   fi
