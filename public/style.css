@@ -1107,7 +1107,7 @@ img.brand-logo {
 /* #1415 / #1458 / #1461 — mobile packets UX overhaul.
  * NOTE: hiding the first dt/dd pair below assumes Payload Type is the
  * first <dt> in .detail-meta (per packets.js renderDetail). Keep that
- * invariant — test-issue-1415-packets-layout.js asserts it. */
+ * invariant — tests/unit/test-issue-1415-packets-layout.js asserts it. */
 @media (max-width: 600px) {
   /* #1: kill empty chevron rail */
   #pktTable th.col-expand,
@@ -2461,7 +2461,7 @@ button.ch-item:hover .ch-icon-btn { opacity: 1; }
      the td and `table-layout: auto`, the cell's min-content becomes the
      full single-line text width, blowing past the `max-width: 100px`
      mobile hint. Rows then grow wider than the 360px viewport — which
-     breaks `test-gestures-1062-e2e.js` (a)/(h) because the swipe coords
+     breaks `tests/e2e/test-gestures-1062-e2e.js` (a)/(h) because the swipe coords
      fall outside the viewport and `elementFromPoint` no longer hits the
      row. Inline-block + fixed `max-width` on the clip caps the column's
      preferred width so the row stays viewport-bounded and gestures work. */
@@ -2856,7 +2856,7 @@ button.ch-item.ch-item-encrypted .ch-badge { filter: grayscale(0.6); }
    against page bg). Cell bgs need their own contrast budget vs #fff fg.
    taken:    #22c55e (2.28:1) -> #15803d (green-700, 5.02:1)
    possible: #eab308 (1.92:1) -> #854d0e (yellow-800, 6.85:1)
-   See test-issue-1668-m4-per-route.js hash-cell contrast block. */
+   See tests/unit/test-issue-1668-m4-per-route.js hash-cell contrast block. */
 .hash-cell-taken    { background: #15803d; color: #fff; font-size: 12px; font-weight: 700; }
 .hash-cell-possible { background: #854d0e; color: #fff; font-size: 12px; font-weight: 700; }
 .hash-cell-collision { color: #fff; font-size: 12px; font-weight: 700; }
@@ -4809,7 +4809,22 @@ body[data-cb-preset="achromat"] {
 }
 .infra-card:hover, .infra-card:focus-visible { border-color: var(--mc-infra); }
 .infra-card-head { display: flex; align-items: center; gap: 6px; }
-.infra-card-status { font-size: 10px; line-height: 1; }
+.infra-card-status {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 auto;
+}
+.infra-status-dot {
+  display: inline-block;
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: 0.05em;
+}
 /* Stale is RED here (not the table's muted gray): a silent infra node
  * is an outage signal, and surfacing outages is what the panel is for. */
 .infra-status-active { color: var(--status-green); }

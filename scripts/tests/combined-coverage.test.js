@@ -279,6 +279,24 @@ test('instrumentation refuses to overwrite a pre-existing target', () => {
   }
 });
 
+test('frontend instrumentation remains compatible with the production CSP', () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'corescope-instrument-csp-'));
+  const target = path.join(tempRoot, 'public-instrumented');
+  try {
+    const result = spawnSync('sh', ['scripts/instrument-frontend.sh'], {
+      cwd: repoRoot,
+      env: { ...process.env, INSTRUMENTED_DIR: target },
+      encoding: 'utf8',
+    });
+    assert.strictEqual(result.status, 0, result.stderr || result.stdout);
+    const instrumented = fs.readFileSync(path.join(target, 'payload-labels.js'), 'utf8');
+    assert.doesNotMatch(instrumented, /new Function\s*\(/,
+      'Istanbul global lookup must not require unsafe-eval under the production CSP');
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
 test('frontend collector rejects empty and rejected group results', () => {
   const collector = require('../collect-frontend-coverage.js');
   const complete = Array.from({ length: 7 }, (_, i) => ({
