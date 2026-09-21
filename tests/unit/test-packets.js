@@ -762,12 +762,22 @@ console.log('\n=== packets.js: buildFieldTable ===');
   });
 
   test('buildFieldTable renders path hops', () => {
-    const pkt = { raw_hex: 'c042aabb', route_type: 1, payload_type: 0 };
+    const pkt = { raw_hex: 'c002aabb', route_type: 1, payload_type: 0 };
     const decoded = { destHash: 'xx' };
     const result = api.buildFieldTable(pkt, decoded, ['aa', 'bb'], []);
     assert(result.includes('Path (2 hops)'));
     assert(result.includes('Hop 0'));
     assert(result.includes('Hop 1'));
+  });
+
+  test('buildFieldTable derives wire hop rows from raw bytes when path_json differs', () => {
+    const pkt = { raw_hex: '11427d1d1f5d300d', route_type: 1, payload_type: 4 };
+    const decoded = { type: 'ADVERT', pubKey: '300d' };
+    const result = api.buildFieldTable(pkt, decoded, ['7D1D', 'DA2A', 'EACF', '1000', 'EC34', '4000'], []);
+    assert(result.includes('Path (2 hops)'));
+    assert(result.includes('7D1D'));
+    assert(result.includes('1F5D'));
+    assert(!result.includes('DA2A'));
   });
 
   test('buildFieldTable renders ADVERT payload', () => {

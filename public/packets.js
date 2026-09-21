@@ -3066,7 +3066,7 @@
       if (!isNaN(plByte)) rawHopCount = plByte & 0x3F;
     }
     if (rawHopCount != null && pathHops.length !== rawHopCount) {
-      console.warn(`[CoreScope] Hop count inconsistency for packet ${pkt.hash}: path_json has ${pathHops.length} hops but raw_hex path_len has ${rawHopCount}. UI shows path_json.`);
+      console.warn(`[CoreScope] Hop count inconsistency for packet ${pkt.hash}: path_json has ${pathHops.length} hops but raw_hex path_len has ${rawHopCount}. Route displays use path_json; the byte breakdown uses raw_hex.`);
     }
 
     // Resolve sender GPS — from packet directly, or from known node in DB
@@ -3206,9 +3206,8 @@
       ? `<div class="anomaly-banner" style="background:var(--warning, #f0ad4e); color:#000; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-weight:600;"><svg class="ph-icon" aria-hidden="true"><use href="/icons/phosphor-sprite.svg#ph-warning"/></svg> Anomaly: ${escapeHtml(decoded.anomaly)}</div>`
       : '';
 
-    // Hop count display: use pathHops length (= effective observation's path_json).
-    // The raw_hex/path_json mismatch warning is logged above for diagnostics; the UI
-    // must stay self-consistent — top pill names and byte breakdown rows must agree.
+    // Route-level hop count display: use the effective observation's path_json.
+    // The technical byte breakdown separately decodes the literal raw_hex wire path.
     const displayHopCount = pathHops.length;
     const obsIndicator = currentObs && observations.length > 1
       ? `<span style="font-size:0.8em;color:var(--text-muted);margin-left:6px">(observation ${observations.indexOf(currentObs) + 1} of ${observations.length})</span>`
@@ -3489,20 +3488,31 @@
     rows += fieldRow(off, 'Path Length', '0x' + (buf.slice(off * 2, off * 2 + 2) || '??'), hashCountVal === 0 ? `hash_count=0 (direct advert)` : `hash_size=${hashSizeVal} byte${hashSizeVal !== 1 ? 's' : ''}, hash_count=${hashCountVal}`);
     off += 1;
 
-    // Path — render hops from path_json (what this observation reported).
-    // Byte offsets advance by hashSize * pathHops.length to match.
+    // Path — decode the hop rows from the same raw bytes used by the hex strip.
+    // path_json can contain a resolved/extended route that is not the packet's
+    // literal wire path, so using it here makes byte labels disagree with the
+    // highlighted Path range.
     const hashSize = isNaN(pathByte0) ? 1 : ((pathByte0 >> 6) + 1);
-    if (pathHops.length > 0) {
-      rows += sectionRow('Path (' + pathHops.length + ' hops)', 'section-path');
-      for (let i = 0; i < pathHops.length; i++) {
+    const wirePathHops = [];
+    if (!isNaN(pathByte0)) {
+      for (let i = 0; i < hashCountVal; i++) {
+        const start = (off + i * hashSize) * 2;
+        const hex = buf.slice(start, start + hashSize * 2);
+        if (hex.length !== hashSize * 2) break;
+        wirePathHops.push(hex.toUpperCase());
+      }
+    }
+    if (wirePathHops.length > 0) {
+      rows += sectionRow('Path (' + wirePathHops.length + ' hops)', 'section-path');
+      for (let i = 0; i < wirePathHops.length; i++) {
         const hopOff = off + i * hashSize;
-        const hex = String(pathHops[i] || '').toUpperCase();
+        const hex = wirePathHops[i];
         const hopHtml = HopDisplay.renderHop(hex, hopNameCache[hex]);
         const label = `Hop ${i} — ${hopHtml}`;
         rows += fieldRow(hopOff, label, hex, '');
       }
-      off += hashSize * pathHops.length;
     }
+    if (!isNaN(pathByte0)) off += hashSize * hashCountVal;
 
     // TRACE SNR values (from header path bytes, decoded by backend)
     if (decoded.type === 'TRACE' && decoded.snrValues && decoded.snrValues.length > 0) {
