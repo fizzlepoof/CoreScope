@@ -60,7 +60,7 @@ test('--help documents supported coverage modes', () => {
 });
 
 test('--dry-run describes the current Go and canonical frontend flow without mutation', () => {
-  const fixture = path.join(repoRoot, 'test-fixtures/e2e-fixture.db');
+  const fixture = path.join(repoRoot, 'tests/fixtures/e2e/e2e-fixture.db');
   const before = sha256(fixture);
   const result = run(['--dry-run'], { COVERAGE_PORT: '24680' });
   assert.strictEqual(result.status, 0, result.stderr);
@@ -69,7 +69,7 @@ test('--dry-run describes the current Go and canonical frontend flow without mut
   assert.match(output, /cmd\/ingestor.*go test.*-coverprofile/);
   assert.match(output, /cmd\/server.*go build/);
   assert.match(output, /cmd\/migrate.*go build/);
-  assert.match(output, /copy.*test-fixtures\/e2e-fixture\.db/i);
+  assert.match(output, /copy.*tests\/fixtures\/e2e\/e2e-fixture\.db/i);
   assert.match(output, /corescope-migrate.*-db/);
   assert.match(output, /-host 127\.0\.0\.1/);
   assert.match(output, /-port 24680/);
@@ -123,7 +123,7 @@ test('Playwright launchers allow bundled Chromium when CHROMIUM_PATH is unset', 
 test('temporary fixture seeding adds a current deterministic multi-hop packet', () => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'corescope-coverage-fixture-'));
   const fixture = path.join(temp, 'fixture.db');
-  fs.copyFileSync(path.join(repoRoot, 'test-fixtures/e2e-fixture.db'), fixture);
+  fs.copyFileSync(path.join(repoRoot, 'tests/fixtures/e2e/e2e-fixture.db'), fixture);
   try {
     const addMigratedColumns = spawnSync('python3', ['-c', [
       'import sqlite3, sys',
