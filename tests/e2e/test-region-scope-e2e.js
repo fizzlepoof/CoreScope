@@ -313,19 +313,38 @@ async function clipboardText(page) {
     assert.match(page.url(), /#\/regions\?regions=%23tn/, 'Regions selection is bookmarkable in the hash URL');
     assert.strictEqual(await page.getByLabel('Show #tn').isChecked(), true, 'selected region remains visible');
 
-    await page.evaluate(() => localStorage.setItem('meshcore-live-scope-coverage', 'true'));
+    await page.evaluate(() => localStorage.setItem('meshcore-live-scope-coverage', 'false'));
     await page.goto(base + '/#/live?lat=35.5&lon=-86&zoom=6', { waitUntil: 'domcontentloaded' });
     await page.reload({ waitUntil: 'domcontentloaded' });
     const liveCoverageToggle = page.locator('#liveScopeCoverageToggle');
+    const liveRegionNames = page.locator('#liveScopeRegionVisibility');
     await liveCoverageToggle.waitFor({ state: 'attached' });
     await page.waitForFunction(() => {
       const label = document.querySelector('#liveScopeCoverageLabel');
       return label && label.style.display !== 'none';
     });
+    await liveRegionNames.locator('label').first().waitFor({ state: 'attached' });
+    assert.strictEqual(await liveRegionNames.evaluate(node => node.style.display), 'none',
+      'Live map hides region scope names while Region coverage is off');
     await liveCoverageToggle.evaluate(toggle => {
       toggle.checked = true;
       toggle.dispatchEvent(new Event('change', { bubbles: true }));
     });
+    await page.waitForFunction(() => document.querySelector('#liveScopeRegionVisibility').style.display !== 'none');
+    assert.notStrictEqual(await liveRegionNames.evaluate(node => node.style.display), 'none',
+      'Live map reveals region scope names when Region coverage is on');
+    await liveCoverageToggle.evaluate(toggle => {
+      toggle.checked = false;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await page.waitForFunction(() => document.querySelector('#liveScopeRegionVisibility').style.display === 'none');
+    assert.strictEqual(await liveRegionNames.evaluate(node => node.style.display), 'none',
+      'Live map hides region scope names again when Region coverage is switched off');
+    await liveCoverageToggle.evaluate(toggle => {
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await page.waitForFunction(() => document.querySelector('#liveScopeRegionVisibility').style.display !== 'none');
     await page.locator('.leaflet-overlay-pane canvas').first().waitFor({ state: 'attached' });
     assert.strictEqual(await liveCoverageToggle.isChecked(), true,
       'Live map activates the shared saved-region coverage renderer');
