@@ -1872,7 +1872,12 @@
       liveScopeCoverageOverlay.setVisibleRegions(selected);
       var controls = document.getElementById('liveScopeRegionVisibility');
       if (!controls || !regions.length) return;
-      controls.style.display = '';
+      var coverageToggle = document.getElementById('liveScopeCoverageToggle');
+      function syncRegionVisibilityControls() {
+        controls.style.display = coverageToggle && coverageToggle.checked ? '' : 'none';
+      }
+      syncRegionVisibilityControls();
+      if (coverageToggle) coverageToggle.addEventListener('change', syncRegionVisibilityControls);
       regions.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).forEach(function (region) {
         var label = document.createElement('label');
         var input = document.createElement('input');
