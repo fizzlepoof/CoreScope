@@ -14,7 +14,8 @@ const packageJSON = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const adminHTML = fs.readFileSync('public/admin/hash-regions.html', 'utf8');
 const adminJS = fs.readFileSync('public/admin/hash-regions.js', 'utf8');
 
-assert.match(index, /href="#\/tools\/region-scope"/, 'public navigation links the helper');
+assert.doesNotMatch(index, /data-route="region-scope"/, 'desktop navigation does not expose the helper as its own tab');
+assert.match(app, /href="#\/tools\/region-scope" class="tools-card"/, 'Tools landing page links the helper');
 assert.match(index, /region-scope-helpers\.js\?v=__BUST__/, 'shared helper is loaded by browser');
 assert.match(index, /region-scope\.js\?v=__BUST__/, 'helper page module is loaded');
 assert.match(index, /region-scope\.css\?v=__BUST__/, 'helper page CSS is loaded');
@@ -52,7 +53,9 @@ assert.match(scopeJS, /AbortController|loadGeneration/, 'definition loading guar
 assert.match(scopeJS, /replaceChildren\(\)|textContent\s*=\s*''/, 'definition target is cleared before append');
 assert.match(scopeJS, /_applyTilesToNodeMap/, 'helper uses the established tile provider path');
 assert.doesNotMatch(scopeJS, /basemaps\.cartocdn\.com/, 'helper does not bypass configured tile providers');
-assert.match(bottomNav, /region-scope/, 'mobile navigation exposes the helper route directly');
+assert.doesNotMatch(bottomNav, /route:\s*'region-scope'/, 'mobile navigation does not expose the helper as its own tab');
+assert.match(bottomNav, /route:\s*'tools'/, 'mobile navigation keeps the Tools entry that contains the helper');
+assert.doesNotMatch(bottomNav, /if \(h === 'tools\/region-scope'\) return 'region-scope'/, 'helper route activates the parent Tools tab');
 assert.match(scopeCSS, /@media \(max-width: 800px\)/, 'helper has mobile layout coverage');
 assert.match(scopeCSS, /scrollbar-gutter:\s*stable/, 'available region list reserves visible scrollbar space');
 assert.match(scopeCSS, /region-scope-list-frame\.is-scrollable/, 'scrollable list has a distinct visual treatment');
