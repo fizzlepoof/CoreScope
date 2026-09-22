@@ -14,6 +14,9 @@ node test-packet-filter-ux.js
 node test-aging.js
 node test-issue-1065-gesture-hints-gates.js
 node test-frontend-helpers.js
+node test-region-scope-helper.js
+node test-region-scope-ui.js
+node test-hash-region-admin.js
 node test-fetch-all-nodes-pagination.js
 node test-my-repeaters-dashboard.js
 node test-url-state.js
@@ -69,6 +72,10 @@ node test-issue-1770-mobile-row-clamp.js
 # Infrastructure nodes (#infra) — badge/filter/panel frontend surface + set-infra.sh CLI
 node test-infrastructure-nodes.js
 sh scripts/test-set-infra.sh
+
+# Browser acceptance tests (kept out of npm run test:unit)
+echo "── Browser Tests ──"
+node test-region-scope-e2e.js
 
 echo ""
 echo "═══════════════════════════════════════"
