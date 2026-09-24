@@ -198,7 +198,9 @@ async function main() {
         // EXACTLY the non-active non-high routes so the active link stays
         // inline and no current navigation destination is orphaned.
         if (w <= 1100) {
-          const ALL_NON_HIGH = ['#/channels', '#/infrastructure', '#/tools', '#/tools/region-scope', '#/observers', '#/analytics', '#/perf', '#/audio-lab', '#/regions'];
+          // Region Scope is a Tools child route, not a standalone navigation
+          // destination, so it must not appear in the overflow inventory.
+          const ALL_NON_HIGH = ['#/channels', '#/infrastructure', '#/tools', '#/observers', '#/analytics', '#/perf', '#/audio-lab', '#/regions'];
           const expectedMore = ALL_NON_HIGH.filter(h => h !== expectedActive).sort();
           assert.deepStrictEqual(
             [...data.moreItems].sort(),
