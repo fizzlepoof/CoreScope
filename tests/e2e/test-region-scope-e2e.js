@@ -52,7 +52,10 @@ const server = http.createServer((request, response) => {
   }
   if (url.pathname === '/api/scope-coverage') {
     return send(response, 200, 'application/json', JSON.stringify({
-      regions: [{ name: '#tn', nodeCount: 2, hull: [[35, -88], [40, -70], [36, -87]] }],
+      regions: [
+        { name: '#tn', nodeCount: 2, hull: [[35, -88], [40, -70], [36, -87]] },
+        { name: '#a60', nodeCount: 1, hull: [] },
+      ],
     }));
   }
   if (url.pathname === '/api/scope-coverage/nodes') {
@@ -142,16 +145,16 @@ async function clipboardText(page) {
     const middleCoverageColor = await page.evaluate(() => scopeCoverageRegionColor('#middle'));
     assert.strictEqual(middleHelperColor, middleCoverageColor, 'automatic region color is canonical across helper and coverage surfaces');
     const collidingSurfaceColors = await page.evaluate(() => {
-      const configured = [{ name: '#region-32' }];
-      const helperColor = RegionScopeHelpers.buildRegionColorTable(configured)['#region-32'];
+      const configured = [{ name: '#middle' }];
+      const helperColor = RegionScopeHelpers.buildRegionColorTable(configured)['#middle'];
       scopeCoverageSetRegionColors(configured, [
-        { name: '#region-32' },
-        { name: '#region-29' },
+        { name: '#middle' },
+        { name: '#a60' },
       ]);
       return {
         helper: helperColor,
-        coverage: scopeCoverageRegionColor('#region-32'),
-        observed: scopeCoverageRegionColor('#region-29'),
+        coverage: scopeCoverageRegionColor('#middle'),
+        observed: scopeCoverageRegionColor('#a60'),
       };
     });
     assert.strictEqual(collidingSurfaceColors.coverage, collidingSurfaceColors.helper,
@@ -180,6 +183,33 @@ async function clipboardText(page) {
     const boundaryColors = JSON.parse(await page.locator('#region-scope-map').getAttribute('data-boundary-colors'));
     assert.strictEqual(boundaryColors.length, 3, 'map records one rendered color per saved boundary');
     assert.strictEqual(boundaryColors.some(color => /var\(|color-mix/.test(color)), false, 'Canvas boundaries receive concrete computed colors');
+    const middleRow = page.getByLabel('Select #middle').locator('xpath=ancestor::*[contains(@class,"region-scope-item")]');
+    const helperRenderedBefore = await middleRow.evaluate(node => getComputedStyle(node).borderLeftColor);
+    const helperBoundaryIndex = boundaryColors.indexOf(helperRenderedBefore);
+    assert.notStrictEqual(helperBoundaryIndex, -1, 'Helper map records the configured automatic row color on its boundary');
+    const helperBoundaryBefore = boundaryColors[helperBoundaryIndex];
+    await page.evaluate(() => {
+      document.documentElement.style.setProperty('--region-scope-auto-lightness', '0.82');
+      document.documentElement.style.setProperty('--region-scope-auto-chroma', '0.08');
+      window.dispatchEvent(new CustomEvent('theme-changed'));
+    });
+    await page.waitForFunction(({ previous, index }) => {
+      const colors = JSON.parse(document.querySelector('#region-scope-map').getAttribute('data-boundary-colors'));
+      return colors[index] !== previous;
+    }, { previous: helperBoundaryBefore, index: helperBoundaryIndex });
+    const helperRenderedAfter = await middleRow.evaluate(node => getComputedStyle(node).borderLeftColor);
+    const helperBoundaryAfter = JSON.parse(await page.locator('#region-scope-map').getAttribute('data-boundary-colors'))[helperBoundaryIndex];
+    assert.notStrictEqual(helperRenderedAfter, helperRenderedBefore, 'existing Helper rows update their rendered automatic color after a theme change');
+    assert.notStrictEqual(helperBoundaryAfter, helperBoundaryBefore, 'existing Helper map boundaries redraw with the changed concrete automatic color');
+    await page.evaluate(() => {
+      document.documentElement.style.removeProperty('--region-scope-auto-lightness');
+      document.documentElement.style.removeProperty('--region-scope-auto-chroma');
+      window.dispatchEvent(new CustomEvent('theme-changed'));
+    });
+    await page.waitForFunction(({ previous, index }) => {
+      const colors = JSON.parse(document.querySelector('#region-scope-map').getAttribute('data-boundary-colors'));
+      return colors[index] !== previous;
+    }, { previous: helperBoundaryAfter, index: helperBoundaryIndex });
 
     await page.locator('#region-scope-list').evaluate(node => { node.style.maxHeight = '90px'; });
     await page.evaluate(() => window.dispatchEvent(new Event('resize')));
@@ -317,11 +347,48 @@ async function clipboardText(page) {
     await page.goto(base + '/#/tools');
     assert.deepStrictEqual(await page.evaluate(() => window.__tileListenerCounts), { added: 1, removed: 1 }, 'tile provider listener is removed on route teardown');
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('mc-tile-provider-changed')));
+    await page.evaluate(() => {
+      window.__scopePolygonStyles = [];
+      if (!L.__scopeOriginalPolygon) {
+        L.__scopeOriginalPolygon = L.polygon;
+        L.polygon = function (latlngs, style) {
+          window.__scopePolygonStyles.push({
+            latlngs: JSON.parse(JSON.stringify(latlngs)),
+            style: Object.assign({}, style),
+          });
+          return L.__scopeOriginalPolygon.apply(this, arguments);
+        };
+      }
+    });
 
     await page.goto(base + '/#/regions', { waitUntil: 'domcontentloaded' });
     await page.locator('#regionsLegendList .regions-legend-row').first().waitFor();
     assert.match(await page.locator('#regionsLegendList').textContent(), /#tn\s*2/, 'Regions tab keeps the full observed relay count');
     await page.waitForFunction(() => document.querySelectorAll('.leaflet-pane path[fill="#12abef"]').length >= 2);
+    const regionsMiddleBefore = await page.evaluate(() => {
+      const matches = window.__scopePolygonStyles.filter(entry => JSON.stringify(entry.latlngs).includes('[35,-88]'));
+      return matches.at(-1).style.fillColor;
+    });
+    assert.strictEqual(regionsMiddleBefore, helperRenderedBefore,
+      'Regions renders the configured automatic color used by Helper despite the earlier-sorting observed-only collision');
+    const regionsStyleCount = await page.evaluate(() => window.__scopePolygonStyles.length);
+    await page.evaluate(() => {
+      document.documentElement.style.setProperty('--region-scope-auto-lightness', '0.82');
+      document.documentElement.style.setProperty('--region-scope-auto-chroma', '0.08');
+      window.dispatchEvent(new CustomEvent('theme-changed'));
+    });
+    await page.waitForFunction(previous => window.__scopePolygonStyles.length > previous, regionsStyleCount);
+    const regionsMiddleAfter = await page.evaluate(() => {
+      const matches = window.__scopePolygonStyles.filter(entry => JSON.stringify(entry.latlngs).includes('[35,-88]'));
+      return matches.at(-1).style.fillColor;
+    });
+    assert.notStrictEqual(regionsMiddleAfter, regionsMiddleBefore, 'Regions redraws existing automatic boundaries after a theme change');
+    await page.evaluate(() => {
+      document.documentElement.style.removeProperty('--region-scope-auto-lightness');
+      document.documentElement.style.removeProperty('--region-scope-auto-chroma');
+      window.dispatchEvent(new CustomEvent('theme-changed'));
+    });
+    await page.waitForTimeout(350);
     assert.strictEqual(await page.locator('.leaflet-pane path[fill="#12abef"]').count() >= 2, true,
       'Regions tab uses the assigned color for both the saved polygon and an out-of-bound relay marker');
     assert.strictEqual(await page.locator('[class*="regionsNodes"] path[fill="#12abef"]').count(), 1,
@@ -331,6 +398,7 @@ async function clipboardText(page) {
     await page.getByLabel('Show #middle').uncheck();
     await page.getByLabel('Show #manual').uncheck();
     await page.getByLabel('Show #us-ky').uncheck();
+    await page.getByLabel('Show #a60').uncheck();
     await page.waitForFunction(() => document.querySelectorAll('[class*="regionsNodes"] path').length === 1);
     assert.match(page.url(), /#\/regions\?regions=%23tn/, 'Regions selection is bookmarkable in the hash URL');
     assert.strictEqual(await page.getByLabel('Show #tn').isChecked(), true, 'selected region remains visible');
@@ -346,6 +414,19 @@ async function clipboardText(page) {
       return label && label.style.display !== 'none';
     });
     await liveRegionNames.locator('label').first().waitFor({ state: 'attached' });
+    await page.evaluate(() => {
+      window.__scopePolygonStyles = [];
+      if (!L.__scopeOriginalPolygon) {
+        L.__scopeOriginalPolygon = L.polygon;
+        L.polygon = function (latlngs, style) {
+          window.__scopePolygonStyles.push({
+            latlngs: JSON.parse(JSON.stringify(latlngs)),
+            style: Object.assign({}, style),
+          });
+          return L.__scopeOriginalPolygon.apply(this, arguments);
+        };
+      }
+    });
     assert.strictEqual(await liveRegionNames.evaluate(node => node.style.display), 'none',
       'Live map hides region scope names while Region coverage is off');
     await liveCoverageToggle.evaluate(toggle => {
@@ -355,6 +436,31 @@ async function clipboardText(page) {
     await page.waitForFunction(() => document.querySelector('#liveScopeRegionVisibility').style.display !== 'none');
     assert.notStrictEqual(await liveRegionNames.evaluate(node => node.style.display), 'none',
       'Live map reveals region scope names when Region coverage is on');
+    await page.waitForFunction(() => window.__scopePolygonStyles.some(entry => JSON.stringify(entry.latlngs).includes('[35,-88]')));
+    const liveMiddleBefore = await page.evaluate(() => {
+      const matches = window.__scopePolygonStyles.filter(entry => JSON.stringify(entry.latlngs).includes('[35,-88]'));
+      return matches.at(-1).style.fillColor;
+    });
+    assert.strictEqual(liveMiddleBefore, helperRenderedBefore,
+      'Live renders the configured automatic color used by Helper and Regions despite the observed-only collision');
+    const liveStyleCount = await page.evaluate(() => window.__scopePolygonStyles.length);
+    await page.evaluate(() => {
+      document.documentElement.style.setProperty('--region-scope-auto-lightness', '0.82');
+      document.documentElement.style.setProperty('--region-scope-auto-chroma', '0.08');
+      window.dispatchEvent(new CustomEvent('theme-changed'));
+    });
+    await page.waitForFunction(previous => window.__scopePolygonStyles.length > previous, liveStyleCount);
+    const liveMiddleAfter = await page.evaluate(() => {
+      const matches = window.__scopePolygonStyles.filter(entry => JSON.stringify(entry.latlngs).includes('[35,-88]'));
+      return matches.at(-1).style.fillColor;
+    });
+    assert.notStrictEqual(liveMiddleAfter, liveMiddleBefore, 'Live redraws existing Canvas boundaries after a theme change');
+    await page.evaluate(() => {
+      document.documentElement.style.removeProperty('--region-scope-auto-lightness');
+      document.documentElement.style.removeProperty('--region-scope-auto-chroma');
+      window.dispatchEvent(new CustomEvent('theme-changed'));
+    });
+    await page.waitForTimeout(350);
     const liveCanvasColor = await page.evaluate(() => {
       const token = scopeCoverageRegionColor('#middle');
       const resolved = scopeCoverageResolveColor(token);
