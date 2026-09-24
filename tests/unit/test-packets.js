@@ -4,8 +4,11 @@ const vm = require('vm');
 const fs = require('fs');
 const assert = require('assert');
 
-let passed = 0, failed = 0;
+let passed = 0, failed = 0, selected = 0;
+const testNameFilter = process.env.PACKETS_TEST_NAME_FILTER || '';
 function test(name, fn) {
+  if (testNameFilter && !name.includes(testNameFilter)) return;
+  selected++;
   try {
     fn();
     passed++;
@@ -770,7 +773,7 @@ console.log('\n=== packets.js: buildFieldTable ===');
     assert(result.includes('Hop 1'));
   });
 
-  test('buildFieldTable derives wire hop rows from raw bytes when path_json differs', () => {
+  test('wire path: buildFieldTable derives hop rows from raw bytes when path_json differs', () => {
     const pkt = { raw_hex: '11427d1d1f5d300d', route_type: 1, payload_type: 4 };
     const decoded = { type: 'ADVERT', pubKey: '300d' };
     const result = api.buildFieldTable(pkt, decoded, ['7D1D', 'DA2A', 'EACF', '1000', 'EC34', '4000'], []);
@@ -780,13 +783,13 @@ console.log('\n=== packets.js: buildFieldTable ===');
     assert(!result.includes('DA2A'));
   });
 
-  test('getWirePathHops treats present but truncated raw bytes as an empty wire path', () => {
+  test('wire path: getWirePathHops treats present but truncated raw bytes as empty', () => {
     const hops = api.getWirePathHops('11', 1);
     assert(Array.isArray(hops));
     assert.strictEqual(hops.length, 0);
   });
 
-  test('canUseResolvedPath rejects same-length identities from a different reported path', () => {
+  test('wire path: canUseResolvedPath rejects identities from a different reported path', () => {
     assert.strictEqual(
       api.canUseResolvedPath(['7D1D', '1F5D'], ['7D1D', 'DA2A'], ['pubkey-a', 'pubkey-b']),
       false
@@ -1266,4 +1269,8 @@ console.log('\n=== packets.js: scroll position preserved across renderTableRows 
 // ===== SUMMARY =====
 console.log(`\n${'='.repeat(40)}`);
 console.log(`packets.js tests: ${passed} passed, ${failed} failed`);
+if (testNameFilter && selected === 0) {
+  console.error(`No packets.js tests matched filter: ${testNameFilter}`);
+  process.exit(1);
+}
 if (failed > 0) process.exit(1);

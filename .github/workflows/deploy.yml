@@ -108,6 +108,9 @@ jobs:
       - name: Run canonical legacy CI unit and integration phase
         run: npm run test:ci
 
+      - name: Verify packet detail wire-path consistency
+        run: node tests/unit/test-packet-wire-path.js
+
       - name: 🛡️ Preflight XSS gate — actual --diff check (PR only)
         # The fixture self-test above (tests/integration/test-preflight-xss-gate.js) only
         # asserts the script's behavior against fixtures. It does NOT scan

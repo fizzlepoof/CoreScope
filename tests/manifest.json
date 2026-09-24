@@ -7781,6 +7781,37 @@
       ]
     },
     {
+      "path": "tests/unit/test-packet-wire-path.js",
+      "suite": "unit",
+      "command": [
+        "node",
+        "tests/unit/test-packet-wire-path.js"
+      ],
+      "requirements": {
+        "environment": [
+          {
+            "name": "PACKETS_TEST_NAME_FILTER",
+            "required": false,
+            "description": "optional substring used by the focused packet wire-path runner"
+          }
+        ],
+        "flags": []
+      },
+      "status": "active",
+      "statusEvidence": [
+        {
+          "source": ".github/workflows/deploy.yml",
+          "detail": "explicitly listed as a focused CI regression gate"
+        }
+      ],
+      "classificationEvidence": [
+        {
+          "source": "tests/unit/test-packet-wire-path.js",
+          "detail": "runs isolated Node assertions without importing a browser runner or requiring a live server"
+        }
+      ]
+    },
+    {
       "path": "tests/unit/test-packets.js",
       "suite": "unit",
       "command": [
@@ -7788,7 +7819,13 @@
         "tests/unit/test-packets.js"
       ],
       "requirements": {
-        "environment": [],
+        "environment": [
+          {
+            "name": "PACKETS_TEST_NAME_FILTER",
+            "required": false,
+            "description": "optional substring selecting focused tests from the legacy runner"
+          }
+        ],
         "flags": []
       },
       "status": "dormant",
