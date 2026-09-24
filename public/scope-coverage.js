@@ -46,10 +46,22 @@ function scopeCoverageIsDarkTheme() {
 // name through the same table. When the shared region helper is loaded, its
 // active-set allocator also prevents automatic colors from colliding.
 var scopeCoverageAssignedRegionColors = Object.create(null);
-function scopeCoverageSetRegionColors(definitions) {
+function scopeCoverageSetRegionColors(definitions, activeRegions) {
   definitions = Array.isArray(definitions) ? definitions : [];
+  activeRegions = Array.isArray(activeRegions) ? activeRegions : definitions;
   if (window.RegionScopeHelpers && typeof RegionScopeHelpers.buildRegionColorTable === 'function') {
-    scopeCoverageAssignedRegionColors = RegionScopeHelpers.buildRegionColorTable(definitions);
+    var definitionByName = Object.create(null);
+    definitions.forEach(function (definition) {
+      if (definition && typeof definition.name === 'string') definitionByName[definition.name] = definition;
+    });
+    var activeDefinitions = activeRegions.map(function (region) {
+      var definition = region && definitionByName[region.name];
+      return {
+        name: region && region.name,
+        color: definition && definition.color
+      };
+    });
+    scopeCoverageAssignedRegionColors = RegionScopeHelpers.buildRegionColorTable(activeDefinitions);
     return;
   }
   var assigned = Object.create(null);
@@ -79,6 +91,21 @@ function scopeCoverageRegionOutline(name) {
 function scopeCoverageRegionSwatchHtml(name) {
   return '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' +
     scopeCoverageRegionColor(name) + ';margin-right:5px;vertical-align:middle;"></span>';
+}
+
+// Leaflet's Canvas renderer cannot resolve CSS custom properties. Resolve the
+// shared DOM color token before it is baked into a polygon style while leaving
+// the original token available to ordinary DOM swatches and markers.
+function scopeCoverageResolveColor(token) {
+  if (!/var\(|color-mix\(/.test(String(token || ''))) return token;
+  if (!document.createElement || !document.body || typeof getComputedStyle !== 'function') return token;
+  var probe = document.createElement('span');
+  probe.style.color = token;
+  probe.style.display = 'none';
+  document.body.appendChild(probe);
+  var resolved = getComputedStyle(probe).color;
+  probe.remove();
+  return resolved || token;
 }
 
 // Join observed relay membership/counts to the administrator-owned region
@@ -353,8 +380,8 @@ function createScopeCoverageOverlay(map, opts) {
 
     var shapes = [];
     regionsByZOrder.forEach(function (region) {
-      var fill = scopeCoverageRegionColor(region.name);
-      var outline = scopeCoverageRegionOutline(region.name);
+      var fill = scopeCoverageResolveColor(scopeCoverageRegionColor(region.name));
+      var outline = scopeCoverageResolveColor(scopeCoverageRegionOutline(region.name));
       var shape, baseStyle, hoverStyle;
       var latlngs = scopeCoverageGeometryLatLngs(region.geometry);
       if (!latlngs) return; // Count/membership remains visible; no inferred polygon.
@@ -467,10 +494,10 @@ function createScopeCoverageOverlay(map, opts) {
       if (destroyed || generation !== loadGeneration) return false;
       var resp = results[0] || { regions: [] };
       var definitions = results[1];
-      scopeCoverageSetRegionColors(definitions);
       data = Array.isArray(definitions)
         ? { regions: scopeCoverageCombineRegions(resp.regions || [], definitions) }
         : resp;
+      scopeCoverageSetRegionColors(definitions, data.regions || []);
       if (!data.regions || !data.regions.length) return true;
       var label = document.getElementById(labelId);
       var el = document.getElementById(checkboxId);

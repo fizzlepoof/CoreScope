@@ -19,6 +19,7 @@ const packageJSON = JSON.parse(fs.readFileSync(fromRepositoryRoot('package.json'
 const testManifest = JSON.parse(fs.readFileSync(fromRepositoryRoot('tests/manifest.json'), 'utf8'));
 const adminHTML = fs.readFileSync(fromRepositoryRoot('public/admin/hash-regions.html'), 'utf8');
 const adminJS = fs.readFileSync(fromRepositoryRoot('public/admin/hash-regions.js'), 'utf8');
+const regionScopeHelpers = require(fromRepositoryRoot('public/region-scope-helpers.js'));
 
 assert.doesNotMatch(index, /data-route="region-scope"/, 'desktop navigation does not expose the helper as its own tab');
 assert.match(app, /href="#\/tools\/region-scope" class="tools-card"/, 'Tools landing page links the helper');
@@ -109,7 +110,18 @@ async function verifyCoverageColors() {
   assert.strictEqual(context.scopeCoverageRegionColor('#us-tn'), '#12abef', 'saved Regions-tool color overrides the hash fallback');
   assert.match(context.scopeCoverageRegionColor('#invalid'), /^fallback:/, 'invalid saved colors retain deterministic fallback');
   assert.match(context.scopeCoverageRegionColor('#automatic'), /^fallback:/, 'regions without an assigned color retain deterministic fallback');
-  assert.match(scopeCoverageJS, /buildRegionColorTable\(definitions\)/, 'coverage surfaces allocate automatic colors over the complete active definition set');
+  context.window.RegionScopeHelpers = regionScopeHelpers;
+  context.RegionScopeHelpers = regionScopeHelpers;
+  context.scopeCoverageSetRegionColors(
+    [{ name: '#region-29' }],
+    [{ name: '#region-29' }, { name: '#region-32' }]
+  );
+  assert.notStrictEqual(
+    context.scopeCoverageRegionColor('#region-29'),
+    context.scopeCoverageRegionColor('#region-32'),
+    'coverage allocation includes configured and observed-only names in one collision-free active set'
+  );
+  assert.match(scopeCoverageJS, /buildRegionColorTable\(activeDefinitions\)/, 'coverage surfaces allocate automatic colors over the complete active region set');
   const authoritativeGeometry = {
     type: 'Polygon',
     coordinates: [[[-88, 35], [-87, 35], [-87, 36], [-88, 35]]],
@@ -132,7 +144,7 @@ async function verifyCoverageColors() {
     'admin GeoJSON coordinates are converted to Leaflet coordinates without using relay hull points'
   );
   assert.match(scopeCoverageJS, /api\('\/config\/hash-region-definitions'/, 'coverage overlay loads Regions-tool color definitions');
-  assert.match(scopeCoverageJS, /var fill = scopeCoverageRegionColor\(region\.name\)/, 'coverage polygons use the shared region color resolver');
+  assert.match(scopeCoverageJS, /var fill = scopeCoverageResolveColor\(scopeCoverageRegionColor\(region\.name\)\)/, 'coverage polygons resolve the shared region color before Canvas rendering');
   assert.match(scopeCoverageJS, /scopeCoverageGeometryLatLngs\(region\.geometry\)/, 'coverage polygons use saved admin geometry');
   assert.match(liveJS, /createScopeCoverageOverlay\(/, 'Live map uses the shared coverage overlay');
   assert.match(regionsJS, /createScopeCoverageOverlay\(/, 'Regions tab uses the shared coverage overlay');
@@ -180,6 +192,11 @@ async function verifyCoverageColors() {
   const toggle = { checked: true, addEventListener() {} };
   const label = { style: {} };
   context.document.getElementById = id => id === 'coverage-toggle' ? toggle : (id === 'coverage-label' ? label : null);
+  context.document.createElement = () => ({ style: {}, remove() {} });
+  context.document.body = { appendChild() {} };
+  context.getComputedStyle = probe => ({
+    color: String(probe.style.color).includes('var(') ? 'oklch(0.58 0.17 42)' : probe.style.color,
+  });
   context.L = {
     polygon(latlngs, style) {
       renderedPolygon = { latlngs, style };
@@ -201,6 +218,26 @@ async function verifyCoverageColors() {
     'Live and Regions shared overlay renders the saved polygon, not the relay hull');
   assert.strictEqual(renderedPolygon.style.fillColor, '#12abef', 'saved region color styles the authoritative polygon');
   assert.strictEqual(renderedOverlay.getRegions()[0].nodeCount, 2, 'out-of-bound relays remain included in the displayed count');
+
+  let automaticPolygon = null;
+  context.L.polygon = (latlngs, style) => {
+    automaticPolygon = { latlngs, style };
+    return { setStyle() {}, bringToFront() {} };
+  };
+  context.api = async path => path === '/config/hash-region-definitions'
+    ? [{ name: '#region-29', geometry: authoritativeGeometry }]
+    : { regions: [
+      { name: '#region-29', nodeCount: 1 },
+      { name: '#region-32', nodeCount: 1 },
+    ] };
+  const automaticOverlay = context.createScopeCoverageOverlay({
+    on() {}, off() {}, removeLayer() {}, hasLayer() { return true; },
+  }, {
+    checkboxId: 'coverage-toggle', labelId: 'coverage-label', storageKey: 'automatic-scope-coverage',
+  });
+  await automaticOverlay.load();
+  assert.doesNotMatch(automaticPolygon.style.fillColor, /var\(/, 'Canvas polygon fill receives a concrete computed color');
+  assert.doesNotMatch(automaticPolygon.style.color, /var\(/, 'Canvas polygon outline receives a concrete computed color');
 }
 
 verifyCoverageColors().then(() => {

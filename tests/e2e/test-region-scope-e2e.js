@@ -338,6 +338,18 @@ async function clipboardText(page) {
     await page.waitForFunction(() => document.querySelector('#liveScopeRegionVisibility').style.display !== 'none');
     assert.notStrictEqual(await liveRegionNames.evaluate(node => node.style.display), 'none',
       'Live map reveals region scope names when Region coverage is on');
+    const liveCanvasColor = await page.evaluate(() => {
+      const token = scopeCoverageRegionColor('#middle');
+      const resolved = scopeCoverageResolveColor(token);
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      context.fillStyle = '#010203';
+      context.fillStyle = resolved;
+      return { token, resolved, canvas: context.fillStyle };
+    });
+    assert.match(liveCanvasColor.token, /var\(/, 'automatic coverage color remains a theme-derived DOM token');
+    assert.doesNotMatch(liveCanvasColor.resolved, /var\(|color-mix/, 'Live Canvas receives a concrete computed color');
+    assert.notStrictEqual(liveCanvasColor.canvas, '#010203', 'the resolved automatic color is accepted by Canvas');
     await liveCoverageToggle.evaluate(toggle => {
       toggle.checked = false;
       toggle.dispatchEvent(new Event('change', { bubbles: true }));

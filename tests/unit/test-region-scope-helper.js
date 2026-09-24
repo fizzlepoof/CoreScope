@@ -225,10 +225,10 @@ const regionColors = regionNames.map((name) => regionColorTable[name]);
 assert.strictEqual(new Set(regionColors).size, 100, 'every supported region receives a distinct automatic color');
 assert.strictEqual(regionColors.every((value) => /var\(--region-scope-auto-lightness\)/.test(value)), true, 'automatic colors derive from theme CSS variables');
 const collisionTable = helpers.buildRegionColorTable([
-  { name: '#region-15' },
-  { name: '#region-896' },
+  { name: '#region-29' },
+  { name: '#region-32' },
 ]);
-assert.notStrictEqual(collisionTable['#region-15'], collisionTable['#region-896'], 'active-set allocation resolves colliding automatic color slots');
+assert.notStrictEqual(collisionTable['#region-29'], collisionTable['#region-32'], 'active-set allocation resolves colliding automatic color slots');
 assert.strictEqual(
   helpers.buildRegionColorTable([{ name: '#tn' }])['#tn'],
   helpers.buildRegionColorTable([{ name: '#tn' }, { name: '#ky' }])['#tn'],
