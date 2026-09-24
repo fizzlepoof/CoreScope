@@ -54,7 +54,7 @@ const server = http.createServer((request, response) => {
     return send(response, 200, 'application/json', JSON.stringify({
       regions: [
         { name: '#tn', nodeCount: 2, hull: [[35, -88], [40, -70], [36, -87]] },
-        { name: '#a60', nodeCount: 1, hull: [] },
+        { name: '#a320', nodeCount: 1, hull: [] },
       ],
     }));
   }
@@ -140,7 +140,8 @@ async function clipboardText(page) {
     const regionColors = await page.locator('#region-scope-list .region-scope-item').evaluateAll(nodes => nodes.map(node => node.style.getPropertyValue('--region-scope-color')));
     assert.strictEqual(new Set(regionColors).size, regionColors.length, 'visible regions receive distinct colors');
     assert.strictEqual(regionColors.every(Boolean), true, 'every region card exposes its color');
-    assert.strictEqual(await page.getByLabel('Select #tn').evaluate(node => node.closest('.region-scope-item').style.getPropertyValue('--region-scope-color')), '#12abef', 'saved admin color overrides the automatic palette');
+    const tnHelperColor = await page.getByLabel('Select #tn').evaluate(node => node.closest('.region-scope-item').style.getPropertyValue('--region-scope-color'));
+    assert.strictEqual(tnHelperColor, '#12abef', 'saved admin color overrides the automatic palette');
     const middleHelperColor = await page.getByLabel('Select #middle').evaluate(node => node.closest('.region-scope-item').style.getPropertyValue('--region-scope-color'));
     const middleCoverageColor = await page.evaluate(() => scopeCoverageRegionColor('#middle'));
     assert.strictEqual(middleHelperColor, middleCoverageColor, 'automatic region color is canonical across helper and coverage surfaces');
@@ -149,14 +150,18 @@ async function clipboardText(page) {
       const helperColor = RegionScopeHelpers.buildRegionColorTable(configured)['#middle'];
       scopeCoverageSetRegionColors(configured, [
         { name: '#middle' },
-        { name: '#a60' },
+        { name: '#a320' },
       ]);
       return {
         helper: helperColor,
         coverage: scopeCoverageRegionColor('#middle'),
-        observed: scopeCoverageRegionColor('#a60'),
+        observed: scopeCoverageRegionColor('#a320'),
+        configuredInitial: RegionScopeHelpers.regionColorToken('#middle'),
+        observedInitial: RegionScopeHelpers.regionColorToken('#a320'),
       };
     });
+    assert.strictEqual(collidingSurfaceColors.configuredInitial, collidingSurfaceColors.observedInitial,
+      'browser fixture uses an actual earlier-sorting automatic hue collision');
     assert.strictEqual(collidingSurfaceColors.coverage, collidingSurfaceColors.helper,
       'an earlier-sorting observed-only collision cannot change a configured region across Helper, Live, and Regions');
     assert.notStrictEqual(collidingSurfaceColors.observed, collidingSurfaceColors.coverage,
@@ -398,7 +403,7 @@ async function clipboardText(page) {
     await page.getByLabel('Show #middle').uncheck();
     await page.getByLabel('Show #manual').uncheck();
     await page.getByLabel('Show #us-ky').uncheck();
-    await page.getByLabel('Show #a60').uncheck();
+    await page.getByLabel('Show #a320').uncheck();
     await page.waitForFunction(() => document.querySelectorAll('[class*="regionsNodes"] path').length === 1);
     assert.match(page.url(), /#\/regions\?regions=%23tn/, 'Regions selection is bookmarkable in the hash URL');
     assert.strictEqual(await page.getByLabel('Show #tn').isChecked(), true, 'selected region remains visible');
@@ -441,6 +446,12 @@ async function clipboardText(page) {
       const matches = window.__scopePolygonStyles.filter(entry => JSON.stringify(entry.latlngs).includes('[35,-88]'));
       return matches.at(-1).style.fillColor;
     });
+    const liveTnCustomColor = await page.evaluate(() => {
+      const matches = window.__scopePolygonStyles.filter(entry => JSON.stringify(entry.latlngs).includes('[34,-90]'));
+      return matches.at(-1).style.fillColor;
+    });
+    assert.strictEqual(liveTnCustomColor, tnHelperColor,
+      'Live renders the same administrator override already rendered by Helper and Regions');
     assert.strictEqual(liveMiddleBefore, helperRenderedBefore,
       'Live renders the configured automatic color used by Helper and Regions despite the observed-only collision');
     const liveStyleCount = await page.evaluate(() => window.__scopePolygonStyles.length);
