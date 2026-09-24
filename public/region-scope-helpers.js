@@ -355,12 +355,30 @@
     return input;
   }
 
-  function regionColorToken(index, total, customColor) {
+  function regionNameHashHex(name) {
+    var hash = 0x811c9dc5;
+    var value = String(name || 'region');
+    for (var i = 0; i < value.length; i++) {
+      hash ^= value.charCodeAt(i);
+      hash = (hash * 0x01000193) >>> 0;
+    }
+    return ('00000000' + hash.toString(16)).slice(-8);
+  }
+
+  function regionColorToken(name, customColor, theme) {
     var normalizedCustom = String(customColor || '').trim().toLowerCase();
     if (/^#[0-9a-f]{6}$/.test(normalizedCustom)) return normalizedCustom;
-    var safeIndex = Math.max(0, Number(index) || 0);
-    var hue = (safeIndex * 137.50776405003785) % 360;
-    return 'oklch(var(--region-scope-auto-lightness) var(--region-scope-auto-chroma) ' + hue.toFixed(6) + 'deg)';
+    var hashHex = regionNameHashHex(name);
+    var b0 = parseInt(hashHex.slice(0, 2), 16) || 0;
+    var b1 = parseInt(hashHex.slice(2, 4), 16) || 0;
+    var b2 = parseInt(hashHex.slice(4, 6), 16) || 0;
+    var b3 = parseInt(hashHex.slice(6, 8), 16) || 0;
+    var hue = Math.round(((b0 << 8) | b1) / 65535 * 360);
+    var saturation = 55 + Math.round(b2 / 255 * 40);
+    var lightness = theme === 'dark'
+      ? 55 + Math.round(b3 / 255 * 17)
+      : 50 + Math.round(b3 / 255 * 15);
+    return 'hsl(' + hue + ', ' + saturation + '%, ' + lightness + '%)';
   }
 
   return {

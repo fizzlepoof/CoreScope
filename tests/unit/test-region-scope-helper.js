@@ -219,11 +219,26 @@ assert.deepStrictEqual(helpers.parseGeoJSONGeometry({
 }), squareWithHole, 'GeoJSON Feature import extracts Polygon geometry');
 assert.throws(() => helpers.parseGeoJSONGeometry({ type: 'LineString', coordinates: [[0, 0], [1, 1]] }), /Polygon or MultiPolygon/);
 
-const regionColors = Array.from({ length: 100 }, (_, index) => helpers.regionColorToken(index, 100));
-assert.strictEqual(new Set(regionColors).size, 100, 'every supported region receives a distinct color token');
-assert.strictEqual(regionColors.every((value) => /var\(--/.test(value)), true, 'region colors derive from theme CSS variables');
-assert.strictEqual(regionColors.some((value) => /#[0-9a-f]/i.test(value)), false, 'region colors do not hardcode hex values');
-assert.strictEqual(helpers.regionColorToken(0, 1, '#12ABef'), '#12abef', 'saved admin color overrides automatic assignment');
-assert.match(helpers.regionColorToken(0, 1, 'red'), /var\(--/, 'invalid custom color falls back to a theme-derived token');
+const regionNames = Array.from({ length: 100 }, (_, index) => '#region-' + index);
+const regionColors = regionNames.map((name) => helpers.regionColorToken(name, null, 'light'));
+assert.strictEqual(new Set(regionColors).size, 100, 'every supported region receives a distinct automatic color');
+assert.strictEqual(regionColors.every((value) => /^hsl\(/.test(value)), true, 'automatic region colors are concrete deterministic HSL values');
+assert.strictEqual(
+  helpers.regionColorToken('#tn', null, 'light'),
+  helpers.regionColorToken('#tn', null, 'light'),
+  'automatic region color is stable for the same name'
+);
+assert.strictEqual(
+  helpers.regionColorToken('#tn', null, 'light'),
+  helpers.regionColorToken('#tn', null, 'light'),
+  'adding or reordering other regions cannot alter a name-derived color'
+);
+assert.notStrictEqual(
+  helpers.regionColorToken('#tn', null, 'light'),
+  helpers.regionColorToken('#ky', null, 'light'),
+  'different region names receive different automatic colors'
+);
+assert.strictEqual(helpers.regionColorToken('#tn', '#12ABef', 'light'), '#12abef', 'saved admin color overrides automatic assignment');
+assert.match(helpers.regionColorToken('#tn', 'red', 'light'), /^hsl\(/, 'invalid custom color falls back to a deterministic automatic color');
 
 console.log('tests/unit/test-region-scope-helper.js: all tests passed');

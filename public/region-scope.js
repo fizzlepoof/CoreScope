@@ -277,8 +277,9 @@
     definitions = Array.isArray(body) ? body : [];
     definitions.sort(function (a, b) { return a.name.localeCompare(b.name); });
     colorByName.clear();
-    definitions.forEach(function (definition, index) {
-      colorByName.set(definition.name, RegionScopeHelpers.regionColorToken(index, definitions.length, definition.color));
+    var theme = document.documentElement.getAttribute('data-theme') || 'light';
+    definitions.forEach(function (definition) {
+      colorByName.set(definition.name, RegionScopeHelpers.regionColorToken(definition.name, definition.color, theme));
     });
     var list = element('region-scope-list');
     list.replaceChildren();

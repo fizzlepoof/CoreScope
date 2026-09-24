@@ -138,6 +138,9 @@ async function clipboardText(page) {
     assert.strictEqual(new Set(regionColors).size, regionColors.length, 'visible regions receive distinct colors');
     assert.strictEqual(regionColors.every(Boolean), true, 'every region card exposes its color');
     assert.strictEqual(await page.getByLabel('Select #tn').evaluate(node => node.closest('.region-scope-item').style.getPropertyValue('--region-scope-color')), '#12abef', 'saved admin color overrides the automatic palette');
+    const middleHelperColor = await page.getByLabel('Select #middle').evaluate(node => node.closest('.region-scope-item').style.getPropertyValue('--region-scope-color'));
+    const middleCoverageColor = await page.evaluate(() => scopeCoverageRegionColor('#middle'));
+    assert.strictEqual(middleHelperColor, middleCoverageColor, 'automatic region color is canonical across helper and coverage surfaces');
     const collapsedThemeColorCount = await page.evaluate(() => {
       const root = document.documentElement;
       const anchors = ['--accent', '--warning', '--success', '--status-purple', '--danger', '--status-info', '--status-orange', '--link-color'];
@@ -145,7 +148,7 @@ async function clipboardText(page) {
       anchors.forEach(name => root.style.setProperty(name, '#123456'));
       const colors = Array.from({ length: 100 }, (_, index) => {
         const probe = document.createElement('span');
-        probe.style.color = RegionScopeHelpers.regionColorToken(index, 100);
+        probe.style.color = RegionScopeHelpers.regionColorToken('#region-' + index, null, 'light');
         document.body.appendChild(probe);
         const value = getComputedStyle(probe).color;
         probe.remove();

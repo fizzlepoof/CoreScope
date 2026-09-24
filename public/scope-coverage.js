@@ -61,6 +61,9 @@ function scopeCoverageSetRegionColors(definitions) {
 // the app must go through this so the same region always renders the same
 // color no matter which page/overlay is drawing it.
 function scopeCoverageRegionColor(name) {
+  if (window.RegionScopeHelpers) {
+    return RegionScopeHelpers.regionColorToken(name, scopeCoverageAssignedRegionColors[name], scopeCoverageIsDarkTheme() ? 'dark' : 'light');
+  }
   if (scopeCoverageAssignedRegionColors[name]) return scopeCoverageAssignedRegionColors[name];
   return window.HashColor ? HashColor.hashToHsl(scopeCoverageRegionNameToHex(name), scopeCoverageIsDarkTheme() ? 'dark' : 'light') : '#888';
 }
