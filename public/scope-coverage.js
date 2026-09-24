@@ -61,7 +61,8 @@ function scopeCoverageSetRegionColors(definitions, activeRegions) {
         color: definition && definition.color
       };
     });
-    scopeCoverageAssignedRegionColors = RegionScopeHelpers.buildRegionColorTable(activeDefinitions);
+    var configuredNames = definitions.map(function (definition) { return definition && definition.name; });
+    scopeCoverageAssignedRegionColors = RegionScopeHelpers.buildRegionColorTable(activeDefinitions, configuredNames);
     return;
   }
   var assigned = Object.create(null);

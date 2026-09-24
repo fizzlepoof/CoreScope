@@ -141,6 +141,23 @@ async function clipboardText(page) {
     const middleHelperColor = await page.getByLabel('Select #middle').evaluate(node => node.closest('.region-scope-item').style.getPropertyValue('--region-scope-color'));
     const middleCoverageColor = await page.evaluate(() => scopeCoverageRegionColor('#middle'));
     assert.strictEqual(middleHelperColor, middleCoverageColor, 'automatic region color is canonical across helper and coverage surfaces');
+    const collidingSurfaceColors = await page.evaluate(() => {
+      const configured = [{ name: '#region-32' }];
+      const helperColor = RegionScopeHelpers.buildRegionColorTable(configured)['#region-32'];
+      scopeCoverageSetRegionColors(configured, [
+        { name: '#region-32' },
+        { name: '#region-29' },
+      ]);
+      return {
+        helper: helperColor,
+        coverage: scopeCoverageRegionColor('#region-32'),
+        observed: scopeCoverageRegionColor('#region-29'),
+      };
+    });
+    assert.strictEqual(collidingSurfaceColors.coverage, collidingSurfaceColors.helper,
+      'an earlier-sorting observed-only collision cannot change a configured region across Helper, Live, and Regions');
+    assert.notStrictEqual(collidingSurfaceColors.observed, collidingSurfaceColors.coverage,
+      'the colliding observed-only region receives a distinct coverage color');
     const collapsedThemeColorCount = await page.evaluate(() => {
       const root = document.documentElement;
       const anchors = ['--accent', '--warning', '--success', '--status-purple', '--danger', '--status-info', '--status-orange', '--link-color'];

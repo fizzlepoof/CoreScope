@@ -381,18 +381,25 @@
 
   // Allocate the active automatic palette as a set. Name hashing supplies a
   // stable first choice; deterministic linear probing only moves names whose
-  // first-choice hue collides. MeshCore supports at most 32 active regions,
-  // well below the 360 available hue slots.
-  function buildRegionColorTable(definitions) {
+  // first-choice hue collides. Preferred names reserve their slots first so
+  // adding observed-only names cannot change configured regions across views.
+  // MeshCore supports at most 32 active regions, well below the 360 slots.
+  function buildRegionColorTable(definitions, preferredNames) {
     var table = Object.create(null);
     var usedSlots = new Set();
+    var preferred = new Set(Array.isArray(preferredNames) ? preferredNames : []);
     var byName = new Map();
     (Array.isArray(definitions) ? definitions : []).forEach(function (definition) {
       if (definition && typeof definition.name === 'string' && !byName.has(definition.name)) {
         byName.set(definition.name, definition);
       }
     });
-    Array.from(byName.keys()).sort().forEach(function (name) {
+    Array.from(byName.keys()).sort(function (a, b) {
+      var aPreferred = preferred.has(a);
+      var bPreferred = preferred.has(b);
+      if (aPreferred !== bPreferred) return aPreferred ? -1 : 1;
+      return a.localeCompare(b);
+    }).forEach(function (name) {
       var definition = byName.get(name);
       var normalizedCustom = String(definition.color || '').trim().toLowerCase();
       if (/^#[0-9a-f]{6}$/.test(normalizedCustom)) {

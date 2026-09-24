@@ -112,16 +112,22 @@ async function verifyCoverageColors() {
   assert.match(context.scopeCoverageRegionColor('#automatic'), /^fallback:/, 'regions without an assigned color retain deterministic fallback');
   context.window.RegionScopeHelpers = regionScopeHelpers;
   context.RegionScopeHelpers = regionScopeHelpers;
+  const configuredColor = regionScopeHelpers.buildRegionColorTable([{ name: '#region-32' }])['#region-32'];
   context.scopeCoverageSetRegionColors(
-    [{ name: '#region-29' }],
-    [{ name: '#region-29' }, { name: '#region-32' }]
+    [{ name: '#region-32' }],
+    [{ name: '#region-32' }, { name: '#region-29' }]
+  );
+  assert.strictEqual(
+    context.scopeCoverageRegionColor('#region-32'),
+    configuredColor,
+    'an earlier-sorting observed-only collision cannot move a configured region from its helper color'
   );
   assert.notStrictEqual(
     context.scopeCoverageRegionColor('#region-29'),
     context.scopeCoverageRegionColor('#region-32'),
-    'coverage allocation includes configured and observed-only names in one collision-free active set'
+    'coverage allocation keeps configured and observed-only colliding names distinct'
   );
-  assert.match(scopeCoverageJS, /buildRegionColorTable\(activeDefinitions\)/, 'coverage surfaces allocate automatic colors over the complete active region set');
+  assert.match(scopeCoverageJS, /buildRegionColorTable\(activeDefinitions, configuredNames\)/, 'coverage surfaces reserve configured colors before allocating observed-only names');
   const authoritativeGeometry = {
     type: 'Polygon',
     coordinates: [[[-88, 35], [-87, 35], [-87, 36], [-88, 35]]],
