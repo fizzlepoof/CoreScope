@@ -50,10 +50,12 @@ assert.match(scopeJS, /Nearby border: about/, 'UI identifies nearby border sugge
 assert.match(scopeJS, /item\.reason !== 'nearby'/, 'nearby border suggestions are not selected automatically');
 assert.match(scopeJS, /id="region-scope-list-cue"/, 'available regions includes a visible scroll cue');
 assert.match(scopeJS, /More regions below/, 'scroll cue explicitly tells operators when more regions are below');
-assert.match(scopeJS, /regionColorToken/, 'regions receive deterministic distinct colors');
+assert.match(scopeJS, /buildRegionColorTable\(definitions\)/, 'active region names receive a collision-free color table');
 assert.match(scopeJS, /--region-scope-color/, 'region colors are exposed to list styling');
 assert.match(scopeJS, /getComputedStyle\(probe\)\.color/, 'theme color tokens are resolved before Canvas map rendering');
-assert.match(scopeJS, /addEventListener\('theme-changed', themeColorHandler\)/, 'map colors redraw after theme changes');
+assert.match(scopeJS, /themeColorHandler\s*=\s*refreshThemeColors/, 'theme changes rebuild the color table before redrawing the map');
+assert.match(scopeJS, /row\.root\.style\.setProperty\('--region-scope-color'/, 'theme color rebuilds update existing region rows');
+assert.match(scopeJS, /addEventListener\('theme-changed', themeColorHandler\)/, 'theme colors refresh after theme changes');
 assert.match(scopeJS, /removeEventListener\('theme-changed', themeColorHandler\)/, 'theme color listener is removed on route teardown');
 assert.match(scopeJS, /AbortController|loadGeneration/, 'definition loading guards against stale SPA fetches');
 assert.match(scopeJS, /replaceChildren\(\)|textContent\s*=\s*''/, 'definition target is cleared before append');
@@ -107,6 +109,7 @@ async function verifyCoverageColors() {
   assert.strictEqual(context.scopeCoverageRegionColor('#us-tn'), '#12abef', 'saved Regions-tool color overrides the hash fallback');
   assert.match(context.scopeCoverageRegionColor('#invalid'), /^fallback:/, 'invalid saved colors retain deterministic fallback');
   assert.match(context.scopeCoverageRegionColor('#automatic'), /^fallback:/, 'regions without an assigned color retain deterministic fallback');
+  assert.match(scopeCoverageJS, /buildRegionColorTable\(definitions\)/, 'coverage surfaces allocate automatic colors over the complete active definition set');
   const authoritativeGeometry = {
     type: 'Polygon',
     coordinates: [[[-88, 35], [-87, 35], [-87, 36], [-88, 35]]],

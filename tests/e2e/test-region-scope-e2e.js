@@ -146,9 +146,11 @@ async function clipboardText(page) {
       const anchors = ['--accent', '--warning', '--success', '--status-purple', '--danger', '--status-info', '--status-orange', '--link-color'];
       const previous = anchors.map(name => root.style.getPropertyValue(name));
       anchors.forEach(name => root.style.setProperty(name, '#123456'));
-      const colors = Array.from({ length: 100 }, (_, index) => {
+      const definitions = Array.from({ length: 100 }, (_, index) => ({ name: '#region-' + index }));
+      const table = RegionScopeHelpers.buildRegionColorTable(definitions);
+      const colors = definitions.map(definition => {
         const probe = document.createElement('span');
-        probe.style.color = RegionScopeHelpers.regionColorToken('#region-' + index, null, 'light');
+        probe.style.color = table[definition.name];
         document.body.appendChild(probe);
         const value = getComputedStyle(probe).color;
         probe.remove();

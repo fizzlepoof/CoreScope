@@ -220,25 +220,21 @@ assert.deepStrictEqual(helpers.parseGeoJSONGeometry({
 assert.throws(() => helpers.parseGeoJSONGeometry({ type: 'LineString', coordinates: [[0, 0], [1, 1]] }), /Polygon or MultiPolygon/);
 
 const regionNames = Array.from({ length: 100 }, (_, index) => '#region-' + index);
-const regionColors = regionNames.map((name) => helpers.regionColorToken(name, null, 'light'));
+const regionColorTable = helpers.buildRegionColorTable(regionNames.map((name) => ({ name })));
+const regionColors = regionNames.map((name) => regionColorTable[name]);
 assert.strictEqual(new Set(regionColors).size, 100, 'every supported region receives a distinct automatic color');
-assert.strictEqual(regionColors.every((value) => /^hsl\(/.test(value)), true, 'automatic region colors are concrete deterministic HSL values');
+assert.strictEqual(regionColors.every((value) => /var\(--region-scope-auto-lightness\)/.test(value)), true, 'automatic colors derive from theme CSS variables');
+const collisionTable = helpers.buildRegionColorTable([
+  { name: '#region-15' },
+  { name: '#region-896' },
+]);
+assert.notStrictEqual(collisionTable['#region-15'], collisionTable['#region-896'], 'active-set allocation resolves colliding automatic color slots');
 assert.strictEqual(
-  helpers.regionColorToken('#tn', null, 'light'),
-  helpers.regionColorToken('#tn', null, 'light'),
-  'automatic region color is stable for the same name'
+  helpers.buildRegionColorTable([{ name: '#tn' }])['#tn'],
+  helpers.buildRegionColorTable([{ name: '#tn' }, { name: '#ky' }])['#tn'],
+  'adding a non-colliding region does not alter an existing name-derived color'
 );
-assert.strictEqual(
-  helpers.regionColorToken('#tn', null, 'light'),
-  helpers.regionColorToken('#tn', null, 'light'),
-  'adding or reordering other regions cannot alter a name-derived color'
-);
-assert.notStrictEqual(
-  helpers.regionColorToken('#tn', null, 'light'),
-  helpers.regionColorToken('#ky', null, 'light'),
-  'different region names receive different automatic colors'
-);
-assert.strictEqual(helpers.regionColorToken('#tn', '#12ABef', 'light'), '#12abef', 'saved admin color overrides automatic assignment');
-assert.match(helpers.regionColorToken('#tn', 'red', 'light'), /^hsl\(/, 'invalid custom color falls back to a deterministic automatic color');
+assert.strictEqual(helpers.regionColorToken('#tn', '#12ABef'), '#12abef', 'saved admin color overrides automatic assignment');
+assert.match(helpers.regionColorToken('#tn', 'red'), /var\(--region-scope-auto-lightness\)/, 'invalid custom color falls back to a theme-derived automatic color');
 
 console.log('tests/unit/test-region-scope-helper.js: all tests passed');

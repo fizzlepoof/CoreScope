@@ -43,12 +43,17 @@ function scopeCoverageIsDarkTheme() {
 // Structured region definitions may assign an exact display color in the
 // Regions admin tool. Keep those assignments shared at module scope so the
 // coverage polygons, Regions legend, and Regions node markers all resolve a
-// name through the same table. Invalid/automatic colors are deliberately
-// omitted and continue through the deterministic hash fallback below.
+// name through the same table. When the shared region helper is loaded, its
+// active-set allocator also prevents automatic colors from colliding.
 var scopeCoverageAssignedRegionColors = Object.create(null);
 function scopeCoverageSetRegionColors(definitions) {
+  definitions = Array.isArray(definitions) ? definitions : [];
+  if (window.RegionScopeHelpers && typeof RegionScopeHelpers.buildRegionColorTable === 'function') {
+    scopeCoverageAssignedRegionColors = RegionScopeHelpers.buildRegionColorTable(definitions);
+    return;
+  }
   var assigned = Object.create(null);
-  (Array.isArray(definitions) ? definitions : []).forEach(function (definition) {
+  definitions.forEach(function (definition) {
     if (!definition || typeof definition.name !== 'string') return;
     var color = typeof definition.color === 'string' ? definition.color.trim() : '';
     if (/^#[0-9a-f]{6}$/i.test(color)) assigned[definition.name] = color;
@@ -61,10 +66,10 @@ function scopeCoverageSetRegionColors(definitions) {
 // the app must go through this so the same region always renders the same
 // color no matter which page/overlay is drawing it.
 function scopeCoverageRegionColor(name) {
-  if (window.RegionScopeHelpers) {
-    return RegionScopeHelpers.regionColorToken(name, scopeCoverageAssignedRegionColors[name], scopeCoverageIsDarkTheme() ? 'dark' : 'light');
-  }
   if (scopeCoverageAssignedRegionColors[name]) return scopeCoverageAssignedRegionColors[name];
+  if (window.RegionScopeHelpers) {
+    return RegionScopeHelpers.regionColorToken(name, null);
+  }
   return window.HashColor ? HashColor.hashToHsl(scopeCoverageRegionNameToHex(name), scopeCoverageIsDarkTheme() ? 'dark' : 'light') : '#888';
 }
 function scopeCoverageRegionOutline(name) {

@@ -365,20 +365,51 @@
     return ('00000000' + hash.toString(16)).slice(-8);
   }
 
-  function regionColorToken(name, customColor, theme) {
+  function regionColorSlot(name) {
+    return parseInt(regionNameHashHex(name), 16) % 360;
+  }
+
+  function automaticRegionColor(slot) {
+    return 'oklch(var(--region-scope-auto-lightness) var(--region-scope-auto-chroma) ' + slot + ')';
+  }
+
+  function regionColorToken(name, customColor) {
     var normalizedCustom = String(customColor || '').trim().toLowerCase();
     if (/^#[0-9a-f]{6}$/.test(normalizedCustom)) return normalizedCustom;
-    var hashHex = regionNameHashHex(name);
-    var b0 = parseInt(hashHex.slice(0, 2), 16) || 0;
-    var b1 = parseInt(hashHex.slice(2, 4), 16) || 0;
-    var b2 = parseInt(hashHex.slice(4, 6), 16) || 0;
-    var b3 = parseInt(hashHex.slice(6, 8), 16) || 0;
-    var hue = Math.round(((b0 << 8) | b1) / 65535 * 360);
-    var saturation = 55 + Math.round(b2 / 255 * 40);
-    var lightness = theme === 'dark'
-      ? 55 + Math.round(b3 / 255 * 17)
-      : 50 + Math.round(b3 / 255 * 15);
-    return 'hsl(' + hue + ', ' + saturation + '%, ' + lightness + '%)';
+    return automaticRegionColor(regionColorSlot(name));
+  }
+
+  // Allocate the active automatic palette as a set. Name hashing supplies a
+  // stable first choice; deterministic linear probing only moves names whose
+  // first-choice hue collides. MeshCore supports at most 32 active regions,
+  // well below the 360 available hue slots.
+  function buildRegionColorTable(definitions) {
+    var table = Object.create(null);
+    var usedSlots = new Set();
+    var byName = new Map();
+    (Array.isArray(definitions) ? definitions : []).forEach(function (definition) {
+      if (definition && typeof definition.name === 'string' && !byName.has(definition.name)) {
+        byName.set(definition.name, definition);
+      }
+    });
+    Array.from(byName.keys()).sort().forEach(function (name) {
+      var definition = byName.get(name);
+      var normalizedCustom = String(definition.color || '').trim().toLowerCase();
+      if (/^#[0-9a-f]{6}$/.test(normalizedCustom)) {
+        table[name] = normalizedCustom;
+        return;
+      }
+      var slot = regionColorSlot(name);
+      var attempts = 0;
+      while (usedSlots.has(slot) && attempts < 360) {
+        slot = (slot + 1) % 360;
+        attempts++;
+      }
+      if (attempts === 360) throw new Error('Automatic region palette supports at most 360 active names.');
+      usedSlots.add(slot);
+      table[name] = automaticRegionColor(slot);
+    });
+    return table;
   }
 
   return {
@@ -394,5 +425,6 @@
     countiesToMultiPolygon: countiesToMultiPolygon,
     parseGeoJSONGeometry: parseGeoJSONGeometry,
     regionColorToken: regionColorToken,
+    buildRegionColorTable: buildRegionColorTable,
   };
 });
