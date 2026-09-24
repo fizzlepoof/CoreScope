@@ -1355,7 +1355,7 @@
       const battery = (n.battery_mv != null) ? (n.battery_mv / 1000).toFixed(2) + 'V' : '—';
       return `<div class="infra-card" role="button" tabindex="0" data-key="${n.public_key}" aria-label="${escapeHtml(n.name || '(unnamed)')} infrastructure node, ${status}">
         <div class="infra-card-head">
-          <span class="infra-card-status ${status === 'active' ? 'infra-status-active' : 'infra-status-stale'}" title="${status}">●</span>
+          <span class="infra-card-status ${status === 'active' ? 'infra-status-active' : 'infra-status-stale'}" title="${status}" aria-hidden="true"></span>
           <strong>${escapeHtml(n.name || '(unnamed)')}</strong>
         </div>
         <div class="infra-card-meta">

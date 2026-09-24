@@ -77,7 +77,6 @@
     { route: 'regions',   hash: '#/regions',   label: 'Regions',   ph: 'globe' },
     { route: 'infrastructure', hash: '#/infrastructure', label: 'Infra', ph: 'cell-signal-high' },
     { route: 'tools',     hash: '#/tools',     label: 'Tools',     ph: 'wrench' },
-    { route: 'region-scope', hash: '#/tools/region-scope', label: 'Scope Helper', ph: 'map-pin' },
     { route: 'observers', hash: '#/observers', label: 'Observers', ph: 'eye' },
     { route: 'analytics', hash: '#/analytics', label: 'Analytics', ph: 'chart-bar' },
     { route: 'perf',      hash: '#/perf',      label: 'Perf',      ph: 'lightning' },
@@ -104,7 +103,6 @@
     // Mirror app.js navigate(): strip "#/" and any trailing "?…" / "/…".
     var h = (location.hash || '').replace(/^#\//, '');
     if (!h) return 'packets'; // app.js default
-    if (h === 'tools/region-scope') return 'region-scope';
     var slash = h.indexOf('/');
     if (slash >= 0) h = h.substring(0, slash);
     var q = h.indexOf('?');

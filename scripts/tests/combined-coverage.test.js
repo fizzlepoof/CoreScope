@@ -57,6 +57,7 @@ test('--help documents supported coverage modes', () => {
   assert.match(result.stdout, /--frontend-only/);
   assert.match(result.stdout, /--dry-run/);
   assert.match(result.stdout, /COVERAGE_PORT/);
+  assert.match(result.stdout, /COVERAGE_FORCE_DOCKER/);
 });
 
 test('--dry-run describes the current Go and canonical frontend flow without mutation', () => {
@@ -276,6 +277,24 @@ test('instrumentation refuses to overwrite a pre-existing target', () => {
     assert.strictEqual(fs.readFileSync(sentinel, 'utf8'), 'keep me');
   } finally {
     fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test('frontend instrumentation remains compatible with the production CSP', () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'corescope-instrument-csp-'));
+  const target = path.join(tempRoot, 'public-instrumented');
+  try {
+    const result = spawnSync('sh', ['scripts/instrument-frontend.sh'], {
+      cwd: repoRoot,
+      env: { ...process.env, INSTRUMENTED_DIR: target },
+      encoding: 'utf8',
+    });
+    assert.strictEqual(result.status, 0, result.stderr || result.stdout);
+    const instrumented = fs.readFileSync(path.join(target, 'payload-labels.js'), 'utf8');
+    assert.doesNotMatch(instrumented, /new Function\s*\(/,
+      'Istanbul global lookup must not require unsafe-eval under the production CSP');
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
   }
 });
 
@@ -518,7 +537,8 @@ test('signal cleanup stops the active Docker fallback container', () => {
       `FAKE_DOCKER_REGISTRY=${JSON.stringify(registry)}`,
       `FAKE_DOCKER_DAEMON_PID_FILE=${JSON.stringify(daemonPidFile)}`,
       `PATH=${JSON.stringify(`${fakeBin}:/bin`)}`,
-      'export FAKE_DOCKER_STARTED_MARKER FAKE_DOCKER_STOPPED_MARKER FAKE_DOCKER_REGISTRY FAKE_DOCKER_DAEMON_PID_FILE PATH',
+      'COVERAGE_FORCE_DOCKER=1',
+      'export FAKE_DOCKER_STARTED_MARKER FAKE_DOCKER_STOPPED_MARKER FAKE_DOCKER_REGISTRY FAKE_DOCKER_DAEMON_PID_FILE PATH COVERAGE_FORCE_DOCKER',
       'mkdir -p "$WORK_DIR/go-build-cache" "$WORK_DIR/go-mod-cache"',
       'trap cleanup EXIT',
       "trap 'exit 130' HUP INT TERM",
@@ -586,6 +606,7 @@ test('Docker client failure reconciles a delayed owned container before clearing
       '[ -z "$ACTIVE_DOCKER_LABEL" ]',
     ], {
       PATH: `${fakeBin}:/bin`,
+      COVERAGE_FORCE_DOCKER: '1',
       FAKE_DOCKER_REGISTRY: registry,
       FAKE_DOCKER_STOPPED: stopped,
     });

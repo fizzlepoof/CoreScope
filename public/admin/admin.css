@@ -195,7 +195,7 @@ body.auth-gated.authed { visibility: visible; }
 }
 .region-definition-card.is-active { border-color: var(--accent); border-left-color: var(--region-admin-color, var(--accent)); }
 .region-definition-card.is-child-region {
-  margin-inline-start: min(calc(var(--region-tree-depth) * 1.25rem), 5rem);
+  margin-inline-start: min(calc(var(--region-tree-depth, 0) * 1.25rem), 5rem);
   border-inline-start-width: 5px;
 }
 .region-definition-field label, .boundary-tools label {
