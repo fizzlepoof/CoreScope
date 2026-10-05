@@ -166,9 +166,10 @@ async function run() {
     }
     const editedHero = 'Persisted Hero From Playwright';
     // The fixture/server may intentionally hide customizer tabs through its
-    // operator configuration. This test owns the Home customization contract,
-    // so make that precondition explicit rather than treating a disabled
-    // feature as a persistence regression.
+    // operator configuration. Wait until roles.js has applied that async
+    // configuration, then establish the test-owned Home-tab precondition;
+    // otherwise the fetch can race and overwrite the test setup.
+    await page.waitForFunction(() => window.MC_CUSTOMIZER_CFG && Array.isArray(window.MC_CUSTOMIZER_CFG.disabledTabs));
     await page.evaluate(() => {
       window.MC_CUSTOMIZER_CFG = { disabledTabs: [] };
     });
