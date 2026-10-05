@@ -165,6 +165,13 @@ async function run() {
       return;
     }
     const editedHero = 'Persisted Hero From Playwright';
+    // The fixture/server may intentionally hide customizer tabs through its
+    // operator configuration. This test owns the Home customization contract,
+    // so make that precondition explicit rather than treating a disabled
+    // feature as a persistence regression.
+    await page.evaluate(() => {
+      window.MC_CUSTOMIZER_CFG = { disabledTabs: [] };
+    });
     await page.click(toggleSelector);
     const homeTab = page.locator('.cust-tab[data-tab="home"]');
     await homeTab.waitFor({ state: 'visible', timeout: 10000 });
