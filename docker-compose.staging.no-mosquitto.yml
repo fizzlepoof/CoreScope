@@ -1,16 +1,11 @@
-# docker-compose.staging.no-mosquitto.yml — legacy staging override.
+# docker-compose.staging.no-mosquitto.yml — isolated external-broker staging.
 #
-# AUDIENCE: kept for historical parity with pre-v3.7 staging shape and
-# for local reproduction of "staging without an external broker". In
-# most cases you want `docker-compose.staging.yml` instead — it is the
-# CoreScope maintainers' actual staging deploy shape, and it already
-# defaults `DISABLE_MOSQUITTO=true` (external broker on `meshcore-net`).
+# This variant does not join the maintainer staging broker's meshcore-net.
+# Set MQTT_BROKER to an external broker reachable from the container.
+# Compose fails during interpolation when MQTT_BROKER is unset.
 #
-# Use this file ONLY if you are explicitly reproducing the legacy
-# in-container-mosquitto staging shape (e.g. debugging a broker
-# regression). Third-party single-host deploys should use
-# `docker-compose.example.yml` (or `docker-compose.no-mosquitto.yml`
-# for a prod-flavoured variant with an external broker).
+# For maintainer staging, use docker-compose.staging.yml instead; it uses the
+# operator-managed mqtt-broker attached to the external meshcore-net network.
 
 services:
   staging-go:
@@ -34,15 +29,19 @@ services:
       - "host.docker.internal:host-gateway"
     ports:
       - "${STAGING_GO_HTTP_PORT:-82}:80"
-      - "6060:6060"
-      - "6061:6061"
+      - "127.0.0.1:6060:6060"
+      - "127.0.0.1:6061:6061"
     volumes:
       - ${STAGING_DATA_DIR:-~/meshcore-staging-data}:/app/data
       - caddy-data-staging-go:/data/caddy
     environment:
       - NODE_ENV=staging
       - ENABLE_PPROF=true
+      - PPROF_HOST=0.0.0.0
+      - SERVER_PPROF_PORT=6060
+      - INGESTOR_PPROF_PORT=6061
       - DISABLE_MOSQUITTO=true
+      - MQTT_BROKER=${MQTT_BROKER:?set MQTT_BROKER to an external broker URL}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/stats"]
       interval: 30s

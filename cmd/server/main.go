@@ -20,6 +20,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/meshcore-analyzer/admindb"
 	"github.com/meshcore-analyzer/dbschema"
+	"github.com/meshcore-analyzer/pprofconfig"
 )
 
 // Set via -ldflags at build time
@@ -131,14 +132,11 @@ func migrateConfigJSONRegions(cfg *Config, adminStore *admindb.Store) {
 
 func main() {
 	// pprof profiling — off by default, enable with ENABLE_PPROF=true
-	if os.Getenv("ENABLE_PPROF") == "true" {
-		pprofPort := os.Getenv("PPROF_PORT")
-		if pprofPort == "" {
-			pprofPort = "6060"
-		}
+	if pprofconfig.Enabled(os.Getenv) {
+		pprofAddr := pprofconfig.ServerAddress(os.Getenv)
 		go func() {
-			log.Printf("[pprof] profiling UI at http://localhost:%s/debug/pprof/", pprofPort)
-			if err := http.ListenAndServe(":"+pprofPort, nil); err != nil {
+			log.Printf("[pprof] profiling UI at http://%s/debug/pprof/", pprofAddr)
+			if err := http.ListenAndServe(pprofAddr, nil); err != nil {
 				log.Printf("[pprof] failed to start: %v (non-fatal)", err)
 			}
 		}()
