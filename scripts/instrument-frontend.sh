@@ -2,6 +2,10 @@
 # Instrument frontend JS for coverage tracking
 rm -rf public-instrumented
 npx nyc instrument public/ public-instrumented/ --compact=false
+# nyc's browser bootstrap uses new Function("return this"), which strict CSP
+# correctly blocks. Replace only that generated global lookup with globalThis:
+# coverage semantics are unchanged and instrumented assets remain CSP-safe.
+node -e 'const fs=require("fs"); for (const n of fs.readdirSync("public-instrumented")) { if (!n.endsWith(".js")) continue; const p="public-instrumented/"+n; const s=fs.readFileSync(p,"utf8"); fs.writeFileSync(p,s.replaceAll("var global = new Function(\"return this\")();","var global = globalThis;")); }'
 # Copy non-JS files (CSS, HTML, images) as-is
 cp public/*.css public-instrumented/ 2>/dev/null
 cp public/*.html public-instrumented/ 2>/dev/null
