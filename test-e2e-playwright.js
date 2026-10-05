@@ -173,7 +173,14 @@ async function run() {
       await page.waitForFunction(() => window.MeshConfigReady, { timeout: 5000 });
       await page.evaluate(async () => {
         try { await window.MeshConfigReady; } catch (_) {}
-        window.MC_CUSTOMIZER_CFG = { disabledTabs: [] };
+        // Lock the test-owned precondition for the panel's synchronous render.
+        // The asynchronous roles pipeline must not be able to replace it after
+        // it resolves, otherwise Home may disappear before the assertion.
+        Object.defineProperty(window, 'MC_CUSTOMIZER_CFG', {
+          configurable: true,
+          get: () => ({ disabledTabs: [] }),
+          set: () => {}
+        });
       });
     } catch (_) {
       // The configuration pipeline is optional; retain the explicit fixture
