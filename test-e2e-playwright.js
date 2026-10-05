@@ -166,10 +166,10 @@ async function run() {
     }
     const editedHero = 'Persisted Hero From Playwright';
     // The fixture/server may intentionally hide customizer tabs through its
-    // operator configuration. Wait until roles.js has applied that async
-    // configuration, then establish the test-owned Home-tab precondition;
-    // otherwise the fetch can race and overwrite the test setup.
-    await page.waitForFunction(() => window.MC_CUSTOMIZER_CFG && Array.isArray(window.MC_CUSTOMIZER_CFG.disabledTabs));
+    // operator configuration. Wait for the actual customizer readiness signal,
+    // then establish this test's enabled-Home precondition. roles.js config is
+    // optional, so waiting for its global can deadlock this contract test.
+    await page.waitForFunction(() => window._customizerV2 && window._customizerV2.initDone);
     await page.evaluate(() => {
       window.MC_CUSTOMIZER_CFG = { disabledTabs: [] };
     });
