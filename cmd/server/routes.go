@@ -4,7 +4,9 @@ import (
 	"crypto/subtle"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"math"
 	"net/http"
@@ -22,6 +24,34 @@ import (
 	"github.com/meshcore-analyzer/packetpath"
 	"github.com/meshcore-analyzer/prunequeue"
 )
+
+// publicJSONBodyLimit bounds unauthenticated JSON parsing without relying on
+// MeshCore packet-size assumptions. 64 KiB is ample for the largest supported
+// request here: a batch of 200 observation hashes plus JSON framing.
+const publicJSONBodyLimit int64 = 64 << 10
+
+func decodePublicJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) bool {
+	r.Body = http.MaxBytesReader(w, r.Body, publicJSONBodyLimit)
+	decoder := json.NewDecoder(r.Body)
+	writeDecodeError := func(err error) {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			writeError(w, http.StatusRequestEntityTooLarge, "request body too large")
+		} else {
+			writeError(w, http.StatusBadRequest, "invalid JSON body")
+		}
+	}
+
+	if err := decoder.Decode(dst); err != nil {
+		writeDecodeError(err)
+		return false
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		writeDecodeError(err)
+		return false
+	}
+	return true
+}
 
 // memBreakdownNote is the static accounting caveat attached to the opt-in
 // /api/perf?mem=1 store memory breakdown (PerfResponse.MemoryBreakdownNote).
@@ -1250,8 +1280,7 @@ func (s *Server) handleBatchObservations(w http.ResponseWriter, r *http.Request)
 	var body struct {
 		Hashes []string `json:"hashes"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, 400, "invalid JSON body")
+	if !decodePublicJSONBody(w, r, &body) {
 		return
 	}
 	const maxHashes = 200
@@ -1353,8 +1382,7 @@ func (s *Server) handleDecode(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Hex string `json:"hex"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, 400, "invalid JSON body")
+	if !decodePublicJSONBody(w, r, &body) {
 		return
 	}
 	hexStr := strings.TrimSpace(body.Hex)
