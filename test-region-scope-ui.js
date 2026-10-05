@@ -8,6 +8,7 @@ const index = fs.readFileSync('public/index.html', 'utf8');
 const app = fs.readFileSync('public/app.js', 'utf8');
 const scopeJS = fs.readFileSync('public/region-scope.js', 'utf8');
 const scopeCSS = fs.readFileSync('public/region-scope.css', 'utf8');
+const adminCSS = fs.readFileSync('public/admin/admin.css', 'utf8');
 const bottomNav = fs.readFileSync('public/bottom-nav.js', 'utf8');
 const testAll = fs.readFileSync('test-all.sh', 'utf8');
 const packageJSON = JSON.parse(fs.readFileSync('package.json', 'utf8'));
@@ -59,7 +60,8 @@ assert.doesNotMatch(bottomNav, /if \(h === 'tools\/region-scope'\) return 'regio
 assert.match(scopeCSS, /@media \(max-width: 800px\)/, 'helper has mobile layout coverage');
 assert.match(scopeCSS, /scrollbar-gutter:\s*stable/, 'available region list reserves visible scrollbar space');
 assert.match(scopeCSS, /region-scope-list-frame\.is-scrollable/, 'scrollable list has a distinct visual treatment');
-assert.match(scopeCSS, /var\(--region-scope-color\)/, 'region cards visibly use their assigned colors');
+assert.match(scopeCSS, /var\(--region-scope-color, var\(--accent\)\)/, 'region cards retain an accent fallback when no assigned color is present');
+assert.match(adminCSS, /var\(--region-tree-depth, 0\)/, 'nested region cards retain a zero-depth fallback when depth is unset');
 assert.match(testAll, /node test-region-scope-e2e\.js/, 'canonical full test runner includes real Chromium coverage');
 assert.doesNotMatch(packageJSON.scripts['test:unit'], /region-scope-e2e/, 'fast unit runner does not require a browser');
 
