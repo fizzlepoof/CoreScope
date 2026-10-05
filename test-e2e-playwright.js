@@ -166,20 +166,22 @@ async function run() {
     }
     const editedHero = 'Persisted Hero From Playwright';
     // The fixture/server may intentionally hide customizer tabs through its
-    // operator configuration. Give the optional async roles configuration a
-    // bounded chance to arrive, then establish this test's enabled-Home
-    // precondition before the panel renders. Do not require a V2 init signal:
-    // the contract under test is available even when that optional pipeline is
-    // not initialized by the fixture.
+    // async roles configuration. Await that request before establishing this
+    // test's enabled-Home precondition, otherwise its late result can replace
+    // the precondition just before the panel renders.
     try {
-      await page.waitForFunction(() => window.MC_CUSTOMIZER_CFG, { timeout: 1000 });
+      await page.waitForFunction(() => window.MeshConfigReady, { timeout: 5000 });
+      await page.evaluate(async () => {
+        try { await window.MeshConfigReady; } catch (_) {}
+        window.MC_CUSTOMIZER_CFG = { disabledTabs: [] };
+      });
     } catch (_) {
-      // The configuration global is optional; the explicit test precondition
-      // below is authoritative when the fixture does not provide it.
+      // The configuration pipeline is optional; retain the explicit fixture
+      // precondition when it is absent or fails.
+      await page.evaluate(() => {
+        window.MC_CUSTOMIZER_CFG = { disabledTabs: [] };
+      });
     }
-    await page.evaluate(() => {
-      window.MC_CUSTOMIZER_CFG = { disabledTabs: [] };
-    });
     await page.click(toggleSelector);
     const homeTab = page.locator('.cust-tab[data-tab="home"]');
     await homeTab.waitFor({ state: 'visible', timeout: 10000 });
