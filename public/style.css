@@ -1540,7 +1540,10 @@ body.scroll-locked { overflow: hidden; }
 
 /* === Path display === */
 .path-hops {
-  display: inline-flex; align-items: center; gap: 2px; font-family: var(--mono); font-size: 11px;
+  /* A block-level flex track gives the table a bounded path-cell contribution.
+   * Inline flex uses its max-content width during automatic table layout, which
+   * can let a multi-hop fixture expand the row despite the cell's overflow. */
+  display: flex; align-items: center; gap: 2px; width: 100%; min-width: 0; height: 22px; font-family: var(--mono); font-size: 11px;
   /* #1122: never wrap; clip so a long hop chain cannot spill into the next row */
   flex-wrap: nowrap;
   max-width: 100%;
