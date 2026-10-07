@@ -8531,6 +8531,31 @@
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
+    },
+    {
+      "path": "test-mini-markdown-security.js",
+      "suite": "unit",
+      "command": [
+        "node",
+        "test-mini-markdown-security.js"
+      ],
+      "requirements": {
+        "environment": [],
+        "flags": []
+      },
+      "status": "active",
+      "statusEvidence": [
+        {
+          "source": "package.json",
+          "detail": "explicitly listed as a test command or documented runner"
+        }
+      ],
+      "classificationEvidence": [
+        {
+          "source": "test-mini-markdown-security.js",
+          "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
+        }
+      ]
     }
   ]
 }

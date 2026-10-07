@@ -267,7 +267,7 @@ func (s *PacketStore) GetRelayAirtimeShareWithWindow(window TimeWindow) map[stri
 	result := s.computeRelayAirtimeShare(window)
 
 	s.cacheMu.Lock()
-	s.rfCache[cacheKey] = &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)}
+	insertAnalyticsCache(s.rfCache, cacheKey, &cachedResult{data: result, expiresAt: time.Now().Add(s.rfCacheTTL)})
 	s.cacheMu.Unlock()
 
 	return result
