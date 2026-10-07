@@ -16,6 +16,15 @@ function probe(url) {
   });
 }
 
+function sanitizeURL(value) {
+  try {
+    const parsed = new URL(value);
+    return `${parsed.origin}${parsed.pathname}`;
+  } catch {
+    return String(value).split(/[?#]/, 1)[0];
+  }
+}
+
 function createFailureDiagnostics({ page, context, browser, cdp, baseUrl, outputDir, capacity = 100 }) {
   const events = [];
   const inFlightRequests = new Map();
@@ -26,7 +35,7 @@ function createFailureDiagnostics({ page, context, browser, cdp, baseUrl, output
     return event;
   };
   const describeRequest = request => ({
-    url: request.url(),
+    url: sanitizeURL(request.url()),
     resourceType: request.resourceType(),
   });
 
@@ -36,7 +45,7 @@ function createFailureDiagnostics({ page, context, browser, cdp, baseUrl, output
     inFlightRequests.set(request, { ...description, startedAt: event.at });
   });
   page.on('response', response => record('response', {
-    url: response.url(),
+    url: sanitizeURL(response.url()),
     status: response.status(),
     resourceType: response.request().resourceType(),
   }));

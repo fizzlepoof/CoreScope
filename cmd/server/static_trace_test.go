@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -22,7 +23,7 @@ func TestStaticTraceHandlerRecordsRequestLifecycle(t *testing.T) {
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "http://corescope.test/customize-v2.js", nil)
-	req.RemoteAddr = "127.0.0.1:41000"
+	req.RemoteAddr = "198.51.100.17:41000"
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, req)
 	closeTrace()
@@ -42,8 +43,15 @@ func TestStaticTraceHandlerRecordsRequestLifecycle(t *testing.T) {
 	if event.Method != http.MethodGet || event.Path != "/customize-v2.js" {
 		t.Fatalf("request = %s %s, want GET /customize-v2.js", event.Method, event.Path)
 	}
-	if event.RemoteAddr != "127.0.0.1:41000" {
-		t.Fatalf("remote address = %q", event.RemoteAddr)
+	if strings.Contains(string(contents), req.RemoteAddr) {
+		t.Fatalf("trace must not retain remote address: %s", contents)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(contents, &raw); err != nil {
+		t.Fatalf("decode raw trace: %v", err)
+	}
+	if _, ok := raw["remoteAddr"]; ok {
+		t.Fatalf("trace must not contain remoteAddr: %s", contents)
 	}
 	if event.Status != http.StatusOK || event.Bytes != int64(len("console.log('trace');")) {
 		t.Fatalf("response = status %d bytes %d", event.Status, event.Bytes)

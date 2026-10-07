@@ -37,17 +37,23 @@ async function main() {
       capacity: 5,
     });
     const request = {
-      url: () => 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+      url: () => 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js?access_token=request-secret#request-fragment',
       resourceType: () => 'script',
       failure: () => ({ errorText: 'net::ERR_TIMED_OUT' }),
     };
     const pendingRequest = {
-      url: () => 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+      url: () => 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css?api_key=response-secret#response-fragment',
       resourceType: () => 'stylesheet',
+    };
+    const response = {
+      url: pendingRequest.url,
+      status: () => 200,
+      request: () => pendingRequest,
     };
     page.emit('request', request);
     page.emit('requestfailed', request);
     page.emit('request', pendingRequest);
+    page.emit('response', response);
     page.emit('pageerror', new Error('page exploded'));
     cdp.emit('Page.domContentEventFired', { timestamp: 42 });
 
@@ -62,9 +68,13 @@ async function main() {
       {
         url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
         resourceType: 'stylesheet',
-        startedAt: evidence.events.find(event => event.kind === 'request' && event.url.endsWith('leaflet.css')).at,
+        startedAt: evidence.events.find(event => event.kind === 'request' && event.url.startsWith('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css')).at,
       },
     ]);
+    const persistedEvidence = fs.readFileSync(path.join(temp, 'e2e-navigation-diagnostics.json'), 'utf8');
+    for (const secret of ['request-secret', 'request-fragment', 'response-secret', 'response-fragment']) {
+      assert(!persistedEvidence.includes(secret), `persisted evidence must not contain ${secret}`);
+    }
     assert(fs.existsSync(path.join(temp, 'e2e-http-probes.txt')));
   } finally {
     fs.rmSync(temp, { recursive: true, force: true });

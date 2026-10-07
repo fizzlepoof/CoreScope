@@ -18,7 +18,6 @@ type staticTraceEvent struct {
 	ElapsedMicros int64     `json:"elapsedMicros"`
 	Method        string    `json:"method"`
 	Path          string    `json:"path"`
-	RemoteAddr    string    `json:"remoteAddr"`
 	Status        int       `json:"status"`
 	Bytes         int64     `json:"bytes"`
 }
@@ -67,7 +66,6 @@ func staticTraceHandler(tracePath string, next http.Handler) (http.Handler, func
 			ElapsedMicros: finishedAt.Sub(startedAt).Microseconds(),
 			Method:        r.Method,
 			Path:          r.URL.Path,
-			RemoteAddr:    r.RemoteAddr,
 			Status:        status,
 			Bytes:         traceWriter.bytes,
 		})
