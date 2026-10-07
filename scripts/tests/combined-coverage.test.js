@@ -81,6 +81,17 @@ test('--dry-run describes the current Go and canonical frontend flow without mut
   assert.strictEqual(sha256(fixture), before, 'dry-run mutated the tracked fixture');
 });
 
+test('normalizes a relative coverage directory before module-scoped Go commands run', () => {
+  const result = spawnSync('sh', ['-c',
+    '. scripts/combined-coverage-lib.sh; printf "%s" "$GO_COVERAGE_DIR"'], {
+    cwd: repoRoot,
+    env: { ...process.env, COMBINED_COVERAGE_REPO_ROOT: repoRoot, COVERAGE_DIR: 'coverage' },
+    encoding: 'utf8',
+  });
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(result.stdout, path.join(repoRoot, 'coverage', 'go'));
+});
+
 test('invalid configured ports fail before orchestration', () => {
   const result = run(['--dry-run'], { COVERAGE_PORT: 'not-a-port' });
   assert.notStrictEqual(result.status, 0);
