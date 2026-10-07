@@ -631,7 +631,7 @@ test('wires manifest validation and canonical suites into npm, the local wrapper
 
   assert.strictEqual(
     packageJson.scripts['test:manifest'],
-    'node scripts/tests/validate-manifest.test.js && node scripts/tests/run-manifest.test.js && node scripts/tests/combined-coverage.test.js && node scripts/tests/validate-manifest.js'
+    'node scripts/tests/validate-manifest.test.js && node scripts/tests/run-manifest.test.js && node scripts/tests/combined-coverage.test.js && node scripts/tests/e2e-failure-diagnostics.test.js && node scripts/tests/validate-manifest.js'
   );
   assert.strictEqual(packageJson.scripts.test,
     'npx c8 --reporter=text --reporter=text-summary sh test-all.sh');

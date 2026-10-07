@@ -4,10 +4,12 @@
  * Usage: node test-e2e-playwright.js
  */
 const { chromium } = require('playwright');
+const { createFailureDiagnostics } = require('./scripts/e2e-failure-diagnostics');
 
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
 const GO_BASE = process.env.GO_BASE_URL || '';  // e.g. https://analyzer.00id.net:82
 const results = [];
+let failureDiagnostics;
 
 async function test(name, fn) {
   try {
@@ -22,6 +24,9 @@ async function test(name, fn) {
     }
     results.push({ name, pass: false, error: err.message });
     console.log(`  \u274c ${name}: ${err.message}`);
+    if (failureDiagnostics) {
+      await failureDiagnostics.capture({ test: name, error: err });
+    }
     console.log(`\nFail-fast: stopping after first failure.`);
     process.exit(1);
   }
@@ -60,6 +65,16 @@ async function run() {
     try { localStorage.setItem('live-controls-expanded', 'true'); } catch (_) {}
   });
   const page = await context.newPage();
+  const cdp = await context.newCDPSession(page);
+  await cdp.send('Page.enable');
+  failureDiagnostics = createFailureDiagnostics({
+    page,
+    context,
+    browser,
+    cdp,
+    baseUrl: BASE,
+    outputDir: process.env.E2E_FAILURE_EVIDENCE_DIR,
+  });
   page.setDefaultTimeout(10000);
 
   console.log(`\nRunning E2E tests against ${BASE}\n`);

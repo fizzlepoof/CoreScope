@@ -567,6 +567,7 @@ prepare_frontend_paths() {
     RUN_FRONTEND_REPORT_DIR="$FRONTEND_COVERAGE_DIR"
   fi
   mkdir -p "$RUN_FRONTEND_REPORT_DIR"
+  FAILURE_EVIDENCE_DIR="$RUN_FRONTEND_REPORT_DIR/failure-evidence"
 }
 
 validate_frontend_coverage_artifacts() {
@@ -665,6 +666,51 @@ for (const name of names) {
 NODE
 }
 
+capture_frontend_failure_evidence() {
+  base_url=$1
+  exit_status=$2
+  failed_stage=$3
+  [ -n "${FAILURE_EVIDENCE_DIR:-}" ] || return 0
+
+  mkdir -p "$FAILURE_EVIDENCE_DIR"
+  {
+    printf 'base_url=%s\n' "$base_url"
+    printf 'exit_status=%s\n' "$exit_status"
+    printf 'failed_stage=%s\n' "$failed_stage"
+    printf 'server_pid=%s\n' "${SERVER_PID:-}"
+    date -u '+captured_at_utc=%Y-%m-%dT%H:%M:%SZ'
+  } > "$FAILURE_EVIDENCE_DIR/run-metadata.txt"
+
+  if [ -f "$WORK_DIR/server.log" ]; then
+    cp "$WORK_DIR/server.log" "$FAILURE_EVIDENCE_DIR/server.log"
+  fi
+
+  {
+    printf '%s\n' '--- root ---'
+    curl --max-time 2 -sS -D - -o /dev/null "$base_url/" || true
+    printf '%s\n' '--- health ---'
+    curl --max-time 2 -sS -D - -o /dev/null "$base_url/api/healthz" || true
+  } > "$FAILURE_EVIDENCE_DIR/http-probes.txt" 2>&1
+
+  if [ -n "${SERVER_PID:-}" ]; then
+    {
+      ps -o pid=,ppid=,stat=,etime=,cmd= -p "$SERVER_PID" 2>&1 || true
+      printf '%s\n' '--- cgroup ---'
+      cat "/proc/$SERVER_PID/cgroup" 2>&1 || true
+      cgroup_path=$(awk -F: '$1 == "0" { print $3; exit }' "/proc/$SERVER_PID/cgroup" 2>/dev/null || true)
+      if [ -n "$cgroup_path" ] && [ -d "/sys/fs/cgroup$cgroup_path" ]; then
+        for counter in memory.current memory.events memory.stat pids.current; do
+          [ -r "/sys/fs/cgroup$cgroup_path/$counter" ] || continue
+          printf '%s\n' "--- $counter ---"
+          cat "/sys/fs/cgroup$cgroup_path/$counter" 2>&1 || true
+        done
+      fi
+      printf '%s\n' '--- listeners ---'
+      ss -ltnp 2>&1 || true
+    } > "$FAILURE_EVIDENCE_DIR/server-state.txt"
+  fi
+}
+
 run_frontend_coverage() {
   fixture="$WORK_DIR/e2e-fixture.db"
   server="$WORK_DIR/corescope-server"
@@ -694,8 +740,26 @@ run_frontend_coverage() {
   SERVER_PID=$!
   wait_for_server "$base_url"
 
-  run_tracked_in_dir "$REPO_ROOT" env BASE_URL="$base_url" node scripts/tests/run-manifest.js --profile ci-e2e-phase
-  run_tracked_in_dir "$REPO_ROOT" env BASE_URL="$base_url" node scripts/collect-frontend-coverage.js
+  if run_tracked_in_dir "$REPO_ROOT" env \
+    BASE_URL="$base_url" \
+    E2E_FAILURE_EVIDENCE_DIR="$FAILURE_EVIDENCE_DIR" \
+    node scripts/tests/run-manifest.js --profile ci-e2e-phase; then
+    :
+  else
+    frontend_status=$?
+    capture_frontend_failure_evidence "$base_url" "$frontend_status" manifest
+    return "$frontend_status"
+  fi
+  if run_tracked_in_dir "$REPO_ROOT" env \
+    BASE_URL="$base_url" \
+    E2E_FAILURE_EVIDENCE_DIR="$FAILURE_EVIDENCE_DIR" \
+    node scripts/collect-frontend-coverage.js; then
+    :
+  else
+    frontend_status=$?
+    capture_frontend_failure_evidence "$base_url" "$frontend_status" collector
+    return "$frontend_status"
+  fi
 
   validate_frontend_coverage_artifacts "$REPO_ROOT/.nyc_output"
   run_tracked_in_dir "$REPO_ROOT" npx nyc report \

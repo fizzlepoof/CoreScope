@@ -2109,6 +2109,11 @@
             "name": "GO_BASE_URL",
             "required": false,
             "description": "alternate Go server URL used by cross-backend E2E coverage"
+          },
+          {
+            "name": "E2E_FAILURE_EVIDENCE_DIR",
+            "required": false,
+            "description": "run-owned directory where failed browser navigation diagnostics are persisted"
           }
         ],
         "flags": [

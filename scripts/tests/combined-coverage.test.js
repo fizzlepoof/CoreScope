@@ -406,6 +406,38 @@ test('cleanup removes temporary state, instrumented frontend, and server process
   assert.strictEqual(result.status, 0, result.stderr);
 });
 
+test('failed frontend runs preserve run-owned server evidence before cleanup', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'corescope-coverage-failure-evidence-'));
+  const work = path.join(temp, 'work');
+  const evidence = path.join(temp, 'coverage', 'frontend', 'run-evidence');
+  fs.mkdirSync(work, { recursive: true });
+  fs.writeFileSync(path.join(work, 'server.log'), 'server marker\n');
+  const command = [
+    'set -eu',
+    `COMBINED_COVERAGE_REPO_ROOT=${JSON.stringify(repoRoot)}`,
+    'export COMBINED_COVERAGE_REPO_ROOT',
+    `. ${JSON.stringify(library)}`,
+    `WORK_DIR=${JSON.stringify(work)}`,
+    `FAILURE_EVIDENCE_DIR=${JSON.stringify(evidence)}`,
+    'sleep 30 &',
+    'SERVER_PID=$!',
+    'server_pid=$SERVER_PID',
+    'capture_frontend_failure_evidence http://127.0.0.1:1 17 manifest',
+    'cleanup',
+    '[ ! -e "$WORK_DIR" ]',
+    '[ -f "$FAILURE_EVIDENCE_DIR/server.log" ]',
+    'grep -q "server marker" "$FAILURE_EVIDENCE_DIR/server.log"',
+    'grep -q "exit_status=17" "$FAILURE_EVIDENCE_DIR/run-metadata.txt"',
+    '! kill -0 "$server_pid" 2>/dev/null',
+  ].join('\n');
+  try {
+    const result = spawnSync('sh', ['-c', command], { cwd: repoRoot, encoding: 'utf8' });
+    assert.strictEqual(result.status, 0, result.stderr || result.stdout);
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
 test('signal cleanup terminates the active tracked child', () => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'corescope-coverage-signal-'));
   const childPidFile = path.join(temp, 'child.pid');
