@@ -149,12 +149,13 @@ func main() {
 	}
 
 	var (
-		configDir string
-		host      string
-		port      int
-		dbPath    string
-		publicDir string
-		pollMs    int
+		configDir       string
+		host            string
+		port            int
+		dbPath          string
+		publicDir       string
+		pollMs          int
+		staticTraceFile string
 	)
 
 	flag.StringVar(&configDir, "config-dir", ".", "Directory containing config.json")
@@ -163,6 +164,7 @@ func main() {
 	flag.StringVar(&dbPath, "db", "", "SQLite database path (overrides config/env)")
 	flag.StringVar(&publicDir, "public", "public", "Directory to serve static files from")
 	flag.IntVar(&pollMs, "poll-ms", 1000, "SQLite poll interval for WebSocket broadcast (ms)")
+	flag.StringVar(&staticTraceFile, "static-trace-file", "", "Optional local JSONL file for completed static request timing diagnostics")
 	flag.Parse()
 
 	// Load config
@@ -500,7 +502,17 @@ func main() {
 	}).Methods("GET")
 	if _, err := os.Stat(absPublic); err == nil {
 		fs := http.FileServer(http.Dir(absPublic))
-		router.PathPrefix("/").Handler(wsOrStatic(hub, spaHandler(absPublic, fs)))
+		staticHandler := spaHandler(absPublic, fs)
+		if staticTraceFile != "" {
+			tracedHandler, closeTrace, err := staticTraceHandler(staticTraceFile, staticHandler)
+			if err != nil {
+				log.Fatalf("[static] trace setup failed: %v", err)
+			}
+			defer closeTrace()
+			staticHandler = tracedHandler
+			log.Printf("[static] trace enabled at %s", staticTraceFile)
+		}
+		router.PathPrefix("/").Handler(wsOrStatic(hub, staticHandler))
 		log.Printf("[static] serving %s", absPublic)
 	} else {
 		log.Printf("[static] directory %s not found — API-only mode", absPublic)

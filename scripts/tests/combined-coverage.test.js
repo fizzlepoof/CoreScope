@@ -75,10 +75,26 @@ test('--dry-run describes the current Go and canonical frontend flow without mut
   assert.match(output, /-host 127\.0\.0\.1/);
   assert.match(output, /-port 24680/);
   assert.match(output, /-config-dir <temporary>\/config/);
+  assert.match(output, /-static-trace-file <temporary>\/static-request-trace\.jsonl/);
   assert.match(output, /--profile ci-e2e-phase/);
   assert.match(output, /collect-frontend-coverage\.js/);
   assert.match(output, /nyc report/);
   assert.strictEqual(sha256(fixture), before, 'dry-run mutated the tracked fixture');
+});
+
+test('customizer navigation diagnostic dry-run preserves the canonical seeded fixture and narrows the browser target', () => {
+  const fixture = path.join(repoRoot, 'test-fixtures/e2e-fixture.db');
+  const before = sha256(fixture);
+  const result = run(['--customizer-navigation-diagnostic', '--dry-run'], { COVERAGE_PORT: '24681' });
+  assert.strictEqual(result.status, 0, result.stderr);
+  const output = `${result.stdout}\n${result.stderr}`;
+  assert.match(output, /copy.*test-fixtures\/e2e-fixture\.db/i);
+  assert.match(output, /-static-trace-file <temporary>\/static-request-trace\.jsonl/);
+  assert.match(output, /E2E_TEST_FILTER=\^Customizer v2:/);
+  assert.match(output, /node test-e2e-playwright\.js/);
+  assert.doesNotMatch(output, /go test -timeout 15m -coverprofile/);
+  assert.doesNotMatch(output, /run-manifest\.js --profile ci-e2e-phase/);
+  assert.strictEqual(sha256(fixture), before, 'diagnostic dry-run mutated the tracked fixture');
 });
 
 test('normalizes a relative coverage directory before module-scoped Go commands run', () => {

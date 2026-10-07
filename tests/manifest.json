@@ -2114,6 +2114,11 @@
             "name": "E2E_FAILURE_EVIDENCE_DIR",
             "required": false,
             "description": "run-owned directory where failed browser navigation diagnostics are persisted"
+          },
+          {
+            "name": "E2E_TEST_FILTER",
+            "required": false,
+            "description": "regular expression that limits a diagnostic run to named E2E cases"
           }
         ],
         "flags": [

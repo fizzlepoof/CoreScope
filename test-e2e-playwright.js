@@ -10,8 +10,10 @@ const BASE = process.env.BASE_URL || 'http://localhost:3000';
 const GO_BASE = process.env.GO_BASE_URL || '';  // e.g. https://analyzer.00id.net:82
 const results = [];
 let failureDiagnostics;
+const testFilter = process.env.E2E_TEST_FILTER ? new RegExp(process.env.E2E_TEST_FILTER) : null;
 
 async function test(name, fn) {
+  if (testFilter && !testFilter.test(name)) return;
   try {
     await fn();
     results.push({ name, pass: true });
