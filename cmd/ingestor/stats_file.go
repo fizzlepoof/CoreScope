@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/meshcore-analyzer/perfio"
@@ -225,34 +226,46 @@ func procIORate(prev, cur procIOSnapshot, stamp string) *PerfIOSample {
 // `interval` so the server can serve them at /api/perf/write-sources.
 // Failures are logged once-per-interval and never fatal.
 //
-// The stats file path is resolved via statsFilePath() once at writer-loop
-// start; the env var (CORESCOPE_INGESTOR_STATS) is only re-read on process
-// restart, not per tick.
-func StartStatsFileWriter(s *Store, interval time.Duration) {
+// The stats file path and procIO reader are captured synchronously once at
+// writer creation, not re-read per tick. The returned stop function is safe
+// for concurrent/repeated calls and waits for any in-flight publication and
+// worker exit. Call it before closing the store or releasing writer resources.
+// Ignoring it keeps the writer running for the lifetime of the process.
+func StartStatsFileWriter(s *Store, interval time.Duration) func() {
 	if interval <= 0 {
 		interval = time.Second
 	}
+	readIO := readProcSelfIOFn
+	path := statsFilePath()
+	stop := make(chan struct{})
+	done := make(chan struct{})
+	var stopOnce sync.Once
 	go func() {
+		defer close(done)
 		t := time.NewTicker(interval)
 		defer t.Stop()
-		path := statsFilePath()
 		// Track previous procIO sample so we can compute per-second deltas
 		// across ticks (#1120 follow-up: ingestor /proc/self/io exposure).
-		prevIO := readProcSelfIOFn()
+		prevIO := readIO()
 		// Reuse a single bytes.Buffer + json.Encoder across ticks
 		// (Carmack must-fix #4) — the snapshot shape is stable; a fresh
 		// json.Marshal allocation per second × forever is pure GC waste.
 		// The buffer grows once and stays.
 		var buf bytes.Buffer
 		enc := json.NewEncoder(&buf)
-		for range t.C {
+		for {
+			select {
+			case <-stop:
+				return
+			case <-t.C:
+			}
 			// Capture time.Now() ONCE per tick (Carmack must-fix #5).
 			// Both snapshot.SampledAt and procIO.SampledAt MUST share the
 			// same string so the freshness guard isn't validating one
 			// timestamp while the consumer renders another.
 			tickAt := time.Now().UTC()
 			stamp := tickAt.Format(time.RFC3339)
-			curIO := readProcSelfIOFn()
+			curIO := readIO()
 			ioRate := procIORate(prevIO, curIO, stamp)
 			prevIO = curIO
 			snap := IngestorStatsSnapshot{
@@ -292,4 +305,8 @@ func StartStatsFileWriter(s *Store, interval time.Duration) {
 			}
 		}
 	}()
+	return func() {
+		stopOnce.Do(func() { close(stop) })
+		<-done
+	}
 }
