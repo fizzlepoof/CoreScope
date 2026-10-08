@@ -38,6 +38,23 @@ function entry(testPath, suite = 'unit', status = 'active', overrides = {}) {
   };
 }
 
+test('canonical browser runner loads its real startup dependencies from its declared path', () => {
+  const root = path.resolve(__dirname, '../..');
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'tests/manifest.json'), 'utf8'));
+  const runners = manifest.tests.filter(entry => entry.path === 'test-e2e-playwright.js' ||
+    entry.path === 'tests/e2e/test-e2e-playwright.js');
+  assert.strictEqual(runners.length, 1);
+  const runnerPath = path.join(root, runners[0].path);
+  const source = fs.readFileSync(runnerPath, 'utf8');
+  const end = source.indexOf('\nconst BASE');
+  assert(end > 0, 'startup dependency boundary must exist');
+  // Execute actual imports with the runner's real CommonJS resolution base.
+  // No browser is launched and no import is replaced by a mock.
+  assert.doesNotThrow(() => require('vm').runInNewContext(source.slice(0, end), {
+    require: require('module').createRequire(runnerPath),
+  }));
+});
+
 test('E2E name selection rejects zero matches and runs matching callbacks', () => {
   const root = path.resolve(__dirname, '../..');
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'tests/manifest.json'), 'utf8'));

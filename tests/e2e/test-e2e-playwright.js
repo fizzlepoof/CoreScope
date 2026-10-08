@@ -5,7 +5,7 @@ const { repositoryRoot } = require('../helpers/repository-root');
  * Usage: node tests/e2e/test-e2e-playwright.js
  */
 const { chromium } = require('playwright');
-const { createFailureDiagnostics } = require('./scripts/e2e-failure-diagnostics');
+const { createFailureDiagnostics } = require('../../scripts/e2e-failure-diagnostics');
 
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
 const GO_BASE = process.env.GO_BASE_URL || '';  // e.g. https://analyzer.00id.net:82
