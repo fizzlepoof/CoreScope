@@ -12,6 +12,15 @@
   },
   "tests": [
     {
+      "path": "test-admindb-ci-policy.js",
+      "suite": "unit",
+      "command": ["node", "test-admindb-ci-policy.js"],
+      "requirements": {"environment": [], "flags": []},
+      "status": "active",
+      "statusEvidence": [{"source": ".github/workflows/deploy.yml", "detail": "explicit canonical admindb policy regression step"}],
+      "classificationEvidence": [{"source": "test-admindb-ci-policy.js", "detail": "isolated assertions against the actual canonical workflow without a server or browser"}]
+    },
+    {
       "path": "test-1108-region-hide-nodes.js",
       "suite": "unit",
       "command": [
