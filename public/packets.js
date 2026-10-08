@@ -3467,12 +3467,14 @@
 
   function getWirePathHops(rawHex, routeType) {
     if (!rawHex) return null;
+    if (typeof rawHex !== 'string' || rawHex.length % 2 !== 0 || !/^[0-9a-f]+$/i.test(rawHex)) return [];
     const pathLenOffset = getPathLenOffset(routeType);
     const pathByte = parseInt(rawHex.slice(pathLenOffset * 2, pathLenOffset * 2 + 2), 16);
     if (isNaN(pathByte)) return [];
     const hashSize = (pathByte >> 6) + 1;
     const hashCount = pathByte & 0x3F;
     const pathStart = pathLenOffset + 1;
+    if ((pathStart + hashCount * hashSize) * 2 > rawHex.length) return [];
     const hops = [];
     for (let i = 0; i < hashCount; i++) {
       const start = (pathStart + i * hashSize) * 2;

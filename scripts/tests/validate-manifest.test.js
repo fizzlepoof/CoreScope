@@ -675,12 +675,12 @@ test('requires repository integration runners to retain behavior-based classific
     },
     {
       path: 'tests/integration/test-e2e-badge-aggregate.sh',
-      source: '#!/bin/sh\naggregator="scripts/aggregate-e2e-pass.sh"\n"$aggregator" test-fixtures/e2e-output-sample.txt\n',
+      source: '#!/bin/sh\naggregator="scripts/aggregate-e2e-pass.sh"\n"$aggregator" tests/fixtures/e2e/e2e-output-sample.txt\n',
       command: ['sh', 'tests/integration/test-e2e-badge-aggregate.sh'],
     },
     {
       path: 'tests/integration/test-preflight-xss-gate.js',
-      source: "const { spawnSync } = require('child_process');\nspawnSync('bash', ['scripts/check-xss-sinks.sh', 'testdata/preflight-xss/bad.js']);\n",
+      source: "const { spawnSync } = require('child_process');\nspawnSync('bash', ['scripts/check-xss-sinks.sh', 'tests/fixtures/preflight-xss/bad.js']);\n",
       command: ['node', 'tests/integration/test-preflight-xss-gate.js'],
       activeSurface: 'test-all.sh',
       activeContent: 'node tests/integration/test-preflight-xss-gate.js\n',
@@ -765,12 +765,12 @@ test('wires manifest validation and canonical suites into npm, the local wrapper
 
   assert.strictEqual(
     packageJson.scripts['test:manifest'],
-    'node scripts/tests/validate-manifest.test.js && node scripts/tests/run-manifest.test.js && node scripts/tests/combined-coverage.test.js && node scripts/tests/validate-manifest.js'
+    'node scripts/tests/validate-manifest.test.js && node scripts/tests/run-manifest.test.js && node scripts/tests/combined-coverage.test.js && node scripts/tests/e2e-failure-diagnostics.test.js && node scripts/tests/validate-manifest.js'
   );
   assert.strictEqual(packageJson.scripts.test,
     'npx c8 --reporter=text --reporter=text-summary sh test-all.sh');
   assert.strictEqual(packageJson.scripts['test:unit'],
-    'node scripts/tests/run-manifest.js --profile legacy-test-unit');
+    'node scripts/tests/run-manifest.js --profile legacy-test-unit && npm run test:mini-markdown-security');
   assert.strictEqual(packageJson.scripts['test:unit:all-active'],
     'node scripts/tests/run-manifest.js --suite unit --status active');
   assert.strictEqual(packageJson.scripts['test:integration'],

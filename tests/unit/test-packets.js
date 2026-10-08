@@ -784,9 +784,13 @@ console.log('\n=== packets.js: buildFieldTable ===');
   });
 
   test('wire path: getWirePathHops treats present but truncated raw bytes as empty', () => {
-    const hops = api.getWirePathHops('11', 1);
-    assert(Array.isArray(hops));
-    assert.strictEqual(hops.length, 0);
+    assert.deepStrictEqual(Array.from(api.getWirePathHops('11', 1)), []);
+    assert.deepStrictEqual(Array.from(api.getWirePathHops('1102AA', 1)), []);
+  });
+
+  test('wire path: getWirePathHops treats malformed raw bytes as empty', () => {
+    assert.deepStrictEqual(Array.from(api.getWirePathHops('1141ZZZZ', 1)), []);
+    assert.deepStrictEqual(Array.from(api.getWirePathHops('1141AAAAF', 1)), []);
   });
 
   test('wire path: canUseResolvedPath rejects identities from a different reported path', () => {

@@ -89,6 +89,13 @@ assert(/L\.circleMarker\(hp\.pos,[\s\S]{0,220}?\.addTo\(animLayer\)/.test(liveSr
   'ghost-hop L.circleMarker shape is added to animLayer');
 assert(/L\.marker\(\[lat, lon\],[\s\S]{0,600}?\.addTo\(animLayer\)/.test(liveSrc),
   'matrix-character L.marker shape is added to animLayer');
+
+assert(/activePulses\.push\(/.test(liveSrc) && /pulsePt\.x, pulsePt\.y, pulse\.r/.test(liveSrc),
+  'node pulses are queued and rendered by the actual Canvas engine');
+const canvasZ = liveSrc.match(/getPane\('animationsPane'\)\.style\.zIndex\s*=\s*(\d+)/);
+assert(canvasZ && Number(canvasZ[1]) > 600 &&
+       /getPane\('animationsPane'\)\.appendChild\(animCanvas\)/.test(liveSrc),
+  'the pulse Canvas is mounted above markerPane');
 assert(pathsAddTo >= 3,
   'pathsLayer still hosts >=3 .addTo() trail shapes (got ' + pathsAddTo + ')');
 

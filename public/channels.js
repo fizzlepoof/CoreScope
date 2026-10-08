@@ -730,7 +730,6 @@
         <div class="ch-channel-list" id="chList" role="listbox" aria-label="Channels">
           <div class="ch-loading">Loading channels…</div>
         </div>
-        <a href="#/analytics?tab=channels" class="ch-analytics-link">Channel Analytics</a>
         <div class="ch-sidebar-resize" aria-hidden="true"></div>
       </div>
       <!-- #1034 PR1: Add Channel modal -->
