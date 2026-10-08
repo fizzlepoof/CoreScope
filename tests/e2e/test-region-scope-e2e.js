@@ -2,8 +2,6 @@
 'use strict';
 const { repositoryRoot } = require('../helpers/repository-root');
 
-const { repositoryRoot } = require('../helpers/repository-root');
-
 const assert = require('assert');
 const fs = require('fs');
 const http = require('http');
