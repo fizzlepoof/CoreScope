@@ -64,11 +64,14 @@ function assert(c, m) { if (!c) throw new Error(m || 'assertion failed'); }
 
   await step(`first table row appears < ${FIRST_ROW_BUDGET_MS}ms despite ${OBSERVERS_DELAY_MS}ms /api/observers stub`, async () => {
     // Clean SPA state — mirrors gotoPackets() pattern from tests/e2e/test-e2e-playwright.js.
-    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-    await page.evaluate(() => {
+    // packets.js captures preferences at module load on the first navigation;
+    // changing storage afterward cannot update a hash-only SPA navigation.
+    // 180 minutes also respects the mobile viewport's supported window cap.
+    await page.addInitScript(() => {
       localStorage.removeItem('meshcore-groupbyhash');
-      localStorage.setItem('meshcore-time-window', '525600');
+      localStorage.setItem('meshcore-time-window', '180');
     });
+    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
 
     const t0 = Date.now();
     await page.goto(BASE + '/#/packets', { waitUntil: 'domcontentloaded' });
