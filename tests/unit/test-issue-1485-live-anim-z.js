@@ -78,14 +78,19 @@ assert(pathsLayerRe.test(liveSrc),
 
 console.log('\n=== #1485 live anim z-order C: per-shape inheritance ===');
 
-// At least one polyline/circleMarker addTo(animLayer) call exists — we're
-// trusting Leaflet pane inheritance from the LayerGroup parent. Sanity
-// check that the four animLayer / pathsLayer addTo sites still exist
-// (regression detector if someone moves circles to the default pane).
+// Upstream 75a38f02 (#1521) moved node pulses from Leaflet into Canvas.
+// Keep both remaining Leaflet shapes and require the migrated pulse surface
+// to remain above markerPane too, rather than restoring obsolete DOM work.
 const animAddTo = (liveSrc.match(/\.addTo\(animLayer\)/g) || []).length;
 const pathsAddTo = (liveSrc.match(/\.addTo\(pathsLayer\)/g) || []).length;
-assert(animAddTo >= 3,
-  'animLayer still hosts >=3 .addTo() animation shapes (got ' + animAddTo + ')');
+assert(animAddTo >= 2,
+  'animLayer retains ghost and Matrix animation shapes (got ' + animAddTo + ')');
+assert(/activePulses\.push\(/.test(liveSrc) && /pulsePt\.x, pulsePt\.y, pulse\.r/.test(liveSrc),
+  'node pulses are queued and rendered by the actual Canvas engine');
+const canvasZ = liveSrc.match(/getPane\('animationsPane'\)\.style\.zIndex\s*=\s*(\d+)/);
+assert(canvasZ && Number(canvasZ[1]) > 600 &&
+       /getPane\('animationsPane'\)\.appendChild\(animCanvas\)/.test(liveSrc),
+  'the pulse Canvas is mounted above markerPane');
 assert(pathsAddTo >= 3,
   'pathsLayer still hosts >=3 .addTo() trail shapes (got ' + pathsAddTo + ')');
 

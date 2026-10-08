@@ -11,6 +11,7 @@ docker run -d --name corescope \
   -p 80:80 \
   -v corescope-data:/app/data \
   -e DISABLE_CADDY=true \
+  -e MQTT_BROKER=mqtts://your-broker:8883 \
   ghcr.io/kpa-clawbot/corescope:latest
 ```
 
@@ -41,11 +42,32 @@ Settings can be overridden via environment variables:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DISABLE_CADDY` | `false` | Skip internal Caddy (set `true` behind a reverse proxy) |
-| `DISABLE_MOSQUITTO` | `true` in `docker-compose.staging.yml`; `false` elsewhere | Skip internal MQTT broker. Default flipped to `true` for the staging deploy in v3.7+ because a standalone `mqtt-broker` container owns MQTT on that host — see "Standalone MQTT broker (staging)" below. |
+| `DISABLE_MOSQUITTO` | `true` | Skip the bundled anonymous plaintext MQTT broker. Set `false` only as an explicit opt-in. |
+| `ENABLE_PPROF` | unset (`false`) | Enable Go pprof endpoints for the server and ingestor. |
+| `PPROF_HOST` | `127.0.0.1` | pprof listener host. Set `0.0.0.0` only when a container port is published to host loopback. |
+| `SERVER_PPROF_PORT` | `6060` | Server pprof listener port. |
+| `INGESTOR_PPROF_PORT` | `6061` | Ingestor pprof listener port. |
 | `HTTP_PORT` | `80` | Host port mapping |
 | `DATA_DIR` | `./data` | Host path for persistent data |
+| `MQTT_BROKER` | none | External broker URL; required unless `config.json` defines an external source or bundled Mosquitto is explicitly enabled |
 
 For advanced configuration, mount a `config.json` into `/app/data/config.json`. See `config.example.json` in the repo.
+
+### MQTT default migration
+
+The bundled Mosquitto service is now disabled when `DISABLE_MOSQUITTO` is
+unset. Existing deployments that intentionally use it must set
+`DISABLE_MOSQUITTO=false` before updating. The bundled configuration is
+anonymous and plaintext; bind its published port to loopback for local
+development (`127.0.0.1:1883:1883`) or provide authentication, ACLs, TLS, and
+network filtering before accepting remote connections. Production deployments
+should configure an authenticated external broker with `MQTT_BROKER` or
+`config.json`.
+
+pprof remains disabled unless `ENABLE_PPROF=true`. When enabled it listens on
+`127.0.0.1` by default. The staging Compose files explicitly bind inside the
+container, configure distinct server/ingestor ports, and publish ports 6060/6061
+on host loopback only.
 
 ## Updating
 
@@ -100,43 +122,19 @@ docker compose -f docker-compose.staging.yml up -d
 If `meshcore-net` doesn't exist when compose starts, docker will refuse
 to bring `staging-go` up (`external: true` — compose won't create it).
 
-### Reverting to the old single-container behaviour
-
-Third-party operators cloning this repo who want the legacy shape
-(in-container mosquitto + `1883:1883` on the host, no external broker)
-should override both the env default and re-add the port mapping.
-
-In `.env` (or the shell):
-
-```
-DISABLE_MOSQUITTO=false
-```
-
-And in `docker-compose.staging.yml`, restore the `1883:1883` mapping
-under `services.staging-go.ports`:
-
-```yaml
-    ports:
-      - "${STAGING_GO_HTTP_PORT:-80}:80"
-      - "${STAGING_GO_MQTT_PORT:-1883}:1883"   # ← re-added
-      - "6060:6060"
-      - "6061:6061"
-```
-
-That gives you back the pre-v3.7 self-contained staging shape. In that
-mode you do **not** need `meshcore-net`, but note the compose file still
-declares it as `external: true`, so either remove that declaration in
-your fork or ensure the network exists.
-
 ---
 
 ## Migrating from manage.sh (existing admins)
 
 If you're currently deploying with `manage.sh` (git clone + local build), you have two options going forward:
 
-### Option A: Keep using manage.sh (no changes needed)
+### Option A: Keep using manage.sh
 
-`manage.sh update` continues to work exactly as before — it fetches the latest tag, builds locally, and restarts. Nothing breaks.
+The MQTT default is a migration break: bundled Mosquitto no longer starts when
+`DISABLE_MOSQUITTO` is unset. Before updating, either configure an external
+broker with `MQTT_BROKER`/`config.json`, or explicitly retain the legacy local
+broker with `DISABLE_MOSQUITTO=false`. `manage.sh setup` enforces this choice;
+the bundled port remains bound to host loopback.
 
 ```bash
 ./manage.sh update          # latest release

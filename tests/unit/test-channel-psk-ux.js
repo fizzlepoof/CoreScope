@@ -90,9 +90,12 @@ async function run() {
   // E2E DOM: distinct badge class/marker for user-added channels
   assert(chSrc.includes('ch-user-added'),
     'renderChannelList emits ch-user-added marker for keyed channels');
-  // Distinct icon
-  assert(chSrc.includes('🔓'),
-    'user-added rows use a distinct unlocked icon (🔓) from server-encrypted (🔒)');
+  // #1648 replaced emoji with the shared Phosphor sprite; preserve the
+  // keyed/encrypted distinction rather than requiring the obsolete glyph.
+  assert(/isUserAdded\s*\?[^;]*#ph-lock-open[^;]*isEncrypted[^;]*#ph-lock/.test(chSrc),
+    'user-added rows use lock-open and server-encrypted rows use lock');
+  assert(/ch-user-badge[^\n]*aria-label="Your key"/.test(chSrc),
+    'the user-key status remains available to assistive technology');
 
   // addUserChannel accepts label
   assert(/addUserChannel\s*\(\s*val\s*,\s*\w*label/i.test(chSrc) ||

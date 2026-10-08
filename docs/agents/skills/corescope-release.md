@@ -149,9 +149,9 @@ git tag -a vX.Y.Z "$TAG_SHA" -m "vX.Y.Z"
 git push origin vX.Y.Z
 ```
 
-## §4 — Wait for tag-CI
+## §4 — Wait for Release Fast-Path
 
-Pushing the tag triggers a `push:tag` event → CI/CD Pipeline reruns → Docker publishes `:vX.Y.Z` only on a fully-green pipeline.
+Pushing the tag triggers `Release Fast-Path`. When the existing `:edge` image matches `TAG_SHA`, the workflow adds the version tags without rebuilding. If it does not match, the workflow synchronously calls the full CI/CD Pipeline before publishing the release assets. In either case, do not continue until the entire Release Fast-Path run succeeds.
 
 ```bash
 sleep 30  # let it queue
@@ -162,15 +162,17 @@ echo "Tag run: $TAG_RUN — polling..."
 
 If Playwright fails on a known-flaky test that bot can rule out as not the release commit's fault: ONE `gh run rerun $TAG_RUN --failed` is OK. If it fails a second time on the same flake: STOP. Fix the flake first (file issue + PR + merge), then re-cut as vX.Y.Z+1.
 
-## §5 — Create GH release
+## §5 — Finalize GH release
+
+The Release Fast-Path creates the GitHub release while uploading the decrypt binaries. Replace its generated notes with the reviewed release notes:
 
 ```bash
 git show origin/master:docs/release-notes/vX.Y.Z.md > /tmp/relbody.md
 sed -i '1,2d' /tmp/relbody.md  # strip the `# CoreScope vX.Y.Z` title — GH adds its own
 # PII grep again
 grep -nEi '...' /tmp/relbody.md && echo "PII HIT" || echo "PII clean"
-gh release create vX.Y.Z -R Kpa-clawbot/CoreScope \
-  --title "CoreScope vX.Y.Z" --notes-file /tmp/relbody.md --verify-tag
+gh release edit vX.Y.Z -R Kpa-clawbot/CoreScope \
+  --title "CoreScope vX.Y.Z" --notes-file /tmp/relbody.md
 ```
 
 ## §6 — VERIFY THE CONTAINER EXISTS BEFORE TELLING THE OPERATOR ANYTHING
