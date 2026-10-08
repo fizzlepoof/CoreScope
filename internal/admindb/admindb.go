@@ -107,7 +107,14 @@ func validatePassword(password string) error {
 
 // Store wraps a read-write SQLite connection dedicated to admin.db.
 type Store struct {
-	db *sql.DB
+	db               *sql.DB
+	passwordComparer func([]byte, []byte) error
+}
+
+// setPasswordComparer configures a private per-store observation seam before
+// the Store is used concurrently. Production stores always use real bcrypt.
+func (s *Store) setPasswordComparer(compare func([]byte, []byte) error) {
+	s.passwordComparer = compare
 }
 
 // Open opens (creating if necessary) the admin database at path and
@@ -222,6 +229,10 @@ func (s *Store) CreateAdmin(username, password string, role Role, createdBy *int
 // account. Returns ErrInvalidCredentials for any failure — unknown
 // user, wrong password, or a disabled account.
 func (s *Store) Authenticate(username, password string) (*Admin, error) {
+	compare := s.passwordComparer
+	if compare == nil {
+		compare = bcrypt.CompareHashAndPassword
+	}
 	row := s.db.QueryRow(
 		`SELECT id, username, password_hash, role, disabled, created_at, created_by FROM admins WHERE username = ? COLLATE NOCASE`,
 		strings.TrimSpace(username),
@@ -237,12 +248,12 @@ func (s *Store) Authenticate(username, password string) (*Admin, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			// Deliberately discard the result: this comparison equalizes the
 			// dominant work with the known-user wrong-password path.
-			_ = bcrypt.CompareHashAndPassword([]byte(invalidCredentialHash), []byte(password))
+			_ = compare([]byte(invalidCredentialHash), []byte(password))
 			return nil, ErrInvalidCredentials
 		}
 		return nil, fmt.Errorf("query admin: %w", err)
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
+	if err := compare([]byte(hash), []byte(password)); err != nil {
 		return nil, ErrInvalidCredentials
 	}
 	if disabled != 0 {
