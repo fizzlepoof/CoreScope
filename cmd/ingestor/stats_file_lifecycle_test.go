@@ -61,7 +61,7 @@ func TestStatsFileWriter_BindsSamplerAndPathAndJoinsConcurrentStops(t *testing.T
 			<-tickRelease
 		}
 		return procIOSnapshot{
-			at: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Add(time.Duration(n) * time.Second),
+			at:        time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Add(time.Duration(n) * time.Second),
 			readBytes: 1000 * n, writeBytes: 2000 * n, syscR: 10 * n, syscW: 20 * n, ok: true,
 		}
 	}
