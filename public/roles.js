@@ -841,7 +841,14 @@
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
       .replace(/`(.+?)`/g, '<code>$1</code>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:var(--link-color)">$1</a>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(_match, label, url) {
+        var normalizedUrl = url.replace(/[\x00-\x20\x7f]+/g, '').toLowerCase();
+        if (/^(?:javascript|data|vbscript):/.test(normalizedUrl)) return label;
+        var safeUrl = url
+          .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return '<a href="' + safeUrl + '" target="_blank" rel="noopener" style="color:var(--link-color)">' + label + '</a>';
+      })
       .replace(/^- (.+)/gm, '<li>$1</li>')
       .replace(/\n/g, '<br>');
     // Wrap consecutive <li> in <ul>

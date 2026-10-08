@@ -2109,6 +2109,16 @@
             "name": "GO_BASE_URL",
             "required": false,
             "description": "alternate Go server URL used by cross-backend E2E coverage"
+          },
+          {
+            "name": "E2E_FAILURE_EVIDENCE_DIR",
+            "required": false,
+            "description": "run-owned directory where failed browser navigation diagnostics are persisted"
+          },
+          {
+            "name": "E2E_TEST_FILTER",
+            "required": false,
+            "description": "regular expression that limits a diagnostic run to named E2E cases"
           }
         ],
         "flags": [
@@ -7669,7 +7679,13 @@
         "tests/unit/test-panel-corner.js"
       ],
       "requirements": {
-        "environment": [],
+        "environment": [
+          {
+            "name": "PACKETS_TEST_NAME_FILTER",
+            "required": false,
+            "description": "optional substring selecting focused tests from the legacy runner"
+          }
+        ],
         "flags": []
       },
       "status": "dormant",
@@ -8528,6 +8544,31 @@
       "classificationEvidence": [
         {
           "source": "tests/unit/test-xss-escape-sinks.js",
+          "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
+        }
+      ]
+    },
+    {
+      "path": "test-mini-markdown-security.js",
+      "suite": "unit",
+      "command": [
+        "node",
+        "test-mini-markdown-security.js"
+      ],
+      "requirements": {
+        "environment": [],
+        "flags": []
+      },
+      "status": "active",
+      "statusEvidence": [
+        {
+          "source": "package.json",
+          "detail": "explicitly listed as a test command or documented runner"
+        }
+      ],
+      "classificationEvidence": [
+        {
+          "source": "test-mini-markdown-security.js",
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]

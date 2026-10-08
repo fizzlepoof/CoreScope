@@ -30,6 +30,7 @@ const cv2Src     = fs.readFileSync(path.join(ROOT, 'public', 'customize-v2.js'),
 const rolesSrc   = fs.readFileSync(path.join(ROOT, 'public', 'roles.js'), 'utf8');
 const presetsSrc = fs.readFileSync(path.join(ROOT, 'public', 'cb-presets.js'), 'utf8');
 const styleSrc   = fs.readFileSync(path.join(ROOT, 'public', 'style.css'), 'utf8');
+const computedRoleStyle = require('../helpers/cb-computed-role-style');
 
 function makeSandbox(localStorageMap) {
   localStorageMap = localStorageMap || {};
@@ -92,13 +93,7 @@ function makeSandbox(localStorageMap) {
     CustomEvent: function (t, o) { this.type = t; this.detail = o && o.detail; },
     Event: function (t) { this.type = t; },
     Proxy: Proxy,
-    getComputedStyle: function () {
-      // Pretend body[data-cb-preset]=X CSS rule applies if attr is set: but
-      // the JS apply also writes the var to root, so just return root's view.
-      return {
-        getPropertyValue: function (k) { return root.style._vars[k] || ''; }
-      };
-    }
+    getComputedStyle: computedRoleStyle(root, body, styleSrc)
   };
   sandbox.window = sandbox;
   return { sandbox, root, body };
@@ -188,7 +183,7 @@ console.log('\n=== #1446 Scenario 5: clear preset → reverts to server config /
   vm.runInContext(cv2Src, env.sandbox);
   env.sandbox.window._customizerV2.init({ nodeColors: { repeater: '#aaaaaa' } });
   // Confirm deut is active first.
-  const repWithPreset = env.root.style.getPropertyValue('--mc-role-repeater').toLowerCase();
+  const repWithPreset = env.sandbox.getComputedStyle(env.body).getPropertyValue('--mc-role-repeater').toLowerCase();
   assert(repWithPreset === '#fe6100',
     'precondition: deut active → --mc-role-repeater = #FE6100 (got: ' + JSON.stringify(repWithPreset) + ')');
   // Now clear the preset.

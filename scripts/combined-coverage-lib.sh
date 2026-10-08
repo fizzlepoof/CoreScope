@@ -4,6 +4,10 @@ set -eu
 
 REPO_ROOT=${COMBINED_COVERAGE_REPO_ROOT:?COMBINED_COVERAGE_REPO_ROOT must be set by the coverage wrapper}
 COVERAGE_DIR=${COVERAGE_DIR:-"$REPO_ROOT/coverage"}
+case "$COVERAGE_DIR" in
+  /*) ;;
+  *) COVERAGE_DIR="$REPO_ROOT/$COVERAGE_DIR" ;;
+esac
 GO_COVERAGE_DIR="$COVERAGE_DIR/go"
 FRONTEND_COVERAGE_DIR="$COVERAGE_DIR/frontend"
 INSTRUMENTED_DIR="$REPO_ROOT/public-instrumented"
@@ -31,6 +35,9 @@ by default, the instrumented static frontend.
 Options:
   --go-only        run cmd/server and cmd/ingestor Go coverage only
   --frontend-only  build the Go server/migrator and run frontend coverage only
+  --customizer-navigation-diagnostic
+                   run only the Customizer v2 Playwright prefix against the
+                   canonical seeded fixture with static request timing trace
   --dry-run        print the selected orchestration without changing files
   -h, --help       show this help
 
@@ -480,7 +487,7 @@ PY
 
 print_dry_run() {
   port=$1
-  if [ "$MODE" != frontend ]; then
+  if [ "$MODE" = full ] || [ "$MODE" = go ]; then
     log "+ cmd/server go test -timeout 15m -coverprofile coverage/go/server-coverage.out ./..."
     log "+ cmd/server go tool cover -func coverage/go/server-coverage.out"
     log "+ cmd/ingestor go test -timeout 15m -coverprofile coverage/go/ingestor-coverage.out ./..."
@@ -493,10 +500,15 @@ print_dry_run() {
     log "+ freshen and seed the temporary E2E fixture"
     log "+ run corescope-migrate -db <temporary>/e2e-fixture.db"
     log "+ instrument frontend into <temporary>/public-instrumented"
-    log "+ <temporary>/corescope-server -host 127.0.0.1 -port $port -db <temporary>/e2e-fixture.db -public <temporary>/public-instrumented -config-dir <temporary>/config"
-    log "+ BASE_URL=http://127.0.0.1:$port node scripts/tests/run-manifest.js --profile ci-e2e-phase"
-    log "+ BASE_URL=http://127.0.0.1:$port node scripts/collect-frontend-coverage.js"
-    log "+ npx nyc report --temp-dir .nyc_output --report-dir coverage/frontend --reporter=text --reporter=text-summary --reporter=html"
+    if [ "$MODE" = customizer ]; then
+      log "+ <temporary>/corescope-server -host 127.0.0.1 -port $port -db <temporary>/e2e-fixture.db -public <temporary>/public-instrumented -config-dir <temporary>/config -static-trace-file <temporary>/static-request-trace.jsonl"
+      log "+ BASE_URL=http://127.0.0.1:$port E2E_TEST_FILTER=^Customizer v2: node test-e2e-playwright.js"
+    else
+      log "+ <temporary>/corescope-server -host 127.0.0.1 -port $port -db <temporary>/e2e-fixture.db -public <temporary>/public-instrumented -config-dir <temporary>/config -static-trace-file <temporary>/static-request-trace.jsonl"
+      log "+ BASE_URL=http://127.0.0.1:$port node scripts/tests/run-manifest.js --profile ci-e2e-phase"
+      log "+ BASE_URL=http://127.0.0.1:$port node scripts/collect-frontend-coverage.js"
+      log "+ npx nyc report --temp-dir .nyc_output --report-dir coverage/frontend --reporter=text --reporter=text-summary --reporter=html"
+    fi
   fi
 }
 
@@ -563,6 +575,8 @@ prepare_frontend_paths() {
     RUN_FRONTEND_REPORT_DIR="$FRONTEND_COVERAGE_DIR"
   fi
   mkdir -p "$RUN_FRONTEND_REPORT_DIR"
+  FAILURE_EVIDENCE_DIR="$RUN_FRONTEND_REPORT_DIR/failure-evidence"
+  mkdir -p "$FAILURE_EVIDENCE_DIR"
 }
 
 validate_frontend_coverage_artifacts() {
@@ -661,6 +675,51 @@ for (const name of names) {
 NODE
 }
 
+capture_frontend_failure_evidence() {
+  base_url=$1
+  exit_status=$2
+  failed_stage=$3
+  [ -n "${FAILURE_EVIDENCE_DIR:-}" ] || return 0
+
+  mkdir -p "$FAILURE_EVIDENCE_DIR"
+  {
+    printf 'base_url=%s\n' "$base_url"
+    printf 'exit_status=%s\n' "$exit_status"
+    printf 'failed_stage=%s\n' "$failed_stage"
+    printf 'server_pid=%s\n' "${SERVER_PID:-}"
+    date -u '+captured_at_utc=%Y-%m-%dT%H:%M:%SZ'
+  } > "$FAILURE_EVIDENCE_DIR/run-metadata.txt"
+
+  if [ -f "$WORK_DIR/server.log" ]; then
+    cp "$WORK_DIR/server.log" "$FAILURE_EVIDENCE_DIR/server.log"
+  fi
+
+  {
+    printf '%s\n' '--- root ---'
+    curl --max-time 2 -sS -D - -o /dev/null "$base_url/" || true
+    printf '%s\n' '--- health ---'
+    curl --max-time 2 -sS -D - -o /dev/null "$base_url/api/healthz" || true
+  } > "$FAILURE_EVIDENCE_DIR/http-probes.txt" 2>&1
+
+  if [ -n "${SERVER_PID:-}" ]; then
+    {
+      ps -o pid=,ppid=,stat=,etime=,cmd= -p "$SERVER_PID" 2>&1 || true
+      printf '%s\n' '--- cgroup ---'
+      cat "/proc/$SERVER_PID/cgroup" 2>&1 || true
+      cgroup_path=$(awk -F: '$1 == "0" { print $3; exit }' "/proc/$SERVER_PID/cgroup" 2>/dev/null || true)
+      if [ -n "$cgroup_path" ] && [ -d "/sys/fs/cgroup$cgroup_path" ]; then
+        for counter in memory.current memory.events memory.stat pids.current; do
+          [ -r "/sys/fs/cgroup$cgroup_path/$counter" ] || continue
+          printf '%s\n' "--- $counter ---"
+          cat "/sys/fs/cgroup$cgroup_path/$counter" 2>&1 || true
+        done
+      fi
+      printf '%s\n' '--- listeners ---'
+      ss -ltnp 2>&1 || true
+    } > "$FAILURE_EVIDENCE_DIR/server-state.txt"
+  fi
+}
+
 run_frontend_coverage() {
   fixture="$WORK_DIR/e2e-fixture.db"
   server="$WORK_DIR/corescope-server"
@@ -686,12 +745,45 @@ run_frontend_coverage() {
 
   assert_port_available "$port"
   mkdir -p "$WORK_DIR/config"
-  "$server" -host 127.0.0.1 -port "$port" -db "$fixture" -public "$RUN_INSTRUMENTED_DIR" -config-dir "$WORK_DIR/config" >"$WORK_DIR/server.log" 2>&1 &
+  "$server" -host 127.0.0.1 -port "$port" -db "$fixture" -public "$RUN_INSTRUMENTED_DIR" -config-dir "$WORK_DIR/config" \
+    -static-trace-file "$FAILURE_EVIDENCE_DIR/static-request-trace.jsonl" >"$WORK_DIR/server.log" 2>&1 &
   SERVER_PID=$!
   wait_for_server "$base_url"
 
-  run_tracked_in_dir "$REPO_ROOT" env BASE_URL="$base_url" node scripts/tests/run-manifest.js --profile ci-e2e-phase
-  run_tracked_in_dir "$REPO_ROOT" env BASE_URL="$base_url" node scripts/collect-frontend-coverage.js
+  if [ "$MODE" = customizer ]; then
+    if run_tracked_in_dir "$REPO_ROOT" env \
+      BASE_URL="$base_url" \
+      E2E_FAILURE_EVIDENCE_DIR="$FAILURE_EVIDENCE_DIR" \
+      E2E_TEST_FILTER='^Customizer v2:' \
+      node test-e2e-playwright.js; then
+      log "Customizer navigation diagnostic trace written to $FAILURE_EVIDENCE_DIR/static-request-trace.jsonl"
+      return 0
+    fi
+    frontend_status=$?
+    capture_frontend_failure_evidence "$base_url" "$frontend_status" customizer-navigation
+    return "$frontend_status"
+  fi
+
+  if run_tracked_in_dir "$REPO_ROOT" env \
+    BASE_URL="$base_url" \
+    E2E_FAILURE_EVIDENCE_DIR="$FAILURE_EVIDENCE_DIR" \
+    node scripts/tests/run-manifest.js --profile ci-e2e-phase; then
+    :
+  else
+    frontend_status=$?
+    capture_frontend_failure_evidence "$base_url" "$frontend_status" manifest
+    return "$frontend_status"
+  fi
+  if run_tracked_in_dir "$REPO_ROOT" env \
+    BASE_URL="$base_url" \
+    E2E_FAILURE_EVIDENCE_DIR="$FAILURE_EVIDENCE_DIR" \
+    node scripts/collect-frontend-coverage.js; then
+    :
+  else
+    frontend_status=$?
+    capture_frontend_failure_evidence "$base_url" "$frontend_status" collector
+    return "$frontend_status"
+  fi
 
   validate_frontend_coverage_artifacts "$REPO_ROOT/.nyc_output"
   run_tracked_in_dir "$REPO_ROOT" npx nyc report \
@@ -708,6 +800,7 @@ main() {
     case "$1" in
       --go-only) MODE=go ;;
       --frontend-only) MODE=frontend ;;
+      --customizer-navigation-diagnostic) MODE=customizer ;;
       --dry-run) DRY_RUN=1 ;;
       -h|--help) usage; return 0 ;;
       *) printf 'ERROR: unknown option: %s\n' "$1" >&2; usage >&2; return 2 ;;
@@ -729,7 +822,7 @@ main() {
   WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/corescope-coverage.XXXXXX")
   mkdir -p "$WORK_DIR/go-build-cache" "$WORK_DIR/go-mod-cache"
 
-  if [ "$MODE" != frontend ]; then
+  if [ "$MODE" = full ] || [ "$MODE" = go ]; then
     run_go_coverage
   fi
   if [ "$MODE" != go ]; then

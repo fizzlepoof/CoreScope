@@ -82,25 +82,34 @@ No build step required — just run:
 ```bash
 docker run -d --name corescope \
   --restart=unless-stopped \
-  -p 80:80 -p 1883:1883 \
+  -p 80:80 \
   -v /your/data:/app/data \
+  -e MQTT_BROKER=mqtts://your-broker:8883 \
   ghcr.io/kpa-clawbot/corescope:latest
 ```
 
-Open `http://localhost` — done. No config file needed; CoreScope starts with sensible defaults.
+Open `http://localhost`. `MQTT_BROKER` is required here because the bundled
+anonymous plaintext broker is disabled by default. An existing `config.json`
+with external `mqttSources` may be used instead.
 
 For HTTPS with a custom domain, add `-p 443:443` and mount your Caddyfile:
 ```bash
 docker run -d --name corescope \
   --restart=unless-stopped \
-  -p 80:80 -p 443:443 -p 1883:1883 \
+  -p 80:80 -p 443:443 \
   -v /your/data:/app/data \
+  -e MQTT_BROKER=mqtts://your-broker:8883 \
   -v /your/Caddyfile:/etc/caddy/Caddyfile:ro \
   -v /your/caddy-data:/data/caddy \
   ghcr.io/kpa-clawbot/corescope:latest
 ```
 
-Disable built-in services with `-e DISABLE_MOSQUITTO=true` or `-e DISABLE_CADDY=true`, or drop a `.env` file in your data volume. See [docs/deployment.md](docs/deployment.md) for the full reference.
+The bundled anonymous plaintext MQTT broker is disabled by default. Configure an
+external broker as above, or explicitly opt into the development broker with
+`-e DISABLE_MOSQUITTO=false -p 127.0.0.1:1883:1883`. Do not publish that broker
+on an untrusted network without adding authentication and TLS. Disable Caddy with
+`-e DISABLE_CADDY=true`, or drop settings in a `.env` file in your data volume.
+See [docs/deployment.md](docs/deployment.md) for the full reference.
 
 ### Build from Source
 
@@ -110,7 +119,10 @@ cd CoreScope
 ./manage.sh setup
 ```
 
-The setup wizard walks you through config, domain, HTTPS, build, and run.
+The setup wizard walks you through config, MQTT, domain, HTTPS, build, and run.
+Its secure default keeps bundled Mosquitto off and requires an external broker
+URL unless an existing `config.json` already has an external source. Choosing
+the bundled broker is an explicit opt-in and publishes it on host loopback only.
 
 ```bash
 ./manage.sh status       # Health check + packet/node counts
@@ -164,6 +176,7 @@ Copy `config.example.json` to `config.json` and edit:
 |----------|-------------|
 | `PORT` | Override config port |
 | `DB_PATH` | Override SQLite database path |
+| `MQTT_BROKER` | External MQTT broker URL; overrides MQTT sources in `config.json` |
 
 ## Architecture
 
@@ -171,7 +184,7 @@ Copy `config.example.json` to `config.json` and edit:
                            ┌─────────────────────────────────────────────┐
                            │              Docker Container               │
                            │                                             │
-Observer → USB →           │  Mosquitto ──→ Go Ingestor ──→ SQLite DB   │
+Observer → USB →           │  MQTT broker ─→ Go Ingestor ─→ SQLite DB   │
   meshcoretomqtt → MQTT ──→│                    │                        │
                            │              Go HTTP Server ──→ WebSocket   │
                            │                    │               │        │
@@ -181,7 +194,7 @@ Observer → USB →           │  Mosquitto ──→ Go Ingestor ──→ SQ
                                              Browser
 ```
 
-**Two-process model:** The Go ingestor handles MQTT ingestion and packet decoding. The Go HTTP server loads all packets into an in-memory store on startup (5 indexes for fast lookups) and serves the REST API + WebSocket broadcast. Both are managed by supervisord inside a single container with Caddy for HTTPS and Mosquitto for local MQTT.
+**Two-process model:** The Go ingestor handles MQTT ingestion and packet decoding. The Go HTTP server loads all packets into an in-memory store on startup (5 indexes for fast lookups) and serves the REST API + WebSocket broadcast. Both are managed by supervisord inside a single container with Caddy for HTTPS. A local Mosquitto is included but disabled by default; set `DISABLE_MOSQUITTO=false` only to opt in.
 
 ## MQTT Setup
 

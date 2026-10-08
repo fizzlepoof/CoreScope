@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "npx c8 --reporter=text --reporter=text-summary sh test-all.sh",
-    "test:manifest": "node scripts/tests/validate-manifest.test.js && node scripts/tests/run-manifest.test.js && node scripts/tests/combined-coverage.test.js && node scripts/tests/validate-manifest.js",
-    "test:unit": "node scripts/tests/run-manifest.js --profile legacy-test-unit",
+    "test:manifest": "node scripts/tests/validate-manifest.test.js && node scripts/tests/run-manifest.test.js && node scripts/tests/combined-coverage.test.js && node scripts/tests/e2e-failure-diagnostics.test.js && node scripts/tests/validate-manifest.js",
+    "test:mini-markdown-security": "node test-mini-markdown-security.js",
+    "test:unit": "node scripts/tests/run-manifest.js --profile legacy-test-unit && npm run test:mini-markdown-security",
     "test:unit:all-active": "node scripts/tests/run-manifest.js --suite unit --status active",
     "test:integration": "node scripts/tests/run-manifest.js --suite integration --status active",
     "test:e2e": "node scripts/tests/run-manifest.js --suite e2e --status active",
