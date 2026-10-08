@@ -252,3 +252,117 @@ verifyCoverageColors().then(() => {
   console.error(error);
   process.exitCode = 1;
 });
+
+// Exercise the registered production page and click handlers, not extracted copies.
+// DOM/Leaflet seams cover only the browser APIs needed to mount an empty page.
+function clipboardPage() {
+  let nodes = new Map();
+  let page;
+  const writes = [];
+  function node() {
+    const listeners = new Map();
+    return {
+      dataset: {}, style: { setProperty() {} }, classList: { toggle() {} },
+      textContent: '', value: '', scrollHeight: 0, clientHeight: 0, scrollTop: 0,
+      appendChild() {}, replaceChildren() {},
+      addEventListener(type, handler) { listeners.set(type, handler); },
+      click() { listeners.get('click')(); },
+    };
+  }
+  const container = {
+    set innerHTML(html) {
+      nodes = new Map(Array.from(html.matchAll(/id="([^"]+)"/g), match => [match[1], node()]));
+    },
+  };
+  const context = vm.createContext({
+    console, Set, Map, Promise,
+    document: { getElementById: id => nodes.get(id) || null, createElement: node },
+    localStorage: { getItem: () => null },
+    fetch: () => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }),
+    requestAnimationFrame: handler => handler(),
+    window: { addEventListener() {}, removeEventListener() {}, _applyTilesToNodeMap() {} },
+    navigator: { clipboard: { writeText(text) {
+      let resolve, reject;
+      const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
+      writes.push({ text, resolve, reject });
+      return promise;
+    } } },
+    L: {
+      map: () => ({ setView() { return this; }, on() {}, remove() {},
+        getContainer: () => nodes.get('region-scope-map') }),
+      layerGroup: () => ({ addTo() { return this; }, clearLayers() {} }),
+    },
+    registerPage(name, handlers) {
+      assert.strictEqual(name, 'region-scope');
+      page = handlers;
+    },
+  });
+  // In a browser, window properties are also global bindings.
+  Object.assign(context, context.window);
+  context.window = context;
+  vm.runInContext(fs.readFileSync('public/region-scope-helpers.js', 'utf8'), context);
+  vm.runInContext(scopeJS, context);
+  const flush = () => new Promise(resolve => setImmediate(resolve));
+  return {
+    writes, flush,
+    get: id => nodes.get(id),
+    async mount() { page.init(container); await flush(); },
+    teardown() { page.destroy(); nodes.clear(); },
+  };
+}
+
+async function clipboardRegression(outcome, lifecycle) {
+  const fixture = clipboardPage();
+  const unhandled = [];
+  const onUnhandled = error => unhandled.push(error);
+  process.on('unhandledRejection', onUnhandled);
+  try {
+    await fixture.mount();
+    const oldStatus = fixture.get('region-scope-status');
+    oldStatus.textContent = 'Original status';
+    fixture.get('copy-region-verification').click();
+    assert.strictEqual(fixture.writes.length, 1, 'real click invokes clipboard once');
+    assert.strictEqual(fixture.writes[0].text, 'region', 'real command output reaches clipboard');
+    if (lifecycle !== 'mounted') fixture.teardown();
+    if (lifecycle === 'remounted') {
+      await fixture.mount();
+      fixture.get('region-scope-status').textContent = 'New mount status';
+    }
+    if (outcome === 'success') fixture.writes[0].resolve();
+    else fixture.writes[0].reject(new Error('clipboard denied'));
+    await fixture.flush();
+    assert.strictEqual(unhandled.length, 0, 'settlement must not produce an unhandled rejection');
+    if (lifecycle === 'mounted') {
+      assert.strictEqual(oldStatus.textContent, outcome === 'success'
+        ? 'Verification command copied to clipboard.'
+        : 'Copy failed. Select the stage and copy it manually.');
+    } else {
+      assert.strictEqual(oldStatus.textContent, 'Original status', 'detached status remains untouched');
+      if (lifecycle === 'remounted') {
+        assert.strictEqual(fixture.get('region-scope-status').textContent, 'New mount status',
+          'old clipboard settlement must not overwrite the new mount status');
+      }
+    }
+  } finally {
+    fixture.teardown();
+    process.removeListener('unhandledRejection', onUnhandled);
+  }
+}
+
+(async function () {
+  let failures = 0;
+  for (const lifecycle of ['mounted', 'teardown', 'remounted']) {
+    for (const outcome of ['success', 'failure']) {
+      const name = `clipboard ${outcome} after ${lifecycle}`;
+      try {
+        await clipboardRegression(outcome, lifecycle);
+        console.log('PASS: ' + name);
+      } catch (error) {
+        failures++;
+        console.error('FAIL: ' + name + '\n' + error.stack);
+      }
+    }
+  }
+  if (failures) process.exitCode = 1;
+  else console.log('test-region-scope-ui.js: all structural assertions and 6 clipboard behavior tests passed');
+})().catch(error => { console.error(error); process.exitCode = 1; });
