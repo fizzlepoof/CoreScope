@@ -10,6 +10,9 @@ const VALID_SUITES = ['e2e', 'integration', 'unit'];
 const VALID_STATUSES = ['active', 'dormant'];
 
 function optionValues(value, validValues, label) {
+  if (!value.trim() || !value.split(',').some(item => item.trim())) {
+    throw new Error(`--${label} requires a non-empty value`);
+  }
   const values = value === 'all' ? validValues : value.split(',').filter(Boolean);
   for (const item of values) {
     if (!validValues.includes(item)) throw new Error(`invalid ${label}: ${item}`);
@@ -157,6 +160,8 @@ function runTests(tests, options) {
 }
 
 function dispatchTests(tests, options, dependencies = {}) {
+  // List/dry-run are inventory queries: zero matches is a valid empty result.
+  // Execution must never report success without running any selected tests.
   const writeOutput = dependencies.writeOutput || (message => process.stdout.write(message));
   if (options.list) {
     tests.forEach(item => writeOutput(`${item.path}\n`));
@@ -172,10 +177,18 @@ function dispatchTests(tests, options, dependencies = {}) {
     })}\n`));
     return 0;
   }
+  if (!tests.length) throw new Error('no tests selected for execution');
+  // This frozen CI profile promises the full canonical browser test set.
+  // Keep explicit name filters available to non-canonical diagnostic callers.
+  const execution = { ...dependencies };
+  if (options.profile === 'ci-e2e-phase') {
+    execution.environment = { ...(dependencies.environment || process.env) };
+    delete execution.environment.E2E_TEST_FILTER;
+  }
   const preflight = dependencies.preflight || preflightTests;
   const run = dependencies.run || runTests;
-  preflight(tests, dependencies);
-  return run(tests, dependencies);
+  preflight(tests, execution);
+  return run(tests, execution);
 }
 
 function main() {

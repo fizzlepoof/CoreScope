@@ -703,6 +703,55 @@ test('customizer diagnostic propagates the browser exit and captures failures on
   }
 });
 
+for (const mode of ['full', 'frontend', 'customizer']) {
+  test(`${mode} coverage executes with canonical filter isolation or the explicit diagnostic filter`, () => {
+    const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'corescope-filter-isolation-'));
+    const fakeRepo = path.join(temp, 'repo');
+    const work = path.join(temp, 'work');
+    const bin = path.join(temp, 'bin');
+    fs.mkdirSync(path.join(fakeRepo, 'test-fixtures'), { recursive: true });
+    fs.mkdirSync(path.join(fakeRepo, 'node_modules', '.bin'), { recursive: true });
+    fs.mkdirSync(work);
+    fs.mkdirSync(bin);
+    fs.writeFileSync(path.join(fakeRepo, 'test-fixtures', 'e2e-fixture.db'), 'fixture');
+    fs.writeFileSync(path.join(fakeRepo, 'node_modules', '.bin', 'nyc'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    fs.writeFileSync(path.join(work, 'corescope-server'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    fs.writeFileSync(path.join(bin, 'node'), '#!/bin/sh\nprintf "child=%s filter=%s keep=%s\\n" "$1" "${E2E_TEST_FILTER-}" "$KEEP_ME"\n', { mode: 0o755 });
+    try {
+      const result = sourceScript([
+        `REPO_ROOT=${JSON.stringify(fakeRepo)}`,
+        `WORK_DIR=${JSON.stringify(work)}`,
+        `FAILURE_EVIDENCE_DIR=${JSON.stringify(path.join(temp, 'evidence'))}`,
+        `MODE=${mode}`,
+        'trap cleanup EXIT HUP INT TERM',
+        'run_go() { return 0; }',
+        'freshen_fixture() { return 0; }',
+        'seed_e2e_fixture() { return 0; }',
+        'finalize_e2e_fixture() { return 0; }',
+        'run_tracked() { return 0; }',
+        'prepare_frontend_paths() { RUN_INSTRUMENTED_DIR="$WORK_DIR/instrumented"; RUN_FRONTEND_REPORT_DIR="$WORK_DIR/report"; }',
+        'assert_port_available() { return 0; }',
+        'wait_for_server() { return 0; }',
+        'validate_frontend_coverage_artifacts() { return 0; }',
+        // Exercise the actual env executable at the orchestration boundary;
+        // only expensive builds, browser children and reporting are replaced.
+        'run_tracked_in_dir() { shift; case "$*" in *run-manifest.js*|*collect-frontend-coverage.js*|*test-e2e-playwright.js*) "$@" ;; *) return 0 ;; esac; }',
+        'run_frontend_coverage 24680',
+        'printf "ambient=%s\\n" "$E2E_TEST_FILTER"',
+      ], { PATH: `${bin}:${process.env.PATH}`, E2E_TEST_FILTER: '^Ambient narrowed:', KEEP_ME: 'yes' });
+      assert.strictEqual(result.status, 0, result.stderr || result.stdout);
+      const children = result.stdout.split('\n').filter(line => line.startsWith('child='));
+      assert.strictEqual(children.length, mode === 'customizer' ? 1 : 2, result.stdout);
+      for (const child of children) {
+        assert.ok(child.endsWith(`filter=${mode === 'customizer' ? '^Customizer v2:' : ''} keep=yes`), child);
+      }
+      assert.match(result.stdout, /ambient=\^Ambient narrowed:/, 'must not mutate the parent environment');
+    } finally {
+      fs.rmSync(temp, { recursive: true, force: true });
+    }
+  });
+}
+
 test('package coverage commands name the artifacts they actually produce', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
   assert.strictEqual(pkg.scripts['test:coverage'], 'sh scripts/combined-coverage.sh --go-only');
