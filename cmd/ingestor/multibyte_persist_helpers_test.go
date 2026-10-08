@@ -5,15 +5,36 @@ import (
 	"database/sql"
 	"log"
 	"strings"
+	"sync"
 	"testing"
 )
+
+// capturedLogBuffer protects both logger writes and test snapshots. The
+// standard logger serializes writes, but not readers of its output buffer.
+// Keep the underlying buffer private so all access uses the same mutex.
+type capturedLogBuffer struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (b *capturedLogBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *capturedLogBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.String()
+}
 
 // captureLogs redirects the standard logger to a buffer for the
 // duration of the test and returns the buffer. Restores the previous
 // writer when the test ends.
-func captureLogs(t *testing.T) *bytes.Buffer {
+func captureLogs(t *testing.T) *capturedLogBuffer {
 	t.Helper()
-	buf := &bytes.Buffer{}
+	buf := &capturedLogBuffer{}
 	prevWriter := log.Writer()
 	prevFlags := log.Flags()
 	log.SetOutput(buf)
@@ -26,7 +47,7 @@ func captureLogs(t *testing.T) *bytes.Buffer {
 
 // logContains reports whether the captured log buffer contains substr
 // (case-insensitive).
-func logContains(buf *bytes.Buffer, substr string) bool {
+func logContains(buf *capturedLogBuffer, substr string) bool {
 	return strings.Contains(strings.ToLower(buf.String()), strings.ToLower(substr))
 }
 
