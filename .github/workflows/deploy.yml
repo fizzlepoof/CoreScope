@@ -79,6 +79,17 @@ jobs:
           echo "--- Go Ingestor Coverage ---"
           go tool cover -func=ingestor-coverage.out | tail -1
 
+      - name: Test admin database authentication module
+        run: |
+          set -e -o pipefail
+          cd internal/admindb
+          go test -timeout 15m -race ./...
+
+      - name: Verify canonical admindb execution policy
+        run: |
+          set -e
+          node test-admindb-ci-policy.js
+
       - name: Build and test channel library + decrypt CLI
         run: |
           set -e -o pipefail
