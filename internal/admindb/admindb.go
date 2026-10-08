@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"golang.org/x/crypto/bcrypt"
 	_ "modernc.org/sqlite"
@@ -49,6 +50,17 @@ type Admin struct {
 	CreatedBy *int64
 }
 
+// HashRegionDefinition is the operator-managed metadata for one MeshCore
+// transport scope. GeometryJSON contains a validated GeoJSON Polygon or
+// MultiPolygon; validation belongs to the HTTP boundary, while this package
+// persists the exact JSON text.
+type HashRegionDefinition struct {
+	Name         string
+	ParentName   string
+	Description  string
+	GeometryJSON string
+}
+
 // ErrInvalidCredentials is returned by Authenticate for any failure —
 // unknown username, wrong password, or a disabled account — so callers
 // never leak which case occurred (no username enumeration).
@@ -61,15 +73,19 @@ var ErrUsernameTaken = errors.New("username already taken")
 // expired session token.
 var ErrSessionInvalid = errors.New("session invalid or expired")
 
-// ErrPasswordTooShort is returned by ChangePassword when newPassword is
-// under minPasswordLen.
+// ErrPasswordTooShort is returned when a newly chosen password is under
+// minPasswordLen.
 var ErrPasswordTooShort = errors.New("password must be at least 8 characters")
 
-// minPasswordLen is the minimum length enforced on a newly *chosen*
-// password (ChangePassword). Existing accounts and CreateAdmin are left
-// as-is — this only guards the one path where an admin is actively
-// picking their own new password.
-const minPasswordLen = 8
+// ErrPasswordTooLong is returned when a password exceeds bcrypt's
+// 72-byte input limit. Rejecting it explicitly avoids accepting a value
+// that bcrypt cannot represent safely.
+var ErrPasswordTooLong = errors.New("password must be at most 72 bytes")
+
+const (
+	minPasswordLen   = 8
+	maxPasswordBytes = 72
+)
 
 // sessionTTL is how long a session stays valid after its last use;
 // ValidateSession slides this window forward on every successful check.
@@ -83,9 +99,33 @@ const sessionTTL = 24 * time.Hour
 // verifying correctly no matter what this constant changes to.
 const bcryptCost = 12
 
+// invalidCredentialHash makes an unknown-username failure perform the
+// same deliberately expensive bcrypt operation as a wrong password. It
+// is a hash of a fixed, non-secret value and exists only to prevent the
+// database lookup result from becoming a username-enumeration timing
+// signal. Keep its cost aligned with bcryptCost (enforced by a test).
+const invalidCredentialHash = "$2a$12$D6YuKS5ry8/SJJEDvG4QbeHoDLgY5n50DYtuP4umv2EvpqAMFFSkC"
+
+func validatePassword(password string) error {
+	if utf8.RuneCountInString(password) < minPasswordLen {
+		return ErrPasswordTooShort
+	}
+	if len(password) > maxPasswordBytes {
+		return ErrPasswordTooLong
+	}
+	return nil
+}
+
 // Store wraps a read-write SQLite connection dedicated to admin.db.
 type Store struct {
-	db *sql.DB
+	db               *sql.DB
+	passwordComparer func([]byte, []byte) error
+}
+
+// setPasswordComparer configures a private per-store observation seam before
+// the Store is used concurrently. Production stores always use real bcrypt.
+func (s *Store) setPasswordComparer(compare func([]byte, []byte) error) {
+	s.passwordComparer = compare
 }
 
 // Open opens (creating if necessary) the admin database at path and
@@ -138,8 +178,11 @@ func ensureSchema(db *sql.DB) error {
 		// cmd/server can CRUD them directly: it's the one process with a
 		// writable handle onto admin.db, same as admin accounts above.
 		`CREATE TABLE IF NOT EXISTS hash_regions (
-			name       TEXT PRIMARY KEY,
-			created_at TEXT NOT NULL
+			name          TEXT PRIMARY KEY,
+			parent_name   TEXT NOT NULL DEFAULT '',
+			description   TEXT NOT NULL DEFAULT '',
+			geometry_json TEXT NOT NULL DEFAULT '',
+			created_at    TEXT NOT NULL
 		)`,
 		// regions holds the IATA observer code -> friendly display name
 		// map used by the region filter UI. Distinct from hash_regions
@@ -157,6 +200,47 @@ func ensureSchema(db *sql.DB) error {
 			return fmt.Errorf("exec %q: %w", stmt, err)
 		}
 	}
+	return ensureHashRegionDefinitionColumns(db)
+}
+
+// ensureHashRegionDefinitionColumns upgrades databases created before hash
+// regions carried hierarchy and boundary metadata. SQLite lacks ADD COLUMN IF
+// NOT EXISTS, so inspect the live schema before each idempotent ALTER.
+func ensureHashRegionDefinitionColumns(db *sql.DB) error {
+	rows, err := db.Query(`PRAGMA table_info(hash_regions)`)
+	if err != nil {
+		return fmt.Errorf("inspect hash_regions schema: %w", err)
+	}
+	columns := make(map[string]bool)
+	for rows.Next() {
+		var cid, notNull, primaryKey int
+		var name, columnType string
+		var defaultValue sql.NullString
+		if err := rows.Scan(&cid, &name, &columnType, &notNull, &defaultValue, &primaryKey); err != nil {
+			rows.Close()
+			return fmt.Errorf("scan hash_regions schema: %w", err)
+		}
+		columns[name] = true
+	}
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("close hash_regions schema rows: %w", err)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("read hash_regions schema: %w", err)
+	}
+
+	for name, definition := range map[string]string{
+		"parent_name":   `TEXT NOT NULL DEFAULT ''`,
+		"description":   `TEXT NOT NULL DEFAULT ''`,
+		"geometry_json": `TEXT NOT NULL DEFAULT ''`,
+	} {
+		if columns[name] {
+			continue
+		}
+		if _, err := db.Exec(fmt.Sprintf(`ALTER TABLE hash_regions ADD COLUMN %s %s`, name, definition)); err != nil {
+			return fmt.Errorf("add hash_regions.%s: %w", name, err)
+		}
+	}
 	return nil
 }
 
@@ -168,8 +252,8 @@ func (s *Store) CreateAdmin(username, password string, role Role, createdBy *int
 	if username == "" {
 		return nil, errors.New("username is required")
 	}
-	if password == "" {
-		return nil, errors.New("password is required")
+	if err := validatePassword(password); err != nil {
+		return nil, err
 	}
 	if !role.Valid() {
 		return nil, fmt.Errorf("invalid role %q", role)
@@ -200,6 +284,10 @@ func (s *Store) CreateAdmin(username, password string, role Role, createdBy *int
 // account. Returns ErrInvalidCredentials for any failure — unknown
 // user, wrong password, or a disabled account.
 func (s *Store) Authenticate(username, password string) (*Admin, error) {
+	compare := s.passwordComparer
+	if compare == nil {
+		compare = bcrypt.CompareHashAndPassword
+	}
 	row := s.db.QueryRow(
 		`SELECT id, username, password_hash, role, disabled, created_at, created_by FROM admins WHERE username = ? COLLATE NOCASE`,
 		strings.TrimSpace(username),
@@ -213,11 +301,14 @@ func (s *Store) Authenticate(username, password string) (*Admin, error) {
 	)
 	if err := row.Scan(&a.ID, &a.Username, &hash, &a.Role, &disabled, &createdAt, &createdBy); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			// Deliberately discard the result: this comparison equalizes the
+			// dominant work with the known-user wrong-password path.
+			_ = compare([]byte(invalidCredentialHash), []byte(password))
 			return nil, ErrInvalidCredentials
 		}
 		return nil, fmt.Errorf("query admin: %w", err)
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
+	if err := compare([]byte(hash), []byte(password)); err != nil {
 		return nil, ErrInvalidCredentials
 	}
 	if disabled != 0 {
@@ -240,11 +331,11 @@ func (s *Store) Authenticate(username, password string) (*Admin, error) {
 // a stolen or idle session cookie alone must not be enough to change
 // (and thereby lock out) the account. Returns ErrInvalidCredentials if
 // oldPassword doesn't match (never distinguishes that from "unknown
-// admin", consistent with Authenticate), or ErrPasswordTooShort if
-// newPassword is under the minimum length.
+// admin", consistent with Authenticate), or a password-policy error if
+// newPassword is outside the accepted length range.
 func (s *Store) ChangePassword(adminID int64, oldPassword, newPassword string) error {
-	if len(newPassword) < minPasswordLen {
-		return ErrPasswordTooShort
+	if err := validatePassword(newPassword); err != nil {
+		return err
 	}
 	var hash string
 	if err := s.db.QueryRow(`SELECT password_hash FROM admins WHERE id = ?`, adminID).Scan(&hash); err != nil {
@@ -409,6 +500,54 @@ func (s *Store) ListHashRegions() ([]string, error) {
 	return listHashRegions(s.db)
 }
 
+// ListHashRegionDefinitions returns all configured scopes and their metadata,
+// alphabetically by scope name.
+func (s *Store) ListHashRegionDefinitions() ([]HashRegionDefinition, error) {
+	rows, err := s.db.Query(`
+		SELECT name, parent_name, description, geometry_json
+		FROM hash_regions
+		ORDER BY name ASC`)
+	if err != nil {
+		return nil, fmt.Errorf("query hash region definitions: %w", err)
+	}
+	defer rows.Close()
+
+	var out []HashRegionDefinition
+	for rows.Next() {
+		var definition HashRegionDefinition
+		if err := rows.Scan(&definition.Name, &definition.ParentName, &definition.Description, &definition.GeometryJSON); err != nil {
+			return nil, fmt.Errorf("scan hash region definition: %w", err)
+		}
+		out = append(out, definition)
+	}
+	return out, rows.Err()
+}
+
+// ReplaceHashRegionDefinitions atomically replaces the complete set of scope
+// definitions. Callers validate names, parent relationships, and geometry.
+func (s *Store) ReplaceHashRegionDefinitions(definitions []HashRegionDefinition) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // no-op if Commit succeeded
+
+	if _, err := tx.Exec(`DELETE FROM hash_regions`); err != nil {
+		return fmt.Errorf("clear hash_regions: %w", err)
+	}
+	now := time.Now().UTC().Format(time.RFC3339)
+	for _, definition := range definitions {
+		if _, err := tx.Exec(`
+			INSERT INTO hash_regions (name, parent_name, description, geometry_json, created_at)
+			VALUES (?, ?, ?, ?, ?)`,
+			definition.Name, definition.ParentName, definition.Description, definition.GeometryJSON, now,
+		); err != nil {
+			return fmt.Errorf("insert hash region definition %q: %w", definition.Name, err)
+		}
+	}
+	return tx.Commit()
+}
+
 // ReplaceHashRegions atomically replaces the full hash-region set with
 // names — full-replace semantics, mirroring how the admin UI submits its
 // complete edited list (same as PUT /api/admin/regions for IATA names).
@@ -421,14 +560,33 @@ func (s *Store) ReplaceHashRegions(names []string) error {
 	}
 	defer tx.Rollback() //nolint:errcheck // no-op if Commit succeeded
 
-	if _, err := tx.Exec(`DELETE FROM hash_regions`); err != nil {
-		return fmt.Errorf("clear hash_regions: %w", err)
-	}
 	now := time.Now().UTC().Format(time.RFC3339)
 	for _, name := range names {
-		if _, err := tx.Exec(`INSERT INTO hash_regions (name, created_at) VALUES (?, ?)`, name, now); err != nil {
+		// Preserve metadata for names retained by the legacy name-only UI.
+		if _, err := tx.Exec(`INSERT OR IGNORE INTO hash_regions (name, created_at) VALUES (?, ?)`, name, now); err != nil {
 			return fmt.Errorf("insert hash_region %q: %w", name, err)
 		}
+	}
+	if len(names) == 0 {
+		if _, err := tx.Exec(`DELETE FROM hash_regions`); err != nil {
+			return fmt.Errorf("clear hash_regions: %w", err)
+		}
+	} else {
+		placeholders := strings.TrimSuffix(strings.Repeat("?,", len(names)), ",")
+		args := make([]interface{}, len(names))
+		for i, name := range names {
+			args[i] = name
+		}
+		if _, err := tx.Exec(`DELETE FROM hash_regions WHERE name NOT IN (`+placeholders+`)`, args...); err != nil {
+			return fmt.Errorf("remove stale hash_regions: %w", err)
+		}
+	}
+	if _, err := tx.Exec(`
+		UPDATE hash_regions
+		SET parent_name = ''
+		WHERE parent_name != ''
+		  AND parent_name NOT IN (SELECT name FROM hash_regions)`); err != nil {
+		return fmt.Errorf("clear stale hash region parents: %w", err)
 	}
 	return tx.Commit()
 }
