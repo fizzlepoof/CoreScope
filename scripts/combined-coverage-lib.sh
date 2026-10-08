@@ -766,9 +766,12 @@ run_frontend_coverage() {
     return "$frontend_status"
   fi
 
+  # Canonical coverage must not inherit diagnostic name narrowing. Scope the
+  # override to child environments so the explicit customizer path stays intact.
   if run_tracked_in_dir "$REPO_ROOT" env \
     BASE_URL="$base_url" \
     E2E_FAILURE_EVIDENCE_DIR="$FAILURE_EVIDENCE_DIR" \
+    E2E_TEST_FILTER= \
     node scripts/tests/run-manifest.js --profile ci-e2e-phase; then
     :
   else
@@ -779,6 +782,7 @@ run_frontend_coverage() {
   if run_tracked_in_dir "$REPO_ROOT" env \
     BASE_URL="$base_url" \
     E2E_FAILURE_EVIDENCE_DIR="$FAILURE_EVIDENCE_DIR" \
+    E2E_TEST_FILTER= \
     node scripts/collect-frontend-coverage.js; then
     :
   else
