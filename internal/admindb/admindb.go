@@ -49,6 +49,18 @@ type Admin struct {
 	CreatedBy *int64
 }
 
+// HashRegionDefinition is the operator-managed metadata for one MeshCore
+// transport scope. GeometryJSON contains a validated GeoJSON Polygon or
+// MultiPolygon; validation belongs to the HTTP boundary, while this package
+// persists the exact JSON text.
+type HashRegionDefinition struct {
+	Name         string
+	ParentName   string
+	Description  string
+	Color        string
+	GeometryJSON string
+}
+
 // ErrInvalidCredentials is returned by Authenticate for any failure —
 // unknown username, wrong password, or a disabled account — so callers
 // never leak which case occurred (no username enumeration).
@@ -87,6 +99,10 @@ const bcryptCost = 12
 type Store struct {
 	db *sql.DB
 }
+
+// ErrHashRegionDefinitionsChanged indicates that a conditional replacement
+// lost an optimistic-concurrency race and must be retried from a fresh read.
+var ErrHashRegionDefinitionsChanged = errors.New("hash region definitions changed concurrently")
 
 // Open opens (creating if necessary) the admin database at path and
 // ensures its schema exists. Safe to call repeatedly / idempotent.
@@ -138,8 +154,12 @@ func ensureSchema(db *sql.DB) error {
 		// cmd/server can CRUD them directly: it's the one process with a
 		// writable handle onto admin.db, same as admin accounts above.
 		`CREATE TABLE IF NOT EXISTS hash_regions (
-			name       TEXT PRIMARY KEY,
-			created_at TEXT NOT NULL
+			name          TEXT PRIMARY KEY,
+			parent_name   TEXT NOT NULL DEFAULT '',
+			description   TEXT NOT NULL DEFAULT '',
+			color         TEXT NOT NULL DEFAULT '',
+			geometry_json TEXT NOT NULL DEFAULT '',
+			created_at    TEXT NOT NULL
 		)`,
 		// regions holds the IATA observer code -> friendly display name
 		// map used by the region filter UI. Distinct from hash_regions
@@ -155,6 +175,48 @@ func ensureSchema(db *sql.DB) error {
 	for _, stmt := range stmts {
 		if _, err := db.Exec(stmt); err != nil {
 			return fmt.Errorf("exec %q: %w", stmt, err)
+		}
+	}
+	return ensureHashRegionDefinitionColumns(db)
+}
+
+// ensureHashRegionDefinitionColumns upgrades databases created before hash
+// regions carried hierarchy and boundary metadata. SQLite lacks ADD COLUMN IF
+// NOT EXISTS, so inspect the live schema before each idempotent ALTER.
+func ensureHashRegionDefinitionColumns(db *sql.DB) error {
+	rows, err := db.Query(`PRAGMA table_info(hash_regions)`)
+	if err != nil {
+		return fmt.Errorf("inspect hash_regions schema: %w", err)
+	}
+	columns := make(map[string]bool)
+	for rows.Next() {
+		var cid, notNull, primaryKey int
+		var name, columnType string
+		var defaultValue sql.NullString
+		if err := rows.Scan(&cid, &name, &columnType, &notNull, &defaultValue, &primaryKey); err != nil {
+			rows.Close()
+			return fmt.Errorf("scan hash_regions schema: %w", err)
+		}
+		columns[name] = true
+	}
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("close hash_regions schema rows: %w", err)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("read hash_regions schema: %w", err)
+	}
+
+	for name, definition := range map[string]string{
+		"parent_name":   `TEXT NOT NULL DEFAULT ''`,
+		"description":   `TEXT NOT NULL DEFAULT ''`,
+		"color":         `TEXT NOT NULL DEFAULT ''`,
+		"geometry_json": `TEXT NOT NULL DEFAULT ''`,
+	} {
+		if columns[name] {
+			continue
+		}
+		if _, err := db.Exec(fmt.Sprintf(`ALTER TABLE hash_regions ADD COLUMN %s %s`, name, definition)); err != nil {
+			return fmt.Errorf("add hash_regions.%s: %w", name, err)
 		}
 	}
 	return nil
@@ -409,6 +471,118 @@ func (s *Store) ListHashRegions() ([]string, error) {
 	return listHashRegions(s.db)
 }
 
+// ListHashRegionDefinitions returns all configured scopes and their metadata,
+// alphabetically by scope name.
+func (s *Store) ListHashRegionDefinitions() ([]HashRegionDefinition, error) {
+	rows, err := s.db.Query(`
+		SELECT name, parent_name, description, color, geometry_json
+		FROM hash_regions
+		ORDER BY name ASC`)
+	if err != nil {
+		return nil, fmt.Errorf("query hash region definitions: %w", err)
+	}
+	defer rows.Close()
+
+	var out []HashRegionDefinition
+	for rows.Next() {
+		var definition HashRegionDefinition
+		if err := rows.Scan(&definition.Name, &definition.ParentName, &definition.Description, &definition.Color, &definition.GeometryJSON); err != nil {
+			return nil, fmt.Errorf("scan hash region definition: %w", err)
+		}
+		out = append(out, definition)
+	}
+	return out, rows.Err()
+}
+
+// ReplaceHashRegionDefinitions atomically replaces the complete set of scope
+// definitions. Callers validate names, parent relationships, and geometry.
+func (s *Store) ReplaceHashRegionDefinitions(definitions []HashRegionDefinition) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // no-op if Commit succeeded
+
+	if err := replaceHashRegionDefinitionsTx(tx, definitions); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// ReplaceHashRegionDefinitionsIfUnchanged performs an optimistic, atomic
+// replacement. It refuses to overwrite edits committed after the caller read
+// expected, preventing a merge import from silently dropping concurrent work.
+func (s *Store) ReplaceHashRegionDefinitionsIfUnchanged(definitions, expected []HashRegionDefinition) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // no-op if Commit succeeded
+
+	rows, err := tx.Query(`
+		SELECT name, parent_name, description, color, geometry_json
+		FROM hash_regions
+		ORDER BY name ASC`)
+	if err != nil {
+		return fmt.Errorf("query hash region definitions: %w", err)
+	}
+	var current []HashRegionDefinition
+	for rows.Next() {
+		var definition HashRegionDefinition
+		if err := rows.Scan(&definition.Name, &definition.ParentName, &definition.Description, &definition.Color, &definition.GeometryJSON); err != nil {
+			rows.Close()
+			return fmt.Errorf("scan hash region definition: %w", err)
+		}
+		current = append(current, definition)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return err
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+	if !hashRegionDefinitionsEqual(current, expected) {
+		return ErrHashRegionDefinitionsChanged
+	}
+	if err := replaceHashRegionDefinitionsTx(tx, definitions); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit hash region definitions: %w", err)
+	}
+	return nil
+}
+
+func hashRegionDefinitionsEqual(left, right []HashRegionDefinition) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
+}
+
+func replaceHashRegionDefinitionsTx(tx *sql.Tx, definitions []HashRegionDefinition) error {
+	if _, err := tx.Exec(`DELETE FROM hash_regions`); err != nil {
+		return fmt.Errorf("clear hash_regions: %w", err)
+	}
+	now := time.Now().UTC().Format(time.RFC3339)
+	for _, definition := range definitions {
+		if _, err := tx.Exec(`
+			INSERT INTO hash_regions (name, parent_name, description, color, geometry_json, created_at)
+			VALUES (?, ?, ?, ?, ?, ?)`,
+			definition.Name, definition.ParentName, definition.Description, definition.Color, definition.GeometryJSON, now,
+		); err != nil {
+			return fmt.Errorf("insert hash region definition %q: %w", definition.Name, err)
+		}
+	}
+	return nil
+}
+
 // ReplaceHashRegions atomically replaces the full hash-region set with
 // names — full-replace semantics, mirroring how the admin UI submits its
 // complete edited list (same as PUT /api/admin/regions for IATA names).
@@ -421,14 +595,33 @@ func (s *Store) ReplaceHashRegions(names []string) error {
 	}
 	defer tx.Rollback() //nolint:errcheck // no-op if Commit succeeded
 
-	if _, err := tx.Exec(`DELETE FROM hash_regions`); err != nil {
-		return fmt.Errorf("clear hash_regions: %w", err)
-	}
 	now := time.Now().UTC().Format(time.RFC3339)
 	for _, name := range names {
-		if _, err := tx.Exec(`INSERT INTO hash_regions (name, created_at) VALUES (?, ?)`, name, now); err != nil {
+		// Preserve metadata for names retained by the legacy name-only UI.
+		if _, err := tx.Exec(`INSERT OR IGNORE INTO hash_regions (name, created_at) VALUES (?, ?)`, name, now); err != nil {
 			return fmt.Errorf("insert hash_region %q: %w", name, err)
 		}
+	}
+	if len(names) == 0 {
+		if _, err := tx.Exec(`DELETE FROM hash_regions`); err != nil {
+			return fmt.Errorf("clear hash_regions: %w", err)
+		}
+	} else {
+		placeholders := strings.TrimSuffix(strings.Repeat("?,", len(names)), ",")
+		args := make([]interface{}, len(names))
+		for i, name := range names {
+			args[i] = name
+		}
+		if _, err := tx.Exec(`DELETE FROM hash_regions WHERE name NOT IN (`+placeholders+`)`, args...); err != nil {
+			return fmt.Errorf("remove stale hash_regions: %w", err)
+		}
+	}
+	if _, err := tx.Exec(`
+		UPDATE hash_regions
+		SET parent_name = ''
+		WHERE parent_name != ''
+		  AND parent_name NOT IN (SELECT name FROM hash_regions)`); err != nil {
+		return fmt.Errorf("clear stale hash region parents: %w", err)
 	}
 	return tx.Commit()
 }
