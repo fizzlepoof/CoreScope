@@ -100,6 +100,166 @@ const over = core.payloadByteStatus({ hashRegionDefinitions: [{ name: '#x', desc
 assert.equal(over.overLimit, true);
 assert.match(over.message, /over 1 MiB/i);
 
+// Execute the complete production UI closure; only replace network startup with
+// fixture setup/inspection. DOM and Leaflet stubs do not replace UI handlers.
+function drawingHarness() {
+  const vm = require('vm');
+  function element() {
+    const handlers = {};
+    return {
+      handlers, children: [], value: '', checked: false, disabled: false,
+      style: { setProperty() {}, removeProperty() {} },
+      classList: { toggle() {}, add() {} },
+      setAttribute() {}, getAttribute() { return ''; },
+      addEventListener(type, callback) { handlers[type] = callback; },
+      fire(type, event = {}) { if (handlers[type]) handlers[type](event); },
+      appendChild(child) { this.children.push(child); },
+      removeChild(child) { this.children.splice(this.children.indexOf(child), 1); },
+      get firstChild() { return this.children[0]; },
+      get options() { return this.children; },
+      getBoundingClientRect() { return { left: 0, top: 0 }; },
+      setPointerCapture(id) { this.pointerId = id; },
+      hasPointerCapture(id) { return this.pointerId === id; },
+      releasePointerCapture() { this.pointerId = null; },
+    };
+  }
+  const elements = new Map();
+  const document = {
+    getElementById(id) {
+      if (!elements.has(id)) elements.set(id, element());
+      return elements.get(id);
+    },
+    createElement: element, createTextNode: element, documentElement: element(),
+  };
+  const container = element();
+  const map = {
+    handlers: {}, dragging: { enabled: true, enable() { this.enabled = true; }, disable() { this.enabled = false; } },
+    setView() { return this; }, on(type, callback) { this.handlers[type] = callback; },
+    getContainer() { return container; }, getPane() { return null; }, fitBounds() {},
+    containerPointToLatLng(point) { return { lng: point.x, lat: point.y }; },
+  };
+  const markers = [];
+  function layer() {
+    return { layers: [], addTo(target) { if (target.layers) target.layers.push(this); return this; },
+      clearLayers() { this.layers = []; }, getBounds() { return { isValid() { return true; } }; } };
+  }
+  const L = {
+    map() { return map; }, tileLayer: layer, layerGroup: layer, geoJSON: layer, polyline: layer,
+    point(x, y) { return { x, y }; },
+    marker(coords) {
+      const marker = Object.assign(layer(), {
+        coords, handlers: {}, on(type, callback) { this.handlers[type] = callback; },
+        getLatLng() { return { lng: this.coords[1], lat: this.coords[0] }; },
+      });
+      markers.push(marker);
+      return marker;
+    },
+  };
+  const fixture = [
+    { name: '#a', geometry: polygonWithHole },
+    { name: '#b', geometry: { type: 'Polygon', coordinates: [[[20, 20], [24, 20], [24, 24], [20, 20]]] } },
+  ];
+  const startup = '  loadCounties();\n  Promise.all([fetchJSON';
+  assert.equal(adminJS.split(startup).length, 2, 'test seam uniquely replaces startup, not handlers');
+  const source = adminJS.slice(0, adminJS.indexOf(startup)) + `
+  definitions = JSON.parse(fixtureJSON);
+  regionsLoaded = true;
+  initMap();
+  renderRows();
+  window.inspect = function () {
+    return JSON.parse(JSON.stringify({ definitions: definitions, drawing: drawing,
+      points: drawingPoints, pointerDown: freehandPointerDown }));
+  };
+})();`;
+  const window = { addEventListener() {} };
+  vm.runInNewContext(source, {
+    window, document, L, fixtureJSON: JSON.stringify(fixture),
+    getComputedStyle() { return { getPropertyValue() { return ''; } }; },
+    MutationObserver: class { observe() {} },
+  }, { filename: 'public/admin/hash-regions.js' });
+  const inspect = window.inspect;
+  window.inspect = () => JSON.parse(JSON.stringify(inspect()));
+  return {
+    window, map, container, markers, fixture,
+    control(id) { return document.getElementById(id); },
+    edit(index) {
+      const card = document.getElementById('region-editor-list').children[index];
+      card.children[4].children[0].fire('click');
+    },
+    click(id) { document.getElementById(id).fire('click'); },
+  };
+}
+
+const drawingFailures = [];
+function drawingRegression(name, test) {
+  try { test(); console.log('PASS: ' + name); }
+  catch (error) { drawingFailures.push(error); console.error('FAIL: ' + name + '\n' + error.stack); }
+}
+
+drawingRegression('switching A to B cancels drawing and Finish preserves both geometries', () => {
+  const h = drawingHarness();
+  h.edit(0);
+  h.click('draw-polygon-btn');
+  assert.equal(h.control('finish-polygon-btn').disabled, false, 'existing A vertices enable Finish');
+  h.edit(1);
+  // Invoke the actual handler even if disabled: cancellation must be semantic.
+  h.click('finish-polygon-btn');
+  assert.deepStrictEqual(h.window.inspect().definitions.map((item) => item.geometry),
+    h.fixture.map((item) => item.geometry), 'Finish must not copy the A ring into B');
+  assert.equal(h.control('finish-polygon-btn').disabled, true, 'owner change disables Finish');
+  assert.equal(h.window.inspect().drawing, false);
+  assert.deepStrictEqual(h.window.inspect().points, []);
+});
+
+drawingRegression('captured old vertex callbacks cannot mutate B or its new drawing', () => {
+  const h = drawingHarness();
+  h.edit(0);
+  const oldEditMarker = h.markers[h.markers.length - 1];
+  h.edit(1);
+  oldEditMarker.coords = [60, 60];
+  oldEditMarker.handlers.dragend();
+  assert.deepStrictEqual(h.window.inspect().definitions, h.fixture, 'old edit callback cannot write into B');
+  h.edit(0);
+  h.click('draw-polygon-btn');
+  const oldDrawMarker = h.markers[h.markers.length - 1];
+  h.edit(1);
+  h.click('draw-polygon-btn');
+  const before = h.window.inspect();
+  oldDrawMarker.coords = [70, 70];
+  oldDrawMarker.handlers.dragend();
+  assert.deepStrictEqual(h.window.inspect(), before, 'old drawing callback cannot change the new session');
+  const currentMarker = h.markers[h.markers.length - 1];
+  currentMarker.coords = [25, 25];
+  currentMarker.handlers.dragend();
+  h.click('finish-polygon-btn');
+  assert.deepStrictEqual(h.window.inspect().definitions[1].geometry.coordinates[0][2], [25, 25],
+    'current drawing drag and Finish still work');
+  assert.deepStrictEqual(h.window.inspect().definitions[0].geometry, h.fixture[0].geometry);
+});
+
+drawingRegression('owner change cancels freehand capture and rejects old pointer events', () => {
+  const h = drawingHarness();
+  const pointer = (id, x) => ({ pointerId: id, clientX: x, clientY: x,
+    type: 'pointermove', cancelable: true, preventDefault() {} });
+  h.edit(0);
+  h.click('draw-polygon-btn');
+  h.control('freehand-mode').checked = true;
+  h.container.fire('pointerdown', pointer(1, 10));
+  h.edit(1);
+  assert.equal(h.map.dragging.enabled, true, 'cancellation restores map dragging');
+  assert.equal(h.container.hasPointerCapture(1), false, 'cancellation releases the old pointer');
+  assert.equal(h.window.inspect().pointerDown, false);
+  h.click('draw-polygon-btn');
+  h.container.fire('pointerdown', pointer(2, 30));
+  const before = h.window.inspect();
+  h.container.fire('pointermove', pointer(1, 80));
+  h.container.fire('pointerup', pointer(1, 80));
+  assert.deepStrictEqual(h.window.inspect(), before, 'old pointer cannot append or end new freehand');
+  h.container.fire('pointermove', pointer(2, 31));
+  assert.equal(h.window.inspect().points.length, before.points.length + 1, 'current pointer still samples');
+});
+if (drawingFailures.length) process.exitCode = 1;
+
 function deferred() {
   let resolve;
   const promise = new Promise((done) => { resolve = done; });
@@ -134,7 +294,7 @@ function deferred() {
   await pendingA;
   assert.equal(authorizedPreview, 'preview-b', 'late preview for the old backup is ignored');
 
-  console.log('test-hash-region-admin.js: all tests passed');
+  if (!drawingFailures.length) console.log('test-hash-region-admin.js: all tests passed');
 }()).catch((error) => {
   console.error(error);
   process.exitCode = 1;
