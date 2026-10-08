@@ -42,6 +42,12 @@ func createTestDBMultiDay(t *testing.T, numDays, txPerDay int) string {
 	execOrFail(`CREATE TABLE schema_version (version INTEGER)`)
 	execOrFail(`INSERT INTO schema_version (version) VALUES (1)`)
 	execOrFail(`CREATE INDEX idx_tx_first_seen ON transmissions(first_seen)`)
+	// Match the ingestor's observation indexes (internal/dbschema). SQL
+	// fallback executes two correlated lookups per transmission; without
+	// these, eight pollers repeatedly scan the entire observation table.
+	execOrFail(`CREATE INDEX idx_observations_transmission_id ON observations(transmission_id)`)
+	execOrFail(`CREATE INDEX idx_observations_timestamp ON observations(timestamp)`)
+	execOrFail(`CREATE INDEX idx_observations_tx_ts ON observations(transmission_id, timestamp)`)
 
 	id := 1
 	now := time.Now().UTC()
@@ -509,14 +515,31 @@ func TestHotStartup_ConcurrentQueryDuringBackgroundLoad(t *testing.T) {
 	// SQL fallback (since < oldestLoaded) and the in-memory path
 	// (oldestLoaded shrinks below since as chunks merge).
 	//
-	// since=200h ago covers everything; as oldestLoaded retreats from
-	// 24h ago to 120h ago, the answer source switches from SQL fallback
-	// to in-memory; Total must never decrease across that switch.
-	since := time.Now().UTC().Add(-200 * time.Hour).Format(time.RFC3339)
+	// since=119h45m ago covers all rows (oldest fixture starts at 119h30m)
+	// but lies inside retention, so oldestLoaded eventually retreats below
+	// it. A date older than retention would stay on SQL forever.
+	since := time.Now().UTC().Add(-119*time.Hour - 45*time.Minute).Format(time.RFC3339)
 	q := PacketQuery{Since: since, Limit: 5000, Order: "ASC"}
+	// A date older than retention never crosses into memory, even after
+	// backgroundLoadDone: QueryPackets compares against oldestLoaded.
+	retentionFloor := time.Now().UTC().Add(-120 * time.Hour).Format(time.RFC3339)
+	if since <= retentionFloor || since >= store.oldestLoaded {
+		t.Fatal("query window must start inside retention but before the hot window to cross SQL fallback into memory")
+	}
 
-	// Start background fill.
-	go store.loadBackgroundChunks()
+	// Hold loader entry until every poller has completed a SQL fallback
+	// sample. This is explicit readiness, not a scheduler-speed assumption.
+	releaseLoader := make(chan struct{})
+	stopPollers := make(chan struct{})
+	loaderDone := make(chan struct{})
+	firstSamples := make(chan struct{}, 8)
+	var releaseOnce sync.Once
+	release := func() { releaseOnce.Do(func() { close(releaseLoader) }) }
+	store.bgLoaderEntryHook = func() { <-releaseLoader }
+	go func() {
+		defer close(loaderDone)
+		store.loadBackgroundChunks()
+	}()
 
 	// Pollers: each goroutine keeps querying until the loader is done,
 	// asserting that within its own series Total only grows or stays equal.
@@ -525,12 +548,23 @@ func TestHotStartup_ConcurrentQueryDuringBackgroundLoad(t *testing.T) {
 	var wg sync.WaitGroup
 	pollers := 8
 	totalSamples := atomicSamples{}
+	defer func() {
+		release()
+		close(stopPollers)
+		wg.Wait()
+		<-loaderDone
+	}()
 	for i := 0; i < pollers; i++ {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
 			lastTotal := -1
 			for !store.backgroundLoadDone.Load() {
+				select {
+				case <-stopPollers:
+					return
+				default:
+				}
 				r := store.QueryPackets(q)
 				if r == nil {
 					continue
@@ -539,11 +573,22 @@ func TestHotStartup_ConcurrentQueryDuringBackgroundLoad(t *testing.T) {
 					t.Errorf("poller %d: result set shrank (%d → %d) — non-monotonic across moving oldestLoaded boundary",
 						i, lastTotal, r.Total)
 				}
+				if lastTotal == -1 {
+					if r.Total != 1000 || len(r.Packets) != 1000 {
+						t.Errorf("poller %d: initial SQL fallback must cover all 1000 rows, got total=%d rows=%d", i, r.Total, len(r.Packets))
+					}
+					firstSamples <- struct{}{}
+				}
 				lastTotal = r.Total
 				totalSamples.inc()
 			}
 			r := store.QueryPackets(q)
-			if r != nil {
+			if r == nil {
+				t.Errorf("poller %d: missing post-load result", i)
+			} else {
+				if r.Total != 1000 || len(r.Packets) != 1000 {
+					t.Errorf("poller %d: final memory sample must cover all 1000 rows, got total=%d rows=%d", i, r.Total, len(r.Packets))
+				}
 				if lastTotal >= 0 && r.Total < lastTotal {
 					t.Errorf("poller %d: post-load result set shrank (%d → %d)", i, lastTotal, r.Total)
 				}
@@ -551,9 +596,32 @@ func TestHotStartup_ConcurrentQueryDuringBackgroundLoad(t *testing.T) {
 			}
 		}(i)
 	}
-	wg.Wait()
-
+	readiness := time.NewTimer(60 * time.Second)
+	defer readiness.Stop()
+	for i := 0; i < pollers; i++ {
+		select {
+		case <-firstSamples:
+		case <-readiness.C:
+			t.Fatal("pollers did not complete initial SQL fallback samples within 60s")
+		}
+	}
+	if n := atomic.LoadInt64(&store.queryCount); n != 0 {
+		t.Errorf("expected only SQL fallback before releasing loader, got %d in-memory queries", n)
+	}
+	release()
+	// Enforce the existing 60s loader contract before joining pollers;
+	// previously wg.Wait made this timeout unreachable on a failed load.
 	waitForBackgroundLoad(t, store, 60*time.Second)
+	wg.Wait()
+	if n := atomic.LoadInt64(&store.queryCount); n < int64(pollers) {
+		t.Errorf("expected every poller's final sample to use memory, got %d in-memory queries", n)
+	}
+	store.mu.RLock()
+	oldestAfter := store.oldestLoaded
+	store.mu.RUnlock()
+	if since < oldestAfter {
+		t.Errorf("query never crossed into memory: since=%s oldestLoaded=%s", since, oldestAfter)
+	}
 
 	store.mu.RLock()
 	postLen := len(store.packets)

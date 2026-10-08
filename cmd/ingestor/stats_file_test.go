@@ -56,7 +56,8 @@ func TestStatsFileWriter_PublishesProcIO(t *testing.T) {
 	}
 	defer store.Close()
 
-	StartStatsFileWriter(store, 50*time.Millisecond)
+	stop := StartStatsFileWriter(store, 50*time.Millisecond)
+	defer stop()
 
 	// Wait for at least 2 ticks so the writer has had a chance to populate
 	// procIO rates from a delta.

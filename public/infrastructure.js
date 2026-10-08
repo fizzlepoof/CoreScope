@@ -83,7 +83,7 @@ window.InfraSummary = {
 
     return `<div class="infrap-card" data-key="${n.public_key}">
       <div class="infrap-card-head">
-        <span class="infra-card-status ${status === 'active' ? 'infra-status-active' : 'infra-status-stale'}" title="${status}">●</span>
+        <span class="infra-card-status ${status === 'active' ? 'infra-status-active' : 'infra-status-stale'}" title="${status}" role="img" aria-label="${status}"><svg class="ph-icon" aria-hidden="true"><use href="/icons/phosphor-sprite.svg#ph-circle-fill"/></svg></span>
         <a href="#/nodes/${pk}" class="infrap-name">${escapeHtml(n.name || '(unnamed)')}</a>
         <span class="badge" style="${(window.aaBadgeStyle && window.aaBadgeStyle(roleColor)) || ('background:' + roleColor + ';color:#fff')}">${n.role || '?'}</span>
         ${n.relay_active ? '<span class="badge infrap-relay-badge" title="Relayed traffic within the active window">relaying</span>' : ''}
@@ -167,8 +167,8 @@ window.InfraSummary = {
       if (summaryEl) {
         summaryEl.innerHTML = infra.length ? `
           <span class="infrap-chip"><strong>${s.total}</strong> node${s.total === 1 ? '' : 's'}</span>
-          <span class="infrap-chip infra-status-active">● <strong>${s.active}</strong> active</span>
-          <span class="infrap-chip ${s.stale ? 'infra-status-stale' : ''}">● <strong>${s.stale}</strong> stale</span>
+          <span class="infrap-chip infra-status-active"><svg class="ph-icon" aria-hidden="true"><use href="/icons/phosphor-sprite.svg#ph-circle-fill"/></svg> <strong>${s.active}</strong> active</span>
+          <span class="infrap-chip ${s.stale ? 'infra-status-stale' : ''}"><svg class="ph-icon" aria-hidden="true"><use href="/icons/phosphor-sprite.svg#ph-circle-fill"/></svg> <strong>${s.stale}</strong> stale</span>
           ${s.relaying ? `<span class="infrap-chip"><strong>${s.relaying}</strong> relaying</span>` : ''}
           ${s.oldestSilent ? `<span class="infrap-chip infrap-chip-warn" title="Longest-silent infrastructure node">${escapeHtml(s.oldestSilent.name)} silent ${(timeAgo(new Date(Date.now() - s.oldestSilent.ms).toISOString()) || '').replace(/\s*ago$/, '')}</span>` : ''}
         ` : '';
