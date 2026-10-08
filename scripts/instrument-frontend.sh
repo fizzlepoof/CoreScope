@@ -7,6 +7,19 @@ if [ -e "$INSTRUMENTED_DIR" ]; then
   exit 1
 fi
 npx nyc instrument public/ "$INSTRUMENTED_DIR" --compact=false
+# Replace only nyc's generated global lookup: strict CSP disallows new Function,
+# while globalThis preserves the browser coverage object and counter semantics.
+node - "$INSTRUMENTED_DIR" <<'NODE'
+const fs = require('fs');
+const path = require('path');
+const directory = process.argv[2];
+for (const name of fs.readdirSync(directory)) {
+  if (!name.endsWith('.js')) continue;
+  const file = path.join(directory, name);
+  const source = fs.readFileSync(file, 'utf8');
+  fs.writeFileSync(file, source.replaceAll('var global = new Function("return this")();', 'var global = globalThis;'));
+}
+NODE
 # Copy non-JS files (CSS, HTML, images) as-is
 cp public/*.css "$INSTRUMENTED_DIR/" 2>/dev/null
 cp public/*.html "$INSTRUMENTED_DIR/" 2>/dev/null
