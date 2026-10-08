@@ -220,7 +220,10 @@
   var geometryLayer;
   var vertexLayer;
   var drawing = false;
+  var drawingOwner = null;
+  var editGeneration = 0;
   var freehandPointerDown = false;
+  var freehandPointerId = null;
   var suppressNextClick = false;
   var drawingPoints = [];
   var tileLayer;
@@ -458,6 +461,7 @@
         showError(new Error('Move or remove child ' + normalize(child.name) + ' before removing ' + removedName + '.'));
         return;
       }
+      cancelDrawing();
       definitions.splice(index, 1);
       activeIndex = -1;
       renderRows();
@@ -530,6 +534,7 @@
   }
 
   function setActive(index, fit) {
+    if (definitions[activeIndex] !== definitions[index]) cancelDrawing();
     activeIndex = index;
     rows.forEach(function (row, rowIndex) { row.card.classList.toggle('is-active', rowIndex === index); });
     updateActiveStatus();
@@ -557,7 +562,29 @@
     if (pane) pane.style.filter = dark && provider && provider.invertFilter ? provider.invertFilter : '';
   }
 
+  function cancelDrawing() {
+    ++editGeneration;
+    drawing = false;
+    drawingOwner = null;
+    drawingPoints = [];
+    freehandPointerDown = false;
+    var pointerId = freehandPointerId;
+    freehandPointerId = null;
+    suppressNextClick = false;
+    if (map) {
+      var container = map.getContainer();
+      if (pointerId !== null && container.hasPointerCapture(pointerId)) container.releasePointerCapture(pointerId);
+      map.dragging.enable();
+    }
+    document.getElementById('finish-polygon-btn').disabled = true;
+  }
+
+  function isCurrentDrawing() {
+    return drawing && drawingOwner === definitions[activeIndex];
+  }
+
   function addFreehandPoint(event) {
+    if (!isCurrentDrawing() || event.pointerId !== freehandPointerId) return;
     var rect = map.getContainer().getBoundingClientRect();
     var point = map.containerPointToLatLng(L.point(event.clientX - rect.left, event.clientY - rect.top));
     drawingPoints = core.sampleFreehandPoint(drawingPoints, [point.lng, point.lat], 0.0001);
@@ -571,14 +598,15 @@
     vertexLayer = L.layerGroup().addTo(map);
     map.on('click', function (event) {
       if (suppressNextClick) { suppressNextClick = false; return; }
-      if (!drawing || freehandInput.checked || activeIndex < 0) return;
+      if (!isCurrentDrawing() || freehandInput.checked || activeIndex < 0) return;
       drawingPoints.push([event.latlng.lng, event.latlng.lat]);
       renderDrawingVertices();
     });
     var container = map.getContainer();
     container.addEventListener('pointerdown', function (event) {
-      if (!drawing || !freehandInput.checked || activeIndex < 0) return;
+      if (!isCurrentDrawing() || !freehandInput.checked || activeIndex < 0 || freehandPointerDown) return;
       freehandPointerDown = true;
+      freehandPointerId = event.pointerId;
       suppressNextClick = true;
       container.setPointerCapture(event.pointerId);
       map.dragging.disable();
@@ -586,13 +614,14 @@
       event.preventDefault();
     });
     container.addEventListener('pointermove', function (event) {
-      if (!freehandPointerDown) return;
+      if (!freehandPointerDown || !isCurrentDrawing() || event.pointerId !== freehandPointerId) return;
       addFreehandPoint(event);
       event.preventDefault();
     });
     function endFreehand(event) {
-      if (!freehandPointerDown) return;
+      if (!freehandPointerDown || event.pointerId !== freehandPointerId) return;
       freehandPointerDown = false;
+      freehandPointerId = null;
       if (event.type !== 'lostpointercapture' && container.hasPointerCapture(event.pointerId)) container.releasePointerCapture(event.pointerId);
       map.dragging.enable();
       if (event.cancelable) event.preventDefault();
@@ -634,9 +663,12 @@
   }
 
   function addVertexMarkers(points) {
+    var owner = definitions[activeIndex];
+    var generation = editGeneration;
     points.forEach(function (position, index) {
       var marker = L.marker([position[1], position[0]], { draggable: true, keyboard: true, title: 'Boundary vertex ' + (index + 1) });
       marker.on('dragend', function () {
+        if (owner !== definitions[activeIndex] || generation !== editGeneration) return;
         var latlng = marker.getLatLng();
         points[index] = [latlng.lng, latlng.lat];
         if (drawing) renderDrawingVertices(); else applyPolygonPoints(points);
@@ -678,9 +710,7 @@
   function applyPolygonPoints(points) {
     if (activeIndex < 0 || points.length < 3) return;
     definitions[activeIndex].geometry = core.replacePolygonOuterRing(definitions[activeIndex].geometry, points);
-    drawingPoints = [];
-    drawing = false;
-    document.getElementById('finish-polygon-btn').disabled = true;
+    cancelDrawing();
     renderGeometry(false);
     updatePayloadStatus();
   }
@@ -688,8 +718,7 @@
   function setGeometry(geometry, fit) {
     if (activeIndex < 0) throw new Error('Choose a region before editing its boundary.');
     definitions[activeIndex].geometry = cloneGeometry(geometry);
-    drawing = false; drawingPoints = [];
-    document.getElementById('finish-polygon-btn').disabled = true;
+    cancelDrawing();
     renderGeometry(fit);
     updatePayloadStatus();
   }
@@ -771,6 +800,7 @@
 
   function loadRegions() {
     return fetchJSON('/api/admin/hash-regions').then(function (body) {
+      cancelDrawing();
       var structured = Array.isArray(body.hashRegionDefinitions) ? body.hashRegionDefinitions : [];
       definitions = structured.length ? structured.map(function (definition) {
         return {
@@ -897,13 +927,15 @@
   document.getElementById('draw-polygon-btn').addEventListener('click', function () {
     clearError();
     if (activeIndex < 0) { showError(new Error('Choose a region before drawing.')); return; }
-    drawing = true; drawingPoints = polygonOuterCoordinates(definitions[activeIndex].geometry);
+    cancelDrawing();
+    drawingOwner = definitions[activeIndex];
+    drawing = true; drawingPoints = polygonOuterCoordinates(drawingOwner.geometry);
     renderDrawingVertices();
     document.getElementById('boundary-active-status').textContent = 'Drawing boundary: click the map to add vertices, or drag existing vertices.';
   });
 
   document.getElementById('finish-polygon-btn').addEventListener('click', function () {
-    if (drawingPoints.length >= 3) applyPolygonPoints(drawingPoints);
+    if (isCurrentDrawing() && drawingPoints.length >= 3) applyPolygonPoints(drawingPoints);
   });
 
   document.getElementById('clear-geometry-btn').addEventListener('click', function () {
