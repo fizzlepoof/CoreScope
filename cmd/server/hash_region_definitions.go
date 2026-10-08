@@ -144,6 +144,11 @@ func canonicalHashRegionGeometry(raw json.RawMessage) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	// Stored geometry can predate numeric-ordinate validation. Keep this linear
+	// source check before trusted canonical reuse, without repeating topology work.
+	if bytes.Contains(geometry.Coordinates, []byte("null")) {
+		return "", errors.New("coordinate ordinates must be numbers, not null")
+	}
 	canonical, err := json.Marshal(struct {
 		Type        string          `json:"type"`
 		Coordinates json.RawMessage `json:"coordinates"`
