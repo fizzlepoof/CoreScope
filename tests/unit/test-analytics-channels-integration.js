@@ -12,8 +12,8 @@
  *      label / key-name instead of the hash-byte placeholder.
  *   3. Group rendering: My Channels → Network → Encrypted, each sorted by
  *      message count descending.
- *   4. Add a link from the Channels page to the Analytics page so users can
- *      jump to channel activity stats.
+ *   4. Keep channel analytics available through the Analytics route while
+ *      preserving #1367's intentional removal of the Channels sidebar chip.
  */
 'use strict';
 const { fromRepositoryRoot } = require('../helpers/repository-root');
@@ -45,7 +45,8 @@ global.localStorage = {
   removeItem(k) { delete this._s[k]; },
 };
 global.getComputedStyle = () => ({ getPropertyValue: () => '' });
-global.registerPage = () => {};
+const registeredPages = new Map();
+global.registerPage = (name, handlers) => registeredPages.set(name, handlers);
 global.api = async () => ({});
 global.fetch = async () => ({ ok: true, json: async () => ({}) });
 global.CLIENT_TTL = {};
@@ -175,15 +176,22 @@ assert(iT > 0 && iP > iT && iE > iP,
 // Within "encrypted" section, ch64 (300 msgs) appears (only one entry).
 assert(tbody.indexOf('0x40') > iEnc, 'encrypted section contains 0x40');
 
-console.log('\n=== Channels page links to Analytics ===');
+console.log('\n=== Channel analytics route and sidebar contract ===');
 
 const channelsSrc = fs.readFileSync(
   fromRepositoryRoot('public', 'channels.js'),
   'utf8'
 );
-assert(/#\/analytics/.test(channelsSrc) &&
-       /Channel Analytics|channel analytics/i.test(channelsSrc),
-  'channels.js sidebar links to #/analytics with "Channel Analytics" text');
+// Upstream 791c8ae1 (#1367/#1376) deliberately removed this sidebar chip.
+// Preserve that UX contract instead of requiring a deleted control to return.
+assert(!/class=["'][^"']*\bch-analytics-link\b/.test(channelsSrc),
+  'Channels sidebar does not restore the intentionally removed analytics chip');
+const analyticsPage = registeredPages.get('analytics');
+assert(analyticsPage && typeof analyticsPage.init === 'function',
+  'the real Analytics page registers its route initializer');
+assert(/data-tab="channels"/.test(analyticsSrc) &&
+       /case 'channels':\s*renderChannels\(el, d\.chanData\)/.test(analyticsSrc),
+  'Analytics retains the Channels tab and dispatches its real channel renderer');
 
 console.log('\n' + (failed ? '✗ ' + failed + ' failed, ' : '') + passed + ' passed');
 process.exit(failed ? 1 : 0);

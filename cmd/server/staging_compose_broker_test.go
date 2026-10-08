@@ -14,12 +14,10 @@ package main
 //     meshcore-net docker network. A bound 1883 mapping is at best
 //     dead weight, at worst a conflict when the broker eventually
 //     moves to the host port.
-//  2. The DISABLE_MOSQUITTO environment variable MUST use the
-//     interpolated default form `${DISABLE_MOSQUITTO:-true}` so the
-//     in-container mosquitto is OFF unless an operator explicitly
-//     opts back in via env, while still preserving that override
-//     capability. Bare literal `true` (no override path) or any
-//     later `=false` override under staging-go is rejected.
+//  2. The DISABLE_MOSQUITTO environment variable MUST be the literal
+//     `true`. Canonical staging always uses the external mqtt-broker;
+//     a production DISABLE_MOSQUITTO override must never enable the
+//     bundled broker in staging.
 //  3. The external docker network "meshcore-net" MUST be declared
 //     and staging-go MUST be attached to it via a real
 //     services.staging-go.networks sub-key (not merely mentioned
@@ -165,31 +163,28 @@ func TestStagingCompose_NoHostPort1883(t *testing.T) {
 	}
 }
 
-func TestStagingCompose_DisableMosquittoDefaultsTrue(t *testing.T) {
+func TestStagingCompose_DisableMosquittoIsAlwaysTrue(t *testing.T) {
 	yaml := readStagingCompose(t)
 	block := extractStagingGoBlock(t, yaml)
-	// Restrict to the environment: sub-block after stripping
-	// comments so a `# DISABLE_MOSQUITTO=true` prose example
-	// can't satisfy the assertion, and the "first-match anywhere"
-	// bug is closed off.
 	envBlock := extractSubBlock(stripYAMLComments(block), "environment", 4)
 
-	// Required shape: the interpolated form that preserves override.
-	//   - DISABLE_MOSQUITTO=${DISABLE_MOSQUITTO:-true}
-	// Bare `DISABLE_MOSQUITTO=true` is REJECTED — it removes the
-	// operator's ability to opt in without editing the compose file,
-	// which is the shape the PR body promises.
-	want := regexp.MustCompile(`(?m)DISABLE_MOSQUITTO=\$\{DISABLE_MOSQUITTO:-true\}\s*$`)
+	want := regexp.MustCompile(`(?m)^\s*-\s*DISABLE_MOSQUITTO=true\s*$`)
 	if !want.MatchString(envBlock) {
-		t.Fatalf("staging-go must declare `DISABLE_MOSQUITTO=${DISABLE_MOSQUITTO:-true}` (interpolated form preserves override capability); env block:\n%s", envBlock)
+		t.Fatalf("canonical staging must force bundled Mosquitto off with literal DISABLE_MOSQUITTO=true; env block:\n%s", envBlock)
 	}
+	if strings.Contains(envBlock, "${DISABLE_MOSQUITTO") {
+		t.Fatalf("canonical staging must not inherit the production DISABLE_MOSQUITTO override; env block:\n%s", envBlock)
+	}
+}
 
-	// Guard against a later `=false` override in the same env block.
-	// Any additional DISABLE_MOSQUITTO assignment with a `false`
-	// default (interpolated or literal) undoes the intent.
-	bad := regexp.MustCompile(`(?m)DISABLE_MOSQUITTO=(?:\$\{DISABLE_MOSQUITTO:-false\}|false)\s*$`)
-	if m := bad.FindString(envBlock); m != "" {
-		t.Fatalf("staging-go env must not include a DISABLE_MOSQUITTO=false override (default MUST be true); found: %q", strings.TrimSpace(m))
+func TestStagingCompose_UsesCanonicalExternalBroker(t *testing.T) {
+	yaml := readStagingCompose(t)
+	block := extractStagingGoBlock(t, yaml)
+	envBlock := extractSubBlock(stripYAMLComments(block), "environment", 4)
+
+	want := regexp.MustCompile(`(?m)^\s*-\s*MQTT_BROKER=mqtt://mqtt-broker:1883\s*$`)
+	if !want.MatchString(envBlock) {
+		t.Fatalf("canonical staging must explicitly select mqtt-broker over copied config or host environment; env block:\n%s", envBlock)
 	}
 }
 

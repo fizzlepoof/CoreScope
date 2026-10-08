@@ -75,10 +75,37 @@ test('--dry-run describes the current Go and canonical frontend flow without mut
   assert.match(output, /-host 127\.0\.0\.1/);
   assert.match(output, /-port 24680/);
   assert.match(output, /-config-dir <temporary>\/config/);
+  assert.match(output, /-static-trace-file <temporary>\/static-request-trace\.jsonl/);
   assert.match(output, /--profile ci-e2e-phase/);
   assert.match(output, /collect-frontend-coverage\.js/);
   assert.match(output, /nyc report/);
   assert.strictEqual(sha256(fixture), before, 'dry-run mutated the tracked fixture');
+});
+
+test('customizer navigation diagnostic dry-run preserves the canonical seeded fixture and narrows the browser target', () => {
+  const fixture = path.join(repoRoot, 'tests/fixtures/e2e/e2e-fixture.db');
+  const before = sha256(fixture);
+  const result = run(['--customizer-navigation-diagnostic', '--dry-run'], { COVERAGE_PORT: '24681' });
+  assert.strictEqual(result.status, 0, result.stderr);
+  const output = `${result.stdout}\n${result.stderr}`;
+  assert.match(output, /copy.*tests\/fixtures\/e2e\/e2e-fixture\.db/i);
+  assert.match(output, /-static-trace-file <temporary>\/static-request-trace\.jsonl/);
+  assert.match(output, /E2E_TEST_FILTER=\^Customizer v2:/);
+  assert.match(output, /node tests\/e2e\/test-e2e-playwright\.js/);
+  assert.doesNotMatch(output, /go test -timeout 15m -coverprofile/);
+  assert.doesNotMatch(output, /run-manifest\.js --profile ci-e2e-phase/);
+  assert.strictEqual(sha256(fixture), before, 'diagnostic dry-run mutated the tracked fixture');
+});
+
+test('normalizes a relative coverage directory before module-scoped Go commands run', () => {
+  const result = spawnSync('sh', ['-c',
+    '. scripts/combined-coverage-lib.sh; printf "%s" "$GO_COVERAGE_DIR"'], {
+    cwd: repoRoot,
+    env: { ...process.env, COMBINED_COVERAGE_REPO_ROOT: repoRoot, COVERAGE_DIR: 'coverage' },
+    encoding: 'utf8',
+  });
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(result.stdout, path.join(repoRoot, 'coverage', 'go'));
 });
 
 test('invalid configured ports fail before orchestration', () => {
@@ -395,6 +422,44 @@ test('cleanup removes temporary state, instrumented frontend, and server process
   assert.strictEqual(result.status, 0, result.stderr);
 });
 
+test('failed frontend runs preserve run-owned server evidence before cleanup', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'corescope-coverage-failure-evidence-'));
+  const work = path.join(temp, 'work');
+  const evidence = path.join(temp, 'coverage', 'frontend', 'run-evidence');
+  fs.mkdirSync(work, { recursive: true });
+  fs.writeFileSync(path.join(work, 'server.log'), 'server marker\n');
+  const command = [
+    'set -eu',
+    `COMBINED_COVERAGE_REPO_ROOT=${JSON.stringify(repoRoot)}`,
+    'export COMBINED_COVERAGE_REPO_ROOT',
+    `. ${JSON.stringify(library)}`,
+    `WORK_DIR=${JSON.stringify(work)}`,
+    `FAILURE_EVIDENCE_DIR=${JSON.stringify(evidence)}`,
+    'sleep 30 &',
+    'SERVER_PID=$!',
+    'server_pid=$SERVER_PID',
+    'ss() { printf "LISTEN 203.0.113.177:24444 host-private-sentinel\\n"; }',
+    'ps() { case "$*" in *cmd=*) printf "192.0.2.177 command-private-sentinel\\n" ;; *) printf "1234 1 S 00:00\\n" ;; esac; }',
+    'capture_frontend_failure_evidence http://127.0.0.1:1 17 manifest',
+    'cleanup',
+    '[ ! -e "$WORK_DIR" ]',
+    '[ -f "$FAILURE_EVIDENCE_DIR/server.log" ]',
+    'grep -q "server marker" "$FAILURE_EVIDENCE_DIR/server.log"',
+    'grep -q "exit_status=17" "$FAILURE_EVIDENCE_DIR/run-metadata.txt"',
+    '! kill -0 "$server_pid" 2>/dev/null',
+  ].join('\n');
+  try {
+    const result = spawnSync('sh', ['-c', command], { cwd: repoRoot, encoding: 'utf8' });
+    assert.strictEqual(result.status, 0, result.stderr || result.stdout);
+    for (const file of fs.readdirSync(evidence)) {
+      const retained = fs.readFileSync(path.join(evidence, file), 'utf8');
+      assert.doesNotMatch(retained, /203\.0\.113\.177|192\.0\.2\.177|host-private-sentinel|command-private-sentinel/, file);
+    }
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
 test('signal cleanup terminates the active tracked child', () => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'corescope-coverage-signal-'));
   const childPidFile = path.join(temp, 'child.pid');
@@ -447,6 +512,11 @@ for (const trackedFunction of ['run_tracked', 'run_tracked_in_dir']) {
     fs.writeFileSync(worker, [
       '#!/bin/sh',
       `sh -c 'trap "exit 0" TERM; echo $$ > "$1"; while :; do sleep 1; done' sh "$1" </dev/null >/dev/null 2>&1 &`,
+      // Prove the descendant actually started before the successful leader
+      // exits; otherwise correct group cleanup can win the scheduler race.
+      'attempt=0',
+      'while [ ! -s "$1" ] && [ "$attempt" -lt 200 ]; do sleep 0.01; attempt=$((attempt + 1)); done',
+      '[ -s "$1" ] || exit 92',
       'exit 0',
     ].join('\n'), { mode: 0o755 });
     try {
@@ -595,6 +665,46 @@ test('Docker client failure reconciles a delayed owned container before clearing
     assert.strictEqual(result.status, 0, result.stderr || result.stdout);
   } finally {
     fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test('customizer diagnostic propagates the browser exit and captures failures only', () => {
+  for (const childStatus of [0, 17]) {
+    const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'corescope-customizer-status-'));
+    const fakeRepo = path.join(temp, 'repo');
+    const work = path.join(temp, 'work');
+    fs.mkdirSync(path.join(fakeRepo, 'tests', 'fixtures', 'e2e'), { recursive: true });
+    fs.mkdirSync(path.join(fakeRepo, 'node_modules', '.bin'), { recursive: true });
+    fs.mkdirSync(work);
+    fs.writeFileSync(path.join(fakeRepo, 'tests', 'fixtures', 'e2e', 'e2e-fixture.db'), 'fixture');
+    fs.writeFileSync(path.join(fakeRepo, 'node_modules', '.bin', 'nyc'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    fs.writeFileSync(path.join(work, 'corescope-server'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    try {
+      const result = sourceScript([
+        `REPO_ROOT=${JSON.stringify(fakeRepo)}`,
+        `WORK_DIR=${JSON.stringify(work)}`,
+        `FAILURE_EVIDENCE_DIR=${JSON.stringify(path.join(temp, 'evidence'))}`,
+        'MODE=customizer',
+        'trap cleanup EXIT HUP INT TERM',
+        'node() { return 0; }',
+        'run_go() { return 0; }',
+        'freshen_fixture() { return 0; }',
+        'seed_e2e_fixture() { return 0; }',
+        'finalize_e2e_fixture() { return 0; }',
+        'run_tracked() { return 0; }',
+        'prepare_frontend_paths() { RUN_INSTRUMENTED_DIR="$WORK_DIR/instrumented"; }',
+        'assert_port_available() { return 0; }',
+        'wait_for_server() { return 0; }',
+        'run_tracked_in_dir() { case "$*" in *E2E_TEST_FILTER=*) case "$*" in *"node tests/e2e/test-e2e-playwright.js"*) return "$DIAGNOSTIC_EXIT" ;; *) return 91 ;; esac ;; *) return 0 ;; esac; }',
+        'capture_frontend_failure_evidence() { printf "evidence_status=%s stage=%s\\n" "$2" "$3"; }',
+        'run_frontend_coverage 24680',
+      ], { DIAGNOSTIC_EXIT: String(childStatus) });
+      assert.strictEqual(result.status, childStatus, result.stderr || result.stdout);
+      if (childStatus) assert.match(result.stdout, /evidence_status=17 stage=customizer-navigation/);
+      else assert.doesNotMatch(result.stdout, /evidence_status=/);
+    } finally {
+      fs.rmSync(temp, { recursive: true, force: true });
+    }
   }
 });
 

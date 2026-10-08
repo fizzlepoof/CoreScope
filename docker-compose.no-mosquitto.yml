@@ -10,7 +10,7 @@
 # For the CoreScope maintainers' staging deploy (standalone
 # `mqtt-broker` container on external network `meshcore-net`), see
 # `docker-compose.staging.yml`. For a simple single-host self-hosted
-# deploy that keeps the built-in broker, see
+# deploy with the built-in broker disabled by default, see
 # `docker-compose.example.yml`.
 
 services:
@@ -38,6 +38,9 @@ services:
     environment:
       - NODE_ENV=production
       - DISABLE_MOSQUITTO=true
+      - DISABLE_CADDY=${DISABLE_CADDY:-false}
+      # Leave empty only when config.json already defines an external source.
+      - MQTT_BROKER=${MQTT_BROKER:-}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/stats"]
       interval: 30s
