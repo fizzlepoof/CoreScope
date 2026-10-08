@@ -8572,6 +8572,128 @@
           "detail": "runs isolated Node/shell assertions without importing a browser runner or requiring a live server"
         }
       ]
+    },
+    {
+      "path": "tests/unit/test-hash-region-admin.js",
+      "suite": "unit",
+      "command": [
+        "node",
+        "tests/unit/test-hash-region-admin.js"
+      ],
+      "requirements": {
+        "environment": [],
+        "flags": []
+      },
+      "status": "active",
+      "statusEvidence": [
+        {
+          "source": "package.json",
+          "detail": "explicitly listed in a Region Scope test command"
+        },
+        {
+          "source": ".github/workflows/deploy.yml",
+          "detail": "explicit focused Region Scope helper/admin/UI or self-contained browser step"
+        }
+      ],
+      "classificationEvidence": [
+        {
+          "source": "tests/unit/test-hash-region-admin.js",
+          "detail": "runs isolated Node assertions for structured region administration behavior"
+        }
+      ]
+    },
+    {
+      "path": "tests/e2e/test-region-scope-e2e.js",
+      "suite": "e2e",
+      "command": [
+        "node",
+        "tests/e2e/test-region-scope-e2e.js"
+      ],
+      "requirements": {
+        "environment": [
+          {
+            "name": "CHROMIUM_PATH",
+            "required": false,
+            "description": "system Chromium executable override; bundled Playwright Chromium is used when unset"
+          }
+        ],
+        "flags": []
+      },
+      "status": "active",
+      "statusEvidence": [
+        {
+          "source": "package.json",
+          "detail": "explicitly listed as the Region Scope browser test command"
+        },
+        {
+          "source": ".github/workflows/deploy.yml",
+          "detail": "explicit focused Region Scope helper/admin/UI or self-contained browser step"
+        }
+      ],
+      "classificationEvidence": [
+        {
+          "source": "tests/e2e/test-region-scope-e2e.js",
+          "detail": "imports Playwright browser automation and exercises Region Scope admin/helper behavior"
+        }
+      ]
+    },
+    {
+      "path": "tests/unit/test-region-scope-helper.js",
+      "suite": "unit",
+      "command": [
+        "node",
+        "tests/unit/test-region-scope-helper.js"
+      ],
+      "requirements": {
+        "environment": [],
+        "flags": []
+      },
+      "status": "active",
+      "statusEvidence": [
+        {
+          "source": "package.json",
+          "detail": "explicitly listed in a Region Scope test command"
+        },
+        {
+          "source": ".github/workflows/deploy.yml",
+          "detail": "explicit focused Region Scope helper/admin/UI or self-contained browser step"
+        }
+      ],
+      "classificationEvidence": [
+        {
+          "source": "tests/unit/test-region-scope-helper.js",
+          "detail": "runs isolated Node assertions for region recommendation and color helpers"
+        }
+      ]
+    },
+    {
+      "path": "tests/unit/test-region-scope-ui.js",
+      "suite": "unit",
+      "command": [
+        "node",
+        "tests/unit/test-region-scope-ui.js"
+      ],
+      "requirements": {
+        "environment": [],
+        "flags": []
+      },
+      "status": "active",
+      "statusEvidence": [
+        {
+          "source": "package.json",
+          "detail": "explicitly listed in a Region Scope test command"
+        },
+        {
+          "source": ".github/workflows/deploy.yml",
+          "detail": "explicit focused Region Scope helper/admin/UI or self-contained browser step"
+        }
+      ],
+      "classificationEvidence": [
+        {
+          "source": "tests/unit/test-region-scope-ui.js",
+          "detail": "runs isolated Node/source assertions for Region Scope UI wiring and lifecycle behavior"
+        }
+      ]
     }
   ]
 }
