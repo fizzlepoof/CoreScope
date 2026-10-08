@@ -232,7 +232,9 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := h.upgrader.Upgrade(w, r, nil)
+	// gorilla/websocket writes the 101 response directly after hijacking the
+	// connection, so pass through headers already installed by middleware.
+	conn, err := h.upgrader.Upgrade(w, r, w.Header().Clone())
 	if err != nil {
 		h.releaseAdmission(clientIP)
 		log.Printf("[ws] upgrade error: %v", err)
