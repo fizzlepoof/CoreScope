@@ -514,6 +514,12 @@ func TestHotStartup_ConcurrentQueryDuringBackgroundLoad(t *testing.T) {
 	// to in-memory; Total must never decrease across that switch.
 	since := time.Now().UTC().Add(-200 * time.Hour).Format(time.RFC3339)
 	q := PacketQuery{Since: since, Limit: 5000, Order: "ASC"}
+	// A date older than retention never crosses into memory, even after
+	// backgroundLoadDone: QueryPackets compares against oldestLoaded.
+	retentionFloor := time.Now().UTC().Add(-120 * time.Hour).Format(time.RFC3339)
+	if since <= retentionFloor || since >= store.oldestLoaded {
+		t.Fatal("query window must start inside retention but before the hot window to cross SQL fallback into memory")
+	}
 
 	// Start background fill.
 	go store.loadBackgroundChunks()
