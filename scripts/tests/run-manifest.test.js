@@ -66,6 +66,100 @@ test('E2E name selection rejects zero matches and runs matching callbacks', () =
   }
 });
 
+test('touch cancellation recovery follows moving rows through the actual E2E helpers and handlers', () => {
+  const root = path.join(__dirname, '../..');
+  const source = fs.readFileSync(path.join(root, 'test-touch-gestures-coverage-e2e.js'), 'utf8');
+  const helpers = source.slice(source.indexOf('async function synthSwipe('), source.indexOf('async function main()'));
+  const cases = source.slice(source.indexOf('    // ── (cov8)'), source.indexOf('    // ── (cov10)'));
+  // Run the real helpers AND cov8/9 call sites, not a reimplementation of
+  // their coordinate selection. Only DOM/layout and Playwright are faked.
+  const probe = `
+    const assert = require('assert');
+    const vm = require('vm');
+    const fs = require('fs');
+    const listeners = new Map();
+    const events = [];
+    const overlays = [];
+    let top = 110, cancellations = 0;
+    function element(kind) {
+      const classes = new Set();
+      return {
+        kind, style: {}, parentNode: null,
+        classList: { add: x => classes.add(x), remove: x => classes.delete(x), contains: x => classes.has(x) },
+        closest(sel) {
+          if (kind === 'row' || kind === 'cell') {
+            if (sel.includes('tr[')) return row;
+            if (sel === 'tbody') return tbody;
+          }
+          return null;
+        },
+        getBoundingClientRect() { return { left: 8, x: 8, top, y: top, right: 369, bottom: top + 29.5, width: 361, height: 29.5 }; },
+        getAttribute() { return 'PRIVATE_PACKET_SENTINEL'; },
+        setAttribute() {}, setPointerCapture() {}, releasePointerCapture() {},
+        dispatchEvent(e) {
+          e.target = this;
+          events.push({ type: e.type, row: !!this.closest('tr[data-hash]'), transformed: !!row.style.transform });
+          for (const handler of listeners.get(e.type) || []) handler(e);
+          if (e.type === 'pointercancel' || e.type === 'lostpointercapture') cancellations++;
+          return true;
+        },
+        remove() { if (this.parentNode) this.parentNode.removeChild(this); },
+      };
+    }
+    const body = element('body');
+    body.appendChild = o => { o.parentNode = body; overlays.push(o); };
+    body.removeChild = o => { overlays.splice(overlays.indexOf(o), 1); o.parentNode = null; };
+    const row = element('row'), cell = element('cell'), tbody = { id: 'pktBody' };
+    const document = {
+      body,
+      addEventListener(type, fn) { listeners.set(type, [...listeners.get(type) || [], fn]); },
+      createElement() { return element('overlay'); },
+      querySelector(sel) {
+        if (sel === '#pktBody tr[data-hash]') return row;
+        if (sel.includes('.row-action-overlay')) return overlays.find(o => !sel.includes('-open') || o.classList.contains('row-action-overlay-open')) || null;
+        return null;
+      },
+      querySelectorAll(sel) { return sel.includes('.row-action-overlay') ? overlays.slice() : []; },
+      elementFromPoint(x, y) { return x >= 8 && x <= 369 && y >= top && y <= top + 29.5 ? cell : body; },
+    };
+    const window = { innerWidth: 375, SlideOver: { isOpen: () => false } };
+    class PointerEvent {
+      constructor(type, opts) { this.type = type; Object.assign(this, opts); }
+      preventDefault() {}
+    }
+    const context = vm.createContext({ window, document, PointerEvent, innerWidth: 375,
+      getComputedStyle: el => ({ transform: el.style.transform || 'none' }) });
+    vm.runInContext(fs.readFileSync(${JSON.stringify(path.join(root, 'public/touch-gestures.js'))}, 'utf8'), context);
+    const pP = {
+      async evaluate(fn, args) {
+        // A deterministic relayout immediately before dispatch also catches
+        // fixes that merely take another snapshot in a separate browser task.
+        if (cancellations && args && args.steps) top += 60;
+        context.args = args;
+        return vm.runInContext('(' + fn.toString() + ')(args)', context);
+      },
+      async waitForTimeout() { top += 60; },
+    };
+    const messages = [];
+    context.pP = pP;
+    context.pass = message => messages.push(message);
+    context.fail = message => { throw new Error(message); };
+    vm.runInContext(${JSON.stringify(helpers)} + '\\n(async () => {' + ${JSON.stringify(cases)} + '\\n})()', context)
+      .then(() => {
+        assert.strictEqual(messages.length, 4);
+        const cancels = events.filter(e => /^(pointercancel|lostpointercapture)$/.test(e.type));
+        assert.strictEqual(cancels.length, 2);
+        assert.ok(cancels.every(e => e.transformed), 'cancel must follow actual row drag feedback');
+        const downs = events.filter(e => e.type === 'pointerdown');
+        assert.strictEqual(downs.length, 4);
+        assert.ok(downs.every(e => e.row), 'every gesture must actually start on a non-interactive row cell');
+        assert.ok(!messages.join('').includes('PRIVATE_PACKET_SENTINEL'), 'geometry evidence must not expose row identifiers');
+      }).catch(error => { console.error(error.message); process.exitCode = 1; });
+  `;
+  const result = require('child_process').spawnSync(process.execPath, ['-e', probe], { encoding: 'utf8' });
+  assert.strictEqual(result.status, 0, result.stderr || result.stdout);
+});
+
 test('parses deterministic profile, suite, status, list, and dry-run options', () => {
   assert.deepStrictEqual(parseArguments([]), {
     profile: null,
