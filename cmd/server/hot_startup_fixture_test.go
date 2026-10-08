@@ -27,6 +27,7 @@ func TestHotStartupFixture_SQLFallbackUsesIndexedObservationLookups(t *testing.T
 	}
 	defer rows.Close()
 	indexedLookups := 0
+	correlated := make(map[int]bool)
 	for rows.Next() {
 		var id, parent, unused int
 		var detail string
@@ -34,10 +35,15 @@ func TestHotStartupFixture_SQLFallbackUsesIndexedObservationLookups(t *testing.T
 			t.Fatal(err)
 		}
 		t.Log(detail)
-		if strings.Contains(detail, "SCAN observations") {
-			t.Errorf("hot-startup fixture forces full observation scan: %s", detail)
+		if strings.HasPrefix(detail, "CORRELATED SCALAR SUBQUERY") {
+			correlated[id] = true
 		}
-		if strings.Contains(detail, "SEARCH observations") && strings.Contains(detail, "transmission_id=?") {
+		// A one-time list subquery may legitimately scan a covering index.
+		// Only a scan beneath a correlated subquery is repeated per row.
+		if correlated[parent] && strings.Contains(detail, "SCAN observations") {
+			t.Errorf("hot-startup fixture forces correlated observation scan: %s", detail)
+		}
+		if correlated[parent] && strings.Contains(detail, "SEARCH observations") && strings.Contains(detail, "transmission_id=?") {
 			indexedLookups++
 		}
 	}
