@@ -176,8 +176,8 @@ async function main() {
     await diagnostics.capture({ test: 'navigation regression', error: new Error('goto timeout') });
     const evidence = JSON.parse(fs.readFileSync(path.join(temp, 'e2e-navigation-diagnostics.json'), 'utf8'));
     assert.strictEqual(evidence.test, 'navigation regression');
-    assert.match(evidence.error, /^(goto timeout|Error)$/);
-    assert(evidence.events.some(event => event.kind === 'requestfailed' && event.resourceType === 'script'));
+    assert.strictEqual(evidence.error, 'Error');
+    assert(evidence.events.some(event => event.kind === 'requestfailed' && event.resourceType === 'script' && event.error === 'net::ERR_TIMED_OUT'));
     assert(evidence.events.some(event => event.kind === 'domcontentloaded'));
     assert(evidence.events.some(event => event.kind === 'pageerror'));
     assert.deepStrictEqual(evidence.inFlightRequests, [
