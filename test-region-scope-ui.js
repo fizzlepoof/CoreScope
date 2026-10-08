@@ -62,7 +62,9 @@ assert.match(scopeCSS, /scrollbar-gutter:\s*stable/, 'available region list rese
 assert.match(scopeCSS, /region-scope-list-frame\.is-scrollable/, 'scrollable list has a distinct visual treatment');
 assert.match(scopeCSS, /var\(--region-scope-color, var\(--accent\)\)/, 'region cards retain an accent fallback when no assigned color is present');
 assert.match(adminCSS, /var\(--region-tree-depth, 0\)/, 'nested region cards retain a zero-depth fallback when depth is unset');
-assert.match(testAll, /node test-region-scope-e2e\.js/, 'canonical full test runner includes real Chromium coverage');
+assert.match(testAll, /run-manifest\.js --profile local-package-and-test-all/, 'canonical full test runner delegates to the manifest orchestrator');
+const testManifest = JSON.parse(fs.readFileSync('tests/manifest.json', 'utf8'));
+assert.ok(testManifest.tests.some(test => test.path === 'test-region-scope-e2e.js' && test.suite === 'e2e' && test.status === 'active'), 'canonical manifest retains real Chromium coverage');
 assert.doesNotMatch(packageJSON.scripts['test:unit'], /region-scope-e2e/, 'fast unit runner does not require a browser');
 
 assert.match(adminHTML, /id="region-editor-list"/, 'admin has structured editor list');

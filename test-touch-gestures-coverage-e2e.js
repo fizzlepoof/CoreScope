@@ -93,6 +93,20 @@ async function synthSwipeCancel(page, fromX, fromY, toX, toY, cancelEvent) {
   await page.waitForTimeout(80);
 }
 
+async function gestureGeometry(page, cx, cy) {
+  return page.evaluate(({ cx, cy }) => {
+    const row = document.querySelector('#pktBody tr[data-hash]');
+    const r = row?.getBoundingClientRect();
+    return { width: innerWidth,
+      rect: r ? { x: r.x, y: r.y, w: r.width, h: r.height } : null,
+      startHitsPacket: !!document.elementFromPoint(cx + 100, cy)?.closest('#pktBody tr[data-hash]'),
+      endHitsPacket: !!document.elementFromPoint(cx - 100, cy)?.closest('#pktBody tr[data-hash]'),
+      transform: row ? getComputedStyle(row).transform : null,
+      slideOpen: !!window.SlideOver?.isOpen(),
+      overlayCount: document.querySelectorAll('.row-action-overlay').length };
+  }, { cx, cy });
+}
+
 async function rowRect(page, sel) {
   return page.evaluate((sel) => {
     const r = document.querySelector(sel);
@@ -174,6 +188,9 @@ async function main() {
 
   // Stub clipboard so cov3 can observe writes without a real permission.
   await page.addInitScript(() => {
+    // Late canonical fixtures outlive 15 minutes; use the supported mobile
+    // window without changing production limits or accepting absent rows.
+    localStorage.setItem('meshcore-time-window', '180');
     window.__clipboardWrites = [];
     if (!navigator.clipboard) {
       Object.defineProperty(navigator, 'clipboard', {
@@ -249,7 +266,7 @@ async function main() {
         hash: location.hash,
         overlay: !!document.querySelector('.row-action-overlay.row-action-overlay-open'),
       }));
-      const expected = `#/packets?hash=${encodeURIComponent(r2.hash)}`;
+      const expected = `#/packets?timeWindow=180&hash=${encodeURIComponent(r2.hash)}`;
       if (state.hash === expected && !state.overlay) {
         pass(`(cov2) filter button navigated to ${state.hash} and dismissed overlay`);
       } else {
@@ -328,8 +345,8 @@ async function main() {
     await synthSwipe(page, cx - 80, cy, cx + 80, cy);
     await page.waitForTimeout(250);
     const hash = await page.evaluate(() => location.hash);
-    if (hash === '#/packets') pass('(cov5) LTR bottom-nav swipe on #/live navigated back to #/packets');
-    else fail(`(cov5) expected #/packets, got ${hash}`);
+    if (hash === '#/packets?timeWindow=180') pass('(cov5) LTR bottom-nav swipe returns to packets with the chosen window preserved');
+    else fail(`(cov5) expected #/packets?timeWindow=180, got ${hash}`);
   }
 
   // ── (cov6) bottom-nav boundary — LTR swipe on first tab (#/home) no-op ──
@@ -365,6 +382,7 @@ async function main() {
     const pD = await ctxD.newPage();
     pD.setDefaultTimeout(15000);
     pD.on('pageerror', (e) => console.error('[pageerror-desktop]', e.message));
+    await pD.addInitScript(() => localStorage.setItem('meshcore-time-window', '180'));
     await pD.goto(`${BASE}/#/packets`, { waitUntil: 'domcontentloaded' });
     await pD.waitForSelector('#pktBody tr[data-hash]', { timeout: 10000 }).catch(() => {});
     await pD.waitForTimeout(200);
@@ -399,6 +417,7 @@ async function main() {
     const pP = await ctxP.newPage();
     pP.setDefaultTimeout(15000);
     pP.on('pageerror', (e) => console.error('[pageerror-phone2]', e.message));
+    await pP.addInitScript(() => localStorage.setItem('meshcore-time-window', '180'));
     await pP.goto(`${BASE}/#/packets`, { waitUntil: 'domcontentloaded' });
     await pP.waitForSelector('#pktBody tr[data-hash]', { timeout: 10000 }).catch(() => {});
     await pP.waitForTimeout(200);
@@ -423,7 +442,7 @@ async function main() {
       const overlay = await pP.evaluate(() =>
         !!document.querySelector('.row-action-overlay.row-action-overlay-open'));
       if (overlay) pass('(cov8) gesture works after pointercancel (state reset cleanly)');
-      else fail('(cov8) subsequent gesture failed after pointercancel — state leaked');
+      else fail('(cov8) subsequent gesture failed after pointercancel: ' + JSON.stringify(await gestureGeometry(pP, cx, cy)));
       await clearOverlays(pP);
     } else {
       fail('(cov8) no row for pointercancel test');
@@ -449,7 +468,7 @@ async function main() {
       const overlay = await pP.evaluate(() =>
         !!document.querySelector('.row-action-overlay.row-action-overlay-open'));
       if (overlay) pass('(cov9) gesture works after lostpointercapture');
-      else fail('(cov9) subsequent gesture failed after lostpointercapture');
+      else fail('(cov9) subsequent gesture failed after lostpointercapture: ' + JSON.stringify(await gestureGeometry(pP, cx, cy)));
       await clearOverlays(pP);
     } else {
       fail('(cov9) no row for lostpointercapture test');

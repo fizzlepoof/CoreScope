@@ -40,6 +40,8 @@ function assert(cond, msg) {
 const cv2Src     = fs.readFileSync(path.join(__dirname, 'public', 'customize-v2.js'), 'utf8');
 const rolesSrc   = fs.readFileSync(path.join(__dirname, 'public', 'roles.js'), 'utf8');
 const presetsSrc = fs.readFileSync(path.join(__dirname, 'public', 'cb-presets.js'), 'utf8');
+const styleSrc = fs.readFileSync(path.join(__dirname, 'public', 'style.css'), 'utf8');
+const computedRoleStyle = require('./tests/helpers/cb-computed-role-style');
 
 // ─── Extract the nodeColors-processing block from customize-v2.js. ───
 function extractBlock(src, anchor) {
@@ -101,9 +103,7 @@ function makeSandbox() {
     matchMedia: function () { return { matches: false }; },
     CustomEvent: function (type, opts) { this.type = type; this.detail = opts && opts.detail; },
     Event: function (type) { this.type = type; },
-    getComputedStyle: function () {
-      return { getPropertyValue: function (k) { return (root.style._vars[k] || ''); } };
-    }
+    getComputedStyle: computedRoleStyle(root, body, styleSrc)
   };
   sandbox.window = sandbox;
   return { sandbox, root, body };
@@ -164,7 +164,7 @@ console.log('\n=== #1438 FINAL C: server-only key does NOT clobber --mc-role-* (
   vm.runInContext(setup, env.sandbox);
 
   // --mc-role-companion must remain the preset's value (no clobber from server).
-  const got = env.root.style.getPropertyValue('--mc-role-companion').toLowerCase();
+  const got = env.sandbox.getComputedStyle(env.body).getPropertyValue('--mc-role-companion').toLowerCase();
   assert(got !== '#2563eb',
     '--mc-role-companion is NOT the server-config legacy #2563eb (got ' + got + ')');
   assert(got === '#648fff',
