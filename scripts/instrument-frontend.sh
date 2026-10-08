@@ -2,7 +2,7 @@
 # Instrument frontend JS for coverage tracking
 set -eu
 INSTRUMENTED_DIR=${INSTRUMENTED_DIR:-public-instrumented}
-if [ -e "$INSTRUMENTED_DIR" ]; then
+if [ -e "$INSTRUMENTED_DIR" ] || [ -L "$INSTRUMENTED_DIR" ]; then
   printf 'ERROR: instrumented frontend target already exists: %s\n' "$INSTRUMENTED_DIR" >&2
   exit 1
 fi
