@@ -79,6 +79,38 @@ async function main() {
   } finally {
     fs.rmSync(temp, { recursive: true, force: true });
   }
+  // Exercise the actual IATA geometry probe with private attributes present.
+  const root = path.resolve(__dirname, '../..');
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'tests/manifest.json'), 'utf8'));
+  const entries = manifest.tests.filter(entry => entry.path === 'test-observer-iata-1188-e2e.js' ||
+    entry.path === 'tests/e2e/test-observer-iata-1188-e2e.js');
+  assert.strictEqual(entries.length, 1);
+  const source = fs.readFileSync(path.join(root, entries[0].path), 'utf8');
+  const start = source.indexOf('async function captureTableLayout()');
+  const end = source.indexOf('\nasync function test', start);
+  assert(start >= 0 && end > start, 'the actual geometry probe must be present');
+  const element = tag => ({ tagName: tag, hidden: false, parentElement: null,
+    id: '203.0.113.177-private-id', className: 'private-class-sentinel',
+    textContent: 'geometry-private-token', url: 'https://example.test/?token=geometry-private-token',
+    closest: () => null,
+    getBoundingClientRect: () => ({ width: 0, height: 0, x: 0, y: 0 }) });
+  const table = element('TABLE'), row = element('TR'), cell = element('TD');
+  row.cells = [cell]; row.parentElement = table;
+  const dom = { innerWidth: 375, innerHeight: 812,
+    document: { querySelectorAll: selector => selector === 'table' ? [table] : [row] },
+    getComputedStyle: () => ({ display: 'none', visibility: 'visible' }) };
+  const output = [];
+  const vm = require('vm');
+  await vm.runInNewContext(source.slice(start, end) + '\ncaptureTableLayout()', {
+    diagnosticPage: { evaluate: async callback => vm.runInNewContext('(' + callback.toString() + ')()', dom) },
+    console: { log: (...args) => output.push(args.join(' ')) },
+  });
+  assert.strictEqual(output.length, 1);
+  const metrics = JSON.parse(output[0].slice('IATA layout evidence: '.length));
+  assert.strictEqual(metrics.rowCount, 1);
+  assert.strictEqual(metrics.rows[0].cells[0].display, 'none');
+  assert.doesNotMatch(output.join('\n'), /203\.0\.113\.177|private-id|private-class-sentinel|geometry-private-token|https:/);
+  passed++;
   console.log(`e2e failure diagnostics: ${passed + 1} tests passed`);
 }
 
