@@ -41,7 +41,8 @@ function entry(testPath, suite = 'unit', status = 'active', overrides = {}) {
 test('E2E name selection rejects zero matches and runs matching callbacks', () => {
   const source = fs.readFileSync(path.join(__dirname, '../../test-e2e-playwright.js'), 'utf8');
   const registration = source.slice(source.indexOf('const results = []'), source.indexOf('\nfunction assert'));
-  const summaryStart = source.indexOf('  // Summary');
+  const closeMarker = '  await browser.close();';
+  const summaryStart = source.lastIndexOf(closeMarker) + closeMarker.length;
   const summary = source.slice(summaryStart, source.indexOf('\n}\n\nrun().catch', summaryStart));
   assert.ok(registration.includes('async function test') && summary.includes('process.exit'),
     'probe must exercise the actual runner registration and final exit path');

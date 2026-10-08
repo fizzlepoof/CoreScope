@@ -703,7 +703,7 @@ capture_frontend_failure_evidence() {
 
   if [ -n "${SERVER_PID:-}" ]; then
     {
-      ps -o pid=,ppid=,stat=,etime=,cmd= -p "$SERVER_PID" 2>&1 || true
+      ps -o pid=,ppid=,stat=,etime= -p "$SERVER_PID" 2>&1 || true
       printf '%s\n' '--- cgroup ---'
       cat "/proc/$SERVER_PID/cgroup" 2>&1 || true
       cgroup_path=$(awk -F: '$1 == "0" { print $3; exit }' "/proc/$SERVER_PID/cgroup" 2>/dev/null || true)
@@ -714,8 +714,9 @@ capture_frontend_failure_evidence() {
           cat "/sys/fs/cgroup$cgroup_path/$counter" 2>&1 || true
         done
       fi
-      printf '%s\n' '--- listeners ---'
-      ss -ltnp 2>&1 || true
+      # Do not capture host-wide listeners or command lines: neither is
+      # necessary to diagnose the owned server, and both can disclose private
+      # host addresses, ports, process arguments, or credentials.
     } > "$FAILURE_EVIDENCE_DIR/server-state.txt"
   fi
 }
@@ -758,8 +759,9 @@ run_frontend_coverage() {
       node test-e2e-playwright.js; then
       log "Customizer navigation diagnostic trace written to $FAILURE_EVIDENCE_DIR/static-request-trace.jsonl"
       return 0
+    else
+      frontend_status=$?
     fi
-    frontend_status=$?
     capture_frontend_failure_evidence "$base_url" "$frontend_status" customizer-navigation
     return "$frontend_status"
   fi

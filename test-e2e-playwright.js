@@ -3588,6 +3588,12 @@ async function run() {
 
   await browser.close();
 
+  // An explicit selector is a diagnostic gate, not permission to pass zero cases.
+  if (testFilter && results.length === 0) {
+    console.error('No E2E tests matched E2E_TEST_FILTER');
+    process.exit(1);
+  }
+
   // Summary
   const skipped = results.filter(r => r.skipped).length;
   const passed = results.filter(r => r.pass && !r.skipped).length;
