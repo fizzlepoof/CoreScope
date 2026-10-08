@@ -352,6 +352,8 @@
   }
 
   function copyStage(buttonId, outputId, label) {
+    var generation = loadGeneration;
+    var status = element('region-scope-status');
     element(buttonId).addEventListener('click', function () {
       var text = element(outputId).dataset.copyText || '';
       if (!text) {
@@ -359,9 +361,11 @@
         return;
       }
       navigator.clipboard.writeText(text).then(function () {
-        element('region-scope-status').textContent = label + ' copied to clipboard.';
+        if (generation !== loadGeneration || element('region-scope-status') !== status) return;
+        status.textContent = label + ' copied to clipboard.';
       }).catch(function () {
-        element('region-scope-status').textContent = 'Copy failed. Select the stage and copy it manually.';
+        if (generation !== loadGeneration || element('region-scope-status') !== status) return;
+        status.textContent = 'Copy failed. Select the stage and copy it manually.';
       });
     });
   }
