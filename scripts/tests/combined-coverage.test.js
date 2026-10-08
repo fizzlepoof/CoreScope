@@ -50,6 +50,50 @@ function test(name, fn) {
   }
 }
 
+test('instrumentation preserves destination ownership and real nyc coverage under strict CSP', () => {
+  const vm = require('vm');
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'corescope-instrument-csp-'));
+  const target = path.join(temp, 'instrumented assets with spaces');
+  const instrument = path.join(repoRoot, 'scripts/instrument-frontend.sh');
+  const invoke = () => spawnSync('sh', [instrument], {
+    cwd: temp,
+    env: { ...process.env, INSTRUMENTED_DIR: target },
+    encoding: 'utf8',
+    timeout: 30000,
+  });
+  try {
+    fs.mkdirSync(path.join(temp, 'public/vendor'), { recursive: true });
+    fs.symlinkSync(path.join(repoRoot, 'node_modules'), path.join(temp, 'node_modules'));
+    fs.writeFileSync(path.join(temp, 'public/probe.js'), 'window.probe = function(value) { return value + 1; }; window.answer = window.probe(41);');
+    for (const extension of ['css', 'html', 'svg', 'png']) {
+      fs.writeFileSync(path.join(temp, `public/asset.${extension}`), `sentinel ${extension}`);
+    }
+    fs.writeFileSync(path.join(temp, 'public/vendor/probe.js'), 'vendor sentinel');
+    fs.mkdirSync(target);
+    const sentinel = path.join(target, 'owned-artifact');
+    fs.writeFileSync(sentinel, 'must remain');
+    const rejected = invoke();
+    assert.notStrictEqual(rejected.status, 0);
+    assert.match(rejected.stderr, /already exists/);
+    assert.strictEqual(fs.readFileSync(sentinel, 'utf8'), 'must remain');
+    fs.rmSync(target, { recursive: true });
+    const generated = invoke();
+    assert.strictEqual(generated.status, 0, generated.stderr || generated.stdout);
+    const context = vm.createContext({}, { codeGeneration: { strings: false, wasm: false } });
+    vm.runInContext('window = globalThis', context);
+    vm.runInContext(fs.readFileSync(path.join(target, 'probe.js'), 'utf8'), context);
+    assert.strictEqual(context.answer, 42);
+    const coverage = Object.values(context.__coverage__);
+    assert.strictEqual(coverage.length, 1);
+    assert(Object.values(coverage[0].s).some(count => count > 0), 'real statement counters must advance');
+    assert(Object.values(coverage[0].f).some(count => count > 0), 'real function counters must advance');
+    assert.strictEqual(fs.readFileSync(path.join(target, 'asset.css'), 'utf8'), 'sentinel css');
+    assert.strictEqual(fs.existsSync(path.join(temp, 'public-instrumented')), false);
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
 test('--help documents supported coverage modes', () => {
   const result = run(['--help']);
   assert.strictEqual(result.status, 0, result.stderr);
