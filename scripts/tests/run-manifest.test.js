@@ -229,6 +229,78 @@ test('parses deterministic profile, suite, status, list, and dry-run options', (
   assert.throws(() => parseArguments(['--unknown']), /unknown argument: --unknown/);
 });
 
+for (const selector of ['suite', 'status', 'profile']) {
+  for (const value of ['', ' ', ',']) {
+    test(`rejects empty ${selector} selector ${JSON.stringify(value)} in both argument forms`, () => {
+      for (const argv of [[`--${selector}=${value}`], [`--${selector}`, value]]) {
+        assert.throws(() => parseArguments(argv, ['ci-e2e-phase']), /requires a non-empty value|invalid/);
+      }
+    });
+  }
+}
+
+for (const argv of [
+  ['--profile=ci-e2e-phase', '--suite=unit'],
+  ['--profile=ci-e2e-phase', '--status=dormant'],
+]) {
+  test(`rejects zero execution selections: ${argv.join(' ')}`, () => {
+    const root = path.resolve(__dirname, '../..');
+    const manifest = JSON.parse(fs.readFileSync(path.join(root, 'tests/manifest.json'), 'utf8'));
+    const profiles = JSON.parse(fs.readFileSync(path.join(root, 'tests/legacy-runner-inventory.json'), 'utf8')).executedRootTests;
+    const options = parseArguments(argv, Object.keys(profiles));
+    const selected = selectTests(manifest, options, profiles);
+    assert.strictEqual(selected.length, 0);
+    assert.throws(() => dispatchTests(selected, options, {
+      repoRoot: root,
+      environment: {},
+      spawnSync: () => { throw new Error('must not spawn'); },
+    }), /no tests selected/);
+  });
+}
+
+test('empty list and dry-run selections are successful inventory queries, not executions', () => {
+  for (const mode of ['--list', '--dry-run']) {
+    const options = parseArguments(['--suite=e2e', mode]);
+    const selected = selectTests({ tests: [entry('test-unit.js')] }, options);
+    const output = [];
+    assert.strictEqual(dispatchTests(selected, options, {
+      writeOutput: line => output.push(line),
+      preflight: () => { throw new Error('must not preflight'); },
+      run: () => { throw new Error('must not run'); },
+    }), 0);
+    assert.deepStrictEqual(output, []);
+  }
+});
+
+test('canonical E2E profile clears ambient name narrowing but other execution preserves it', () => {
+  const root = path.resolve(__dirname, '../..');
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'tests/manifest.json'), 'utf8'));
+  const profiles = JSON.parse(fs.readFileSync(path.join(root, 'tests/legacy-runner-inventory.json'), 'utf8')).executedRootTests;
+  for (const profile of ['ci-e2e-phase', null]) {
+    const options = parseArguments(profile ? [`--profile=${profile}`] : ['--suite=e2e'], Object.keys(profiles));
+    const selected = selectTests(manifest, options, profiles);
+    const environment = { E2E_TEST_FILTER: '^Customizer v2:', KEEP_ME: 'yes' };
+    const calls = [];
+    assert.strictEqual(dispatchTests(selected, options, {
+      repoRoot: root,
+      environment,
+      preflight: () => {},
+      writeOutput: () => {},
+      spawnSync: (_executable, argv, childOptions) => {
+        calls.push({ path: argv[0], env: childOptions.env });
+        return { status: 0 };
+      },
+    }), 0);
+    assert.strictEqual(calls.length, selected.length);
+    assert.ok(calls.some(call => call.path === 'test-e2e-playwright.js'));
+    for (const call of calls) {
+      assert.ok(profile ? !call.env.E2E_TEST_FILTER : call.env.E2E_TEST_FILTER === '^Customizer v2:', call.path);
+      assert.strictEqual(call.env.KEEP_ME, 'yes');
+    }
+    assert.strictEqual(environment.E2E_TEST_FILTER, '^Customizer v2:', 'caller environment must remain intact');
+  }
+});
+
 test('combines a profile with suite and status filters in path order', () => {
   const manifest = {
     tests: [
