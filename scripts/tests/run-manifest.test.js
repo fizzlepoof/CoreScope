@@ -38,6 +38,33 @@ function entry(testPath, suite = 'unit', status = 'active', overrides = {}) {
   };
 }
 
+test('E2E name selection rejects zero matches and runs matching callbacks', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../../test-e2e-playwright.js'), 'utf8');
+  const registration = source.slice(source.indexOf('const results = []'), source.indexOf('\nfunction assert'));
+  const summaryStart = source.indexOf('  // Summary');
+  const summary = source.slice(summaryStart, source.indexOf('\n}\n\nrun().catch', summaryStart));
+  assert.ok(registration.includes('async function test') && summary.includes('process.exit'),
+    'probe must exercise the actual runner registration and final exit path');
+  const probe = `(async () => {
+    ${registration}
+    await test('Customizer v2: selection fixture', async () => console.log('MATCHED_CALLBACK'));
+    await test('Other selection fixture', async () => console.log('OTHER_CALLBACK'));
+    ${summary}
+  })().catch(error => { console.error(error); process.exit(1); });`;
+  for (const [filter, expectedExit, expectedCount] of [
+    ['__NO_SUCH_CASE__', 1, 0],
+    ['^Customizer v2:', 0, 1],
+    ['', 0, 2],
+  ]) {
+    const result = require('child_process').spawnSync(process.execPath, ['-e', probe], {
+      env: { ...process.env, E2E_TEST_FILTER: filter }, encoding: 'utf8',
+    });
+    assert.strictEqual(result.status, expectedExit, result.stderr || result.stdout);
+    const calls = (result.stdout.match(/(?:MATCHED|OTHER)_CALLBACK/g) || []).length;
+    assert.strictEqual(calls, expectedCount, result.stdout);
+  }
+});
+
 test('parses deterministic profile, suite, status, list, and dry-run options', () => {
   assert.deepStrictEqual(parseArguments([]), {
     profile: null,
