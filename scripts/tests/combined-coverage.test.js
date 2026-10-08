@@ -91,7 +91,7 @@ test('customizer navigation diagnostic dry-run preserves the canonical seeded fi
   assert.match(output, /copy.*test-fixtures\/e2e-fixture\.db/i);
   assert.match(output, /-static-trace-file <temporary>\/static-request-trace\.jsonl/);
   assert.match(output, /E2E_TEST_FILTER=\^Customizer v2:/);
-  assert.match(output, /node test-e2e-playwright\.js/);
+  assert.match(output, /node tests\/e2e\/test-e2e-playwright\.js/);
   assert.doesNotMatch(output, /go test -timeout 15m -coverprofile/);
   assert.doesNotMatch(output, /run-manifest\.js --profile ci-e2e-phase/);
   assert.strictEqual(sha256(fixture), before, 'diagnostic dry-run mutated the tracked fixture');
@@ -438,6 +438,8 @@ test('failed frontend runs preserve run-owned server evidence before cleanup', (
     'sleep 30 &',
     'SERVER_PID=$!',
     'server_pid=$SERVER_PID',
+    'ss() { printf "LISTEN 203.0.113.177:24444 host-private-sentinel\\n"; }',
+    'ps() { case "$*" in *cmd=*) printf "192.0.2.177 command-private-sentinel\\n" ;; *) printf "1234 1 S 00:00\\n" ;; esac; }',
     'capture_frontend_failure_evidence http://127.0.0.1:1 17 manifest',
     'cleanup',
     '[ ! -e "$WORK_DIR" ]',
@@ -449,6 +451,10 @@ test('failed frontend runs preserve run-owned server evidence before cleanup', (
   try {
     const result = spawnSync('sh', ['-c', command], { cwd: repoRoot, encoding: 'utf8' });
     assert.strictEqual(result.status, 0, result.stderr || result.stdout);
+    for (const file of fs.readdirSync(evidence)) {
+      const retained = fs.readFileSync(path.join(evidence, file), 'utf8');
+      assert.doesNotMatch(retained, /203\.0\.113\.177|192\.0\.2\.177|host-private-sentinel|command-private-sentinel/, file);
+    }
   } finally {
     fs.rmSync(temp, { recursive: true, force: true });
   }
@@ -654,6 +660,46 @@ test('Docker client failure reconciles a delayed owned container before clearing
     assert.strictEqual(result.status, 0, result.stderr || result.stdout);
   } finally {
     fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test('customizer diagnostic propagates the browser exit and captures failures only', () => {
+  for (const childStatus of [0, 17]) {
+    const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'corescope-customizer-status-'));
+    const fakeRepo = path.join(temp, 'repo');
+    const work = path.join(temp, 'work');
+    fs.mkdirSync(path.join(fakeRepo, 'test-fixtures'), { recursive: true });
+    fs.mkdirSync(path.join(fakeRepo, 'node_modules', '.bin'), { recursive: true });
+    fs.mkdirSync(work);
+    fs.writeFileSync(path.join(fakeRepo, 'test-fixtures', 'e2e-fixture.db'), 'fixture');
+    fs.writeFileSync(path.join(fakeRepo, 'node_modules', '.bin', 'nyc'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    fs.writeFileSync(path.join(work, 'corescope-server'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    try {
+      const result = sourceScript([
+        `REPO_ROOT=${JSON.stringify(fakeRepo)}`,
+        `WORK_DIR=${JSON.stringify(work)}`,
+        `FAILURE_EVIDENCE_DIR=${JSON.stringify(path.join(temp, 'evidence'))}`,
+        'MODE=customizer',
+        'trap cleanup EXIT HUP INT TERM',
+        'node() { return 0; }',
+        'run_go() { return 0; }',
+        'freshen_fixture() { return 0; }',
+        'seed_e2e_fixture() { return 0; }',
+        'finalize_e2e_fixture() { return 0; }',
+        'run_tracked() { return 0; }',
+        'prepare_frontend_paths() { RUN_INSTRUMENTED_DIR="$WORK_DIR/instrumented"; }',
+        'assert_port_available() { return 0; }',
+        'wait_for_server() { return 0; }',
+        'run_tracked_in_dir() { case "$*" in *E2E_TEST_FILTER=*) case "$*" in *"node tests/e2e/test-e2e-playwright.js"*) return "$DIAGNOSTIC_EXIT" ;; *) return 91 ;; esac ;; *) return 0 ;; esac; }',
+        'capture_frontend_failure_evidence() { printf "evidence_status=%s stage=%s\\n" "$2" "$3"; }',
+        'run_frontend_coverage 24680',
+      ], { DIAGNOSTIC_EXIT: String(childStatus) });
+      assert.strictEqual(result.status, childStatus, result.stderr || result.stdout);
+      if (childStatus) assert.match(result.stdout, /evidence_status=17 stage=customizer-navigation/);
+      else assert.doesNotMatch(result.stdout, /evidence_status=/);
+    } finally {
+      fs.rmSync(temp, { recursive: true, force: true });
+    }
   }
 });
 
