@@ -118,6 +118,7 @@ function buildFixture() {
     // Wait until loadNodes() has populated the app node set.
     await page.waitForFunction(
       () => Array.isArray(window.__mc_nodes) && window.__mc_nodes.length >= 501,
+      null,
       { timeout: 15000 }
     );
     const len = await page.evaluate(() => window.__mc_nodes.length);
@@ -159,7 +160,12 @@ function buildFixture() {
   await step('a marker for the page-2 node is rendered on the map', async () => {
     // Start readiness while loadNodes is blocked on observers. A browser round
     // trip fences the initial probe without a fixed sleep.
-    const markerReady = page.evaluate(hasPage2Marker, PAGE2_KEY);
+    const markerReady = page.waitForFunction(hasPage2Marker, PAGE2_KEY, { timeout: 15000 })
+      .then(async (marker) => {
+        const hasMarker = await marker.jsonValue();
+        await marker.dispose();
+        return hasMarker;
+      });
     let settled = false;
     markerReady.then(() => { settled = true; }, () => { settled = true; });
     let settledBeforeRelease;
