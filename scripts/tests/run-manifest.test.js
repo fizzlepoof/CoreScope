@@ -267,6 +267,15 @@ test('#1692 runner installs a supported packet window before module-load capture
   assert.strictEqual(result.status, 0, result.stderr || result.stdout);
 });
 
+test('active region-scope browser contract compiles before launching Chromium', () => {
+  const root = path.resolve(__dirname, '../..');
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'tests/manifest.json'), 'utf8'));
+  const runner = manifest.tests.find(entry => entry.path.endsWith('/test-region-scope-e2e.js'));
+  assert.ok(runner && runner.status === 'active' && runner.suite === 'e2e');
+  const filename = path.join(root, runner.path);
+  assert.doesNotThrow(() => new (require('vm').Script)(fs.readFileSync(filename, 'utf8'), { filename }));
+});
+
 test('parses deterministic profile, suite, status, list, and dry-run options', () => {
   assert.deepStrictEqual(parseArguments([]), {
     profile: null,
