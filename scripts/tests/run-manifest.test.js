@@ -217,6 +217,56 @@ test('touch cancellation recovery follows moving rows through the actual E2E hel
   console.log(result.stdout.trim());
 });
 
+test('#1692 runner installs a supported packet window before module-load capture on both viewports', () => {
+  const root = path.resolve(__dirname, '../..');
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'tests/manifest.json'), 'utf8'));
+  const runner = manifest.tests.find(entry => entry.path.endsWith('/test-issue-1692-packets-init-parallel-e2e.js'));
+  assert.ok(runner && runner.status === 'active' && runner.suite === 'e2e');
+  const source = fs.readFileSync(path.join(root, runner.path), 'utf8');
+  const packets = fs.readFileSync(path.join(root, 'public/packets.js'), 'utf8');
+  const capture = packets.slice(packets.indexOf('  const isMobile ='), packets.indexOf('  let totalCount ='));
+  assert.ok(capture.includes('savedTimeWindowMin'), 'exercise actual module-load viewport policy');
+  // Execute the actual browser runner with a deterministic navigation boundary.
+  // A hash-only goto does not reload packets.js; an aged fixture has no rows
+  // in its default 15-minute window. No production initialization is replaced.
+  const probe = `
+    const assert = require('assert'), vm = require('vm');
+    (async () => {
+      for (const width of [1400, 375]) {
+        const storage = new Map(), initScripts = [];
+        const document = vm.createContext({ window: { innerWidth: width },
+          localStorage: { getItem: key => storage.get(key) ?? null,
+            setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) } });
+        let loaded = false, requestedWindow, exit;
+        const page = {
+          setDefaultTimeout() {}, on() {}, async route() {}, async unroute() {},
+          async addInitScript(fn) { initScripts.push(fn); },
+          async goto(url) {
+            if (!loaded) {
+              for (const fn of initScripts) vm.runInContext('(' + fn.toString() + ')()', document);
+              vm.runInContext(${JSON.stringify(capture)}, document);
+              loaded = true;
+            }
+            if (url.includes('#/packets')) requestedWindow = vm.runInContext('savedTimeWindowMin', document);
+          },
+          async evaluate(fn) { return vm.runInContext('(' + fn.toString() + ')()', document); },
+          async waitForSelector() { assert.ok(requestedWindow > 20, 'aged fixture has no rows in captured default window'); },
+        };
+        const ctx = { async newPage() { return page; }, async addInitScript(fn) { initScripts.push(fn); } };
+        const browser = { async newContext() { return ctx; }, async close() {} };
+        const context = { require: () => ({ chromium: { async launch() { return browser; } } }),
+          process: { env: {}, exit: code => { exit = code; } },
+          console: { log() {}, error() {} }, Date, setTimeout };
+        await vm.runInNewContext(${JSON.stringify(source)}, context);
+        assert.strictEqual(exit, 0, 'actual runner must render aged fixture rows after module-load capture');
+        assert.strictEqual(requestedWindow, 180, 'supported window must survive desktop and mobile module policy');
+      }
+    })().catch(error => { console.error(error.message); process.exitCode = 1; });
+  `;
+  const result = require('child_process').spawnSync(process.execPath, ['-e', probe], { encoding: 'utf8' });
+  assert.strictEqual(result.status, 0, result.stderr || result.stdout);
+});
+
 test('parses deterministic profile, suite, status, list, and dry-run options', () => {
   assert.deepStrictEqual(parseArguments([]), {
     profile: null,
