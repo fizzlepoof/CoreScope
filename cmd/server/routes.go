@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -23,6 +24,34 @@ import (
 	"github.com/meshcore-analyzer/packetpath"
 	"github.com/meshcore-analyzer/prunequeue"
 )
+
+// publicJSONBodyLimit bounds unauthenticated JSON parsing without relying on
+// MeshCore packet-size assumptions. 64 KiB is ample for the largest supported
+// request here: a batch of 200 observation hashes plus JSON framing.
+const publicJSONBodyLimit int64 = 64 << 10
+
+func decodePublicJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) bool {
+	r.Body = http.MaxBytesReader(w, r.Body, publicJSONBodyLimit)
+	decoder := json.NewDecoder(r.Body)
+	writeDecodeError := func(err error) {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			writeError(w, http.StatusRequestEntityTooLarge, "request body too large")
+		} else {
+			writeError(w, http.StatusBadRequest, "invalid JSON body")
+		}
+	}
+
+	if err := decoder.Decode(dst); err != nil {
+		writeDecodeError(err)
+		return false
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		writeDecodeError(err)
+		return false
+	}
+	return true
+}
 
 // memBreakdownNote is the static accounting caveat attached to the opt-in
 // /api/perf?mem=1 store memory breakdown (PerfResponse.MemoryBreakdownNote).
@@ -57,6 +86,12 @@ type Server struct {
 	memStatsMu       sync.Mutex
 	memStatsCache    runtime.MemStats
 	memStatsCachedAt time.Time
+
+	// Bounds the opt-in O(tx+obs) /api/perf?mem=1 store scan to one request
+	// followed by a per-server cooldown.
+	memoryDiagnosticActive        atomic.Bool
+	memoryDiagnosticCooldownUntil atomic.Int64
+	memoryDiagnosticNow           func() time.Time
 
 	// Cached /api/stats response — recomputed at most once every 10s
 	statsMu       sync.Mutex
@@ -158,18 +193,37 @@ func NewServer(db *DB, cfg *Config, hub *Hub) *Server {
 		cfg.applyListLimitsDefaults()
 	}
 	return &Server{
-		db:        db,
-		cfg:       cfg,
-		hub:       hub,
-		startedAt: time.Now(),
-		perfStats: NewPerfStats(),
-		version:   resolveVersion(),
-		commit:    resolveCommit(),
-		buildTime: resolveBuildTime(),
+		db:                  db,
+		cfg:                 cfg,
+		hub:                 hub,
+		startedAt:           time.Now(),
+		perfStats:           NewPerfStats(),
+		version:             resolveVersion(),
+		commit:              resolveCommit(),
+		buildTime:           resolveBuildTime(),
+		memoryDiagnosticNow: time.Now,
 	}
 }
 
 const memStatsTTL = 5 * time.Second
+
+const memoryDiagnosticCooldown = 30 * time.Second
+
+func (s *Server) beginMemoryDiagnostic() bool {
+	if !s.memoryDiagnosticActive.CompareAndSwap(false, true) {
+		return false
+	}
+	if s.memoryDiagnosticNow().UnixNano() < s.memoryDiagnosticCooldownUntil.Load() {
+		s.memoryDiagnosticActive.Store(false)
+		return false
+	}
+	return true
+}
+
+func (s *Server) finishMemoryDiagnostic() {
+	s.memoryDiagnosticCooldownUntil.Store(s.memoryDiagnosticNow().Add(memoryDiagnosticCooldown).UnixNano())
+	s.memoryDiagnosticActive.Store(false)
+}
 
 // getMemStats returns cached runtime.MemStats, refreshing at most every 5 seconds.
 // runtime.ReadMemStats() stops the world; caching prevents per-request GC pauses.
@@ -1017,6 +1071,16 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlePerf(w http.ResponseWriter, r *http.Request) {
+	wantsMemoryDiagnostic := s.store != nil && r.URL.Query().Get("mem") == "1"
+	if wantsMemoryDiagnostic {
+		if !s.beginMemoryDiagnostic() {
+			w.Header().Set("Retry-After", strconv.Itoa(int(memoryDiagnosticCooldown/time.Second)))
+			writeError(w, http.StatusTooManyRequests, "memory diagnostic already in progress")
+			return
+		}
+		defer s.finishMemoryDiagnostic()
+	}
+
 	// Copy perfStats under lock to avoid data races
 	s.perfStats.mu.Lock()
 	type epSnapshot struct {
@@ -1098,7 +1162,7 @@ func (s *Server) handlePerf(w http.ResponseWriter, r *http.Request) {
 	// requested so the hot /api/perf path stays cheap.
 	var memBreakdown *StoreMemoryBreakdown
 	var breakdownNote string
-	if s.store != nil && r.URL.Query().Get("mem") == "1" {
+	if wantsMemoryDiagnostic {
 		memBreakdown = s.store.GetStoreMemoryBreakdown()
 		breakdownNote = memBreakdownNote
 	}
@@ -1278,8 +1342,7 @@ func (s *Server) handleBatchObservations(w http.ResponseWriter, r *http.Request)
 	var body struct {
 		Hashes []string `json:"hashes"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, 400, "invalid JSON body")
+	if !decodePublicJSONBody(w, r, &body) {
 		return
 	}
 	const maxHashes = 200
@@ -1381,8 +1444,7 @@ func (s *Server) handleDecode(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Hex string `json:"hex"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, 400, "invalid JSON body")
+	if !decodePublicJSONBody(w, r, &body) {
 		return
 	}
 	hexStr := strings.TrimSpace(body.Hex)
@@ -2391,9 +2453,34 @@ func (s *Server) handleFleetClockSkew(w http.ResponseWriter, r *http.Request) {
 
 // --- Analytics Handlers ---
 
+func (s *Server) validateAnalyticsFilters(w http.ResponseWriter, region, area string) bool {
+	if len(region) > 64 {
+		writeError(w, http.StatusBadRequest, "region exceeds 64 bytes")
+		return false
+	}
+	if len(area) > 64 {
+		writeError(w, http.StatusBadRequest, "area exceeds 64 bytes")
+		return false
+	}
+	if area != "" {
+		if s.cfg == nil {
+			writeError(w, http.StatusBadRequest, "unknown area")
+			return false
+		}
+		if _, ok := s.cfg.Areas[area]; !ok {
+			writeError(w, http.StatusBadRequest, "unknown area")
+			return false
+		}
+	}
+	return true
+}
+
 func (s *Server) handleAnalyticsRF(w http.ResponseWriter, r *http.Request) {
 	region := r.URL.Query().Get("region")
 	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	window := ParseTimeWindow(r)
 	if s.store != nil {
 		// Issue #1659: gate the default-shape request behind first-pass
@@ -2444,6 +2531,9 @@ func (s *Server) handleAnalyticsRelayAirtimeShare(w http.ResponseWriter, r *http
 func (s *Server) handleAnalyticsTopology(w http.ResponseWriter, r *http.Request) {
 	region := r.URL.Query().Get("region")
 	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	window := ParseTimeWindow(r)
 	if s.store != nil {
 		// #1659 warmup gate (see handleAnalyticsRF for rationale).
@@ -2476,9 +2566,12 @@ func (s *Server) handleAnalyticsTopology(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Server) handleAnalyticsChannels(w http.ResponseWriter, r *http.Request) {
+	region := r.URL.Query().Get("region")
+	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	if s.store != nil {
-		region := r.URL.Query().Get("region")
-		area := r.URL.Query().Get("area")
 		window := ParseTimeWindow(r)
 		// #1659 warmup gate (see handleAnalyticsRF for rationale).
 		if region == "" && area == "" && window.IsZero() {
@@ -2510,6 +2603,9 @@ func (s *Server) handleAnalyticsChannels(w http.ResponseWriter, r *http.Request)
 func (s *Server) handleAnalyticsDistance(w http.ResponseWriter, r *http.Request) {
 	region := r.URL.Query().Get("region")
 	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	if s.store != nil {
 		// Lazy build (#1011): distance index is not built at startup.
 		// First request triggers an async build and gets 202 +
@@ -2538,9 +2634,12 @@ func (s *Server) handleAnalyticsDistance(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Server) handleAnalyticsHashSizes(w http.ResponseWriter, r *http.Request) {
+	region := r.URL.Query().Get("region")
+	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	if s.store != nil {
-		region := r.URL.Query().Get("region")
-		area := r.URL.Query().Get("area")
 		writeJSON(w, s.store.GetAnalyticsHashSizes(region, area))
 		return
 	}
@@ -2555,9 +2654,12 @@ func (s *Server) handleAnalyticsHashSizes(w http.ResponseWriter, r *http.Request
 }
 
 func (s *Server) handleAnalyticsHashCollisions(w http.ResponseWriter, r *http.Request) {
+	region := r.URL.Query().Get("region")
+	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	if s.store != nil {
-		region := r.URL.Query().Get("region")
-		area := r.URL.Query().Get("area")
 		writeJSON(w, s.store.GetAnalyticsHashCollisions(region, area))
 		return
 	}
@@ -2568,12 +2670,16 @@ func (s *Server) handleAnalyticsHashCollisions(w http.ResponseWriter, r *http.Re
 }
 
 func (s *Server) handleAnalyticsSubpaths(w http.ResponseWriter, r *http.Request) {
+	region := r.URL.Query().Get("region")
+	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	if s.store != nil {
 		if !s.store.SubpathIndexReady() {
 			writeIndexLoading503(w)
 			return
 		}
-		region := r.URL.Query().Get("region")
 		minLen := queryInt(r, "minLen", 2)
 		if minLen < 2 {
 			minLen = 2
@@ -2600,11 +2706,15 @@ func (s *Server) handleAnalyticsSubpaths(w http.ResponseWriter, r *http.Request)
 //
 //	?groups=2-2:50,3-3:30,4-4:20,5-8:15   (minLen-maxLen:limit per group)
 func (s *Server) handleAnalyticsSubpathsBulk(w http.ResponseWriter, r *http.Request) {
+	region := r.URL.Query().Get("region")
+	area := r.URL.Query().Get("area")
+	if !s.validateAnalyticsFilters(w, region, area) {
+		return
+	}
 	if s.store != nil && !s.store.SubpathIndexReady() {
 		writeIndexLoading503(w)
 		return
 	}
-	region := r.URL.Query().Get("region")
 	groupsParam := r.URL.Query().Get("groups")
 	if groupsParam == "" {
 		writeJSON(w, ErrorResp{Error: "groups parameter required (e.g. groups=2-2:50,3-3:30)"})

@@ -38,6 +38,7 @@ CoreScope runs well on Raspberry Pi 4/5 (ARM64). The Go server uses ~300 MB RAM 
 docker run -d --name corescope \
   -p 80:80 \
   -v corescope-data:/app/data \
+  -e MQTT_BROKER=mqtts://your-broker:8883 \
   ghcr.io/kpa-clawbot/corescope:latest
 ```
 
@@ -45,8 +46,8 @@ Open `http://localhost` — you'll see an empty dashboard ready to receive packe
 
 No `config.json` is required. The server starts with sensible defaults:
 - HTTP on port 3000 (Caddy proxies port 80 → 3000 internally)
-- Internal Mosquitto MQTT broker on port 1883
-- Ingestor connects to `mqtt://localhost:1883` automatically
+- Bundled anonymous plaintext Mosquitto is disabled
+- Ingestor uses the broker configured by `MQTT_BROKER` or `config.json`
 - SQLite database at `/app/data/meshcore.db`
 
 ### Full `docker run` Reference (recommended)
@@ -56,9 +57,9 @@ The bare `docker run` command is the primary deployment method. One image, docum
 ```bash
 docker run -d --name corescope \
   --restart=unless-stopped \
-  -p 80:80 -p 443:443 -p 1883:1883 \
-  -e DISABLE_MOSQUITTO=false \
+  -p 80:80 -p 443:443 \
   -e DISABLE_CADDY=false \
+  -e MQTT_BROKER=mqtts://your-broker:8883 \
   -v /your/data:/app/data \
   -v /your/Caddyfile:/etc/caddy/Caddyfile:ro \
   -v /your/caddy-data:/data/caddy \
@@ -71,11 +72,11 @@ docker run -d --name corescope \
 |-----------|----------|-------------|
 | `-p 80:80` | Yes | HTTP web UI |
 | `-p 443:443` | No | HTTPS (only if using built-in Caddy with a domain) |
-| `-p 1883:1883` | No | MQTT broker (expose if external gateways connect directly) |
+| `-p 127.0.0.1:1883:1883` | No | Development-only MQTT mapping when the bundled broker is explicitly enabled |
 | `-v /your/data:/app/data` | Yes | Persistent data: SQLite DB, config.json, theme.json |
 | `-v /your/Caddyfile:/etc/caddy/Caddyfile:ro` | No | Custom Caddyfile for HTTPS |
 | `-v /your/caddy-data:/data/caddy` | No | Caddy TLS certificate storage |
-| `-e DISABLE_MOSQUITTO=true` | No | Skip the internal Mosquitto broker (use your own) |
+| `-e DISABLE_MOSQUITTO=false` | No | Explicitly enable the bundled anonymous plaintext broker |
 | `-e DISABLE_CADDY=true` | No | Skip the built-in Caddy reverse proxy |
 | `-e MQTT_BROKER=mqtt://host:1883` | No | Override MQTT broker URL |
 
@@ -108,8 +109,9 @@ docker compose up -d
 |----------|---------|-------------|
 | `HTTP_PORT` | `80` | Host port for the web UI |
 | `DATA_DIR` | `./data` | Host path for persistent data |
-| `DISABLE_MOSQUITTO` | `false` | Set `true` to use an external MQTT broker |
+| `DISABLE_MOSQUITTO` | `true` | Set `false` to explicitly enable the bundled anonymous plaintext broker |
 | `DISABLE_CADDY` | `false` | Set `true` to skip the built-in Caddy proxy |
+| `MQTT_BROKER` | none | External broker URL; required unless `config.json` defines an external source |
 
 ### manage.sh (legacy alternative)
 
@@ -150,17 +152,22 @@ CoreScope uses a layered configuration system (highest priority wins):
 
 1. **Environment variables** — `MQTT_BROKER`, `DB_PATH`, etc.
 2. **`/app/data/config.json`** — full config file (volume-mounted)
-3. **Built-in defaults** — work out of the box with no config
+3. **Built-in defaults** — web/database defaults only; MQTT still requires an
+   external source unless bundled Mosquitto is explicitly enabled
 
 ### Environment variable overrides
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MQTT_BROKER` | `mqtt://localhost:1883` | MQTT broker URL (overrides config file) |
+| `MQTT_BROKER` | none | External MQTT broker URL (overrides config file) |
 | `MQTT_TOPIC` | `meshcore/#` | MQTT topic subscription pattern |
 | `DB_PATH` | `data/meshcore.db` | SQLite database path |
-| `DISABLE_MOSQUITTO` | `false` | Skip the internal Mosquitto broker |
+| `DISABLE_MOSQUITTO` | `true` | Skip the bundled anonymous plaintext broker; set `false` to opt in |
 | `DISABLE_CADDY` | `false` | Skip the built-in Caddy reverse proxy |
+| `ENABLE_PPROF` | unset (`false`) | Enable server and ingestor pprof endpoints |
+| `PPROF_HOST` | `127.0.0.1` | pprof listener host when enabled |
+| `SERVER_PPROF_PORT` | `6060` | Server pprof listener port |
+| `INGESTOR_PPROF_PORT` | `6061` | Ingestor pprof listener port |
 
 ### config.json
 
@@ -192,16 +199,22 @@ Map tile providers are enabled and configured via the `config.json` file. You ca
 
 ## MQTT Setup
 
-CoreScope receives MeshCore packets via MQTT. The container ships with an internal Mosquitto broker — no setup needed for basic use.
+CoreScope receives MeshCore packets via MQTT. Production deployments should use
+an authenticated external broker configured with `MQTT_BROKER` or `config.json`.
+The container also ships a development Mosquitto broker, but it is disabled by
+default because its bundled configuration is anonymous and plaintext.
 
-### Internal broker (default)
+### Bundled development broker (explicit opt-in)
 
-The built-in Mosquitto broker listens on port 1883 inside the container. Point your MeshCore gateways at it:
+Set `DISABLE_MOSQUITTO=false` to start the broker. Bind it to host loopback for
+local development; do not expose it to an untrusted network without replacing
+the bundled config with authentication, ACLs, and TLS.
 
 ```bash
-# Expose MQTT port for external gateways
+# Publish MQTT on host loopback for local development clients
 docker run -d --name corescope \
-  -p 80:80 -p 1883:1883 \
+  -p 80:80 -p 127.0.0.1:1883:1883 \
+  -e DISABLE_MOSQUITTO=false \
   -v corescope-data:/app/data \
   ghcr.io/kpa-clawbot/corescope:latest
 ```
@@ -210,10 +223,7 @@ docker run -d --name corescope \
 
 To use your own MQTT broker (Mosquitto, EMQX, HiveMQ, etc.):
 
-1. Disable the internal broker:
-   ```bash
-   -e DISABLE_MOSQUITTO=true
-   ```
+1. Keep the internal broker disabled (the default).
 
 2. Point the ingestor at your broker:
    ```bash
@@ -549,8 +559,8 @@ docker start corescope
 ### Container starts but dashboard is empty
 
 This is normal on first start with no MQTT sources configured. The dashboard shows data once packets arrive via MQTT. Either:
-- Point a MeshCore gateway at the container's MQTT broker (port 1883)
-- Configure an external MQTT source in `config.json`
+- Configure an external MQTT source in `config.json` or `MQTT_BROKER`
+- Explicitly enable the bundled development broker and point a gateway at its loopback-published port
 
 ### "no MQTT connections established" in logs
 
