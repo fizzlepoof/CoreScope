@@ -13,6 +13,65 @@ import (
 	"github.com/meshcore-analyzer/admindb"
 )
 
+func TestAdminHashRegionBackupTrustedLegacyNullImportPreservesSaved(t *testing.T) {
+	for _, test := range nonNumericHashRegionGeometries() {
+		if !strings.Contains(test.geometry, "null") {
+			continue
+		}
+		for _, mode := range []string{"merge", "replace"} {
+			for _, dryRun := range []bool{true, false} {
+				t.Run(fmt.Sprintf("%s/%s/dryRun=%t", test.name, mode, dryRun), func(t *testing.T) {
+					srv := newTestAdminServer(t)
+					saved := []admindb.HashRegionDefinition{
+						{Name: "#child", ParentName: "#legacy", Description: "retain hierarchy"},
+						{Name: "#legacy", Description: "retain metadata", Color: "#123456", GeometryJSON: test.geometry},
+					}
+					if err := srv.admin.ReplaceHashRegionDefinitions(saved); err != nil {
+						t.Fatal(err)
+					}
+					export := httptest.NewRecorder()
+					srv.handleAdminExportHashRegions(export, httptest.NewRequest(http.MethodGet, "/api/admin/hash-regions/export", nil))
+					if export.Code != http.StatusOK {
+						t.Fatalf("legacy backup export = %d: %s", export.Code, export.Body.String())
+					}
+					var backup hashRegionBackupEnvelope
+					if err := json.Unmarshal(export.Body.Bytes(), &backup); err != nil {
+						t.Fatal(err)
+					}
+					if len(backup.HashRegionDefinitions) != 2 || string(backup.HashRegionDefinitions[1].Geometry) != test.geometry {
+						t.Fatalf("export did not retain legacy geometry: %#v", backup)
+					}
+					// Resubmit the exported geometry, but ensure acceptance would mutate state.
+					backup.HashRegionDefinitions[1].Description = "must not import"
+					body, err := json.Marshal(backup)
+					if err != nil {
+						t.Fatal(err)
+					}
+					imported := append([]admindb.HashRegionDefinition(nil), saved...)
+					imported[1].Description = "must not import"
+					revision, err := hashRegionImportRevision(mode, imported, saved)
+					if err != nil {
+						t.Fatal(err)
+					}
+					requestURL := fmt.Sprintf("/api/admin/hash-regions/import?mode=%s&confirm=true&dryRun=%t&expectedRevision=%s", mode, dryRun, url.QueryEscape(revision))
+					recorder := httptest.NewRecorder()
+					srv.handleAdminImportHashRegions(recorder, httptest.NewRequest(http.MethodPost, requestURL, strings.NewReader(string(body))))
+					if recorder.Code != http.StatusBadRequest || !strings.Contains(recorder.Body.String(), "null") {
+						t.Errorf("legacy null import = %d, want numeric rejection: %s", recorder.Code, recorder.Body.String())
+					}
+					after, err := srv.admin.ListHashRegionDefinitions()
+					if err != nil {
+						t.Fatal(err)
+					}
+					if !reflect.DeepEqual(after, saved) {
+						t.Errorf("legacy null import changed persisted state: got %#v want %#v", after, saved)
+					}
+				})
+			}
+		}
+	}
+}
+
 func TestAdminHashRegionBackupExportIsDeterministicAndComplete(t *testing.T) {
 	srv := newTestAdminServer(t)
 	definitions := []admindb.HashRegionDefinition{

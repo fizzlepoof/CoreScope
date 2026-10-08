@@ -47,6 +47,65 @@ func nonNumericHashRegionGeometries() []struct{ name, geometry string } {
 	return cases
 }
 
+func TestHashRegionGeometryTrustedLegacyNullRejected(t *testing.T) {
+	for _, test := range nonNumericHashRegionGeometries() {
+		if !strings.Contains(test.geometry, "null") {
+			continue
+		}
+		t.Run(test.name, func(t *testing.T) {
+			raw := json.RawMessage(test.geometry)
+			if got, err := canonicalHashRegionGeometry(raw); err == nil || got != "" {
+				t.Errorf("canonicalization accepted legacy null: %q, %v", got, err)
+			}
+			trusted := []admindb.HashRegionDefinition{{Name: "#legacy", GeometryJSON: test.geometry}}
+			input := []hashRegionDefinitionPayload{{Name: "legacy", Geometry: raw}}
+			if got, err := cleanHashRegionDefinitionsWithTrusted(input, trusted); err == nil || got != nil {
+				t.Errorf("trusted cleaner accepted legacy null: %#v, %v", got, err)
+			}
+			if got, work, err := normalizeHashRegionGeometry(raw, 0); err == nil || got != "" || work != 0 {
+				t.Errorf("legacy null rejection spent work: %q, %d, %v", got, work, err)
+			}
+		})
+	}
+}
+
+func TestAdminHashRegionDefinitionsTrustedLegacyNullPreservesSaved(t *testing.T) {
+	for _, test := range nonNumericHashRegionGeometries() {
+		if !strings.Contains(test.geometry, "null") {
+			continue
+		}
+		t.Run(test.name, func(t *testing.T) {
+			srv := newTestAdminServer(t)
+			// Simulate data saved before numeric-ordinate validation existed.
+			saved := []admindb.HashRegionDefinition{
+				{Name: "#legacy", Description: "retain metadata", Color: "#123456", GeometryJSON: test.geometry},
+				{Name: "#child", ParentName: "#legacy", Description: "retain hierarchy"},
+			}
+			if err := srv.admin.ReplaceHashRegionDefinitions(saved); err != nil {
+				t.Fatal(err)
+			}
+			get := func() string {
+				recorder := httptest.NewRecorder()
+				srv.handleAdminGetHashRegions(recorder, httptest.NewRequest(http.MethodGet, "/api/admin/hash-regions", nil))
+				if recorder.Code != http.StatusOK {
+					t.Fatalf("GET status = %d: %s", recorder.Code, recorder.Body.String())
+				}
+				return recorder.Body.String()
+			}
+			before := get()
+			body := fmt.Sprintf(`{"hashRegionDefinitions":[{"name":"legacy","description":"must not replace metadata","geometry":%s},{"name":"#replacement"}]}`, test.geometry)
+			recorder := httptest.NewRecorder()
+			srv.handleAdminPutHashRegions(recorder, httptest.NewRequest(http.MethodPut, "/api/admin/hash-regions", strings.NewReader(body)))
+			if recorder.Code != http.StatusBadRequest || !strings.Contains(recorder.Body.String(), "null") {
+				t.Errorf("legacy null PUT status = %d, want numeric rejection: %s", recorder.Code, recorder.Body.String())
+			}
+			if after := get(); after != before {
+				t.Errorf("legacy null PUT changed persisted state: before=%s after=%s", before, after)
+			}
+		})
+	}
+}
+
 func TestNormalizeHashRegionGeometryRejectsNonNumericOrdinates(t *testing.T) {
 	for _, test := range nonNumericHashRegionGeometries() {
 		t.Run(test.name, func(t *testing.T) {
