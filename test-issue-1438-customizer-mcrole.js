@@ -40,6 +40,33 @@ function assert(cond, msg) {
 const cv2Src     = fs.readFileSync(path.join(__dirname, 'public', 'customize-v2.js'), 'utf8');
 const rolesSrc   = fs.readFileSync(path.join(__dirname, 'public', 'roles.js'), 'utf8');
 const presetsSrc = fs.readFileSync(path.join(__dirname, 'public', 'cb-presets.js'), 'utf8');
+const styleSrc = fs.readFileSync(path.join(__dirname, 'public', 'style.css'), 'utf8');
+// These VM tests have no CSS engine. Read the shipped preset declaration,
+// rather than pretending a removed root inline override is the whole cascade.
+function computedRoleStyle(root, body, css) {
+  return function getComputedStyle(element) {
+    return {
+      getPropertyValue(property) {
+        if (element === body) {
+          const inline = body.style.getPropertyValue(property);
+          if (inline) return inline;
+          const preset = body.getAttribute('data-cb-preset');
+          if (preset && /^[a-z0-9-]+$/.test(preset)) {
+            const selector = 'body[data-cb-preset="' + preset + '"]';
+            const start = css.indexOf(selector + ' {');
+            if (start >= 0) {
+              const block = css.slice(start, css.indexOf('}', start));
+              const escaped = property.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const declaration = block.match(new RegExp(escaped + ':\\s*([^;]+);'));
+              if (declaration) return declaration[1].trim();
+            }
+          }
+        }
+        return root.style.getPropertyValue(property);
+      }
+    };
+  };
+}
 
 // ─── Extract the nodeColors-processing block from customize-v2.js. ───
 function extractBlock(src, anchor) {
@@ -101,9 +128,7 @@ function makeSandbox() {
     matchMedia: function () { return { matches: false }; },
     CustomEvent: function (type, opts) { this.type = type; this.detail = opts && opts.detail; },
     Event: function (type) { this.type = type; },
-    getComputedStyle: function () {
-      return { getPropertyValue: function (k) { return (root.style._vars[k] || ''); } };
-    }
+    getComputedStyle: computedRoleStyle(root, body, styleSrc)
   };
   sandbox.window = sandbox;
   return { sandbox, root, body };
@@ -164,7 +189,7 @@ console.log('\n=== #1438 FINAL C: server-only key does NOT clobber --mc-role-* (
   vm.runInContext(setup, env.sandbox);
 
   // --mc-role-companion must remain the preset's value (no clobber from server).
-  const got = env.root.style.getPropertyValue('--mc-role-companion').toLowerCase();
+  const got = env.sandbox.getComputedStyle(env.body).getPropertyValue('--mc-role-companion').toLowerCase();
   assert(got !== '#2563eb',
     '--mc-role-companion is NOT the server-config legacy #2563eb (got ' + got + ')');
   assert(got === '#648fff',
