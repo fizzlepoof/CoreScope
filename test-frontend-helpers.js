@@ -4560,7 +4560,8 @@ console.log('\n=== app.js: favorites ===');
   test('favStar returns filled star for favorite', () => {
     ctx.localStorage.setItem('meshcore-favorites', '["pk1"]');
     const html = ctx.favStar('pk1');
-    assert.ok(html.includes('★'));
+    assert.ok(html.includes('#ph-star-fill'));
+    assert.ok(html.includes('aria-pressed="true"'));
     assert.ok(html.includes('on'));
     assert.ok(html.includes('Remove from favorites'));
   });
@@ -4568,7 +4569,8 @@ console.log('\n=== app.js: favorites ===');
   test('favStar returns empty star for non-favorite', () => {
     ctx.localStorage.setItem('meshcore-favorites', '[]');
     const html = ctx.favStar('pk1');
-    assert.ok(html.includes('☆'));
+    assert.ok(html.includes('#ph-star"'));
+    assert.ok(html.includes('aria-pressed="false"'));
     assert.ok(!html.includes(' on'));
     assert.ok(html.includes('Add to favorites'));
   });
