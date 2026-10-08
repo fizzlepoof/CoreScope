@@ -3,10 +3,108 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
+
+// These fixtures keep the ring closed even when a null would decode as zero.
+func nonNumericHashRegionGeometries() []struct{ name, geometry string } {
+	var cases []struct{ name, geometry string }
+	for _, kind := range []string{"Polygon", "MultiPolygon"} {
+		for _, ordinate := range []string{"null", `"0"`, "true", "false"} {
+			for _, position := range []string{"longitude", "latitude", "extra"} {
+				point := fmt.Sprintf("[%s,0]", ordinate)
+				if position == "latitude" {
+					point = fmt.Sprintf("[0,%s]", ordinate)
+				} else if position == "extra" {
+					point = fmt.Sprintf("[0,0,0,%s]", ordinate)
+				}
+				coordinates := fmt.Sprintf("[[%s,[1,0],[0,1],%s]]", point, point)
+				if kind == "MultiPolygon" {
+					coordinates = "[" + coordinates + "]"
+				}
+				cases = append(cases, struct{ name, geometry string }{
+					kind + "/" + position + "/" + ordinate,
+					fmt.Sprintf(`{"type":%q,"coordinates":%s}`, kind, coordinates),
+				})
+			}
+		}
+		coordinates := `[[[null,null],[1,0],[0,1],[null,null]]]`
+		if kind == "MultiPolygon" {
+			coordinates = "[" + coordinates + "]"
+		}
+		cases = append(cases, struct{ name, geometry string }{
+			kind + "/null-pair",
+			fmt.Sprintf(`{"type":%q,"coordinates":%s}`, kind, coordinates),
+		})
+	}
+	return cases
+}
+
+func TestNormalizeHashRegionGeometryRejectsNonNumericOrdinates(t *testing.T) {
+	for _, test := range nonNumericHashRegionGeometries() {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := normalizeHashRegionGeometry(json.RawMessage(test.geometry))
+			if err == nil || got != "" {
+				t.Fatalf("normalizer returned %q, %v; want rejection and no geometry", got, err)
+			}
+		})
+	}
+}
+
+func TestAdminHashRegionDefinitionsNonNumericOrdinatesPreserveSaved(t *testing.T) {
+	for _, test := range nonNumericHashRegionGeometries() {
+		t.Run(test.name, func(t *testing.T) {
+			srv := newTestAdminServer(t)
+			saved := `{"hashRegionDefinitions":[{"name":"#saved","description":"retain metadata","geometry":{"type":"Polygon","coordinates":[[[0,0],[1,0],[0,1],[0,0]]]}},{"name":"#child","parentName":"#saved","description":"retain hierarchy"}]}`
+			put := func(body string) *httptest.ResponseRecorder {
+				recorder := httptest.NewRecorder()
+				srv.handleAdminPutHashRegions(recorder, httptest.NewRequest(http.MethodPut, "/api/admin/hash-regions", bytes.NewBufferString(body)))
+				return recorder
+			}
+			get := func() []byte {
+				recorder := httptest.NewRecorder()
+				srv.handleAdminGetHashRegions(recorder, httptest.NewRequest(http.MethodGet, "/api/admin/hash-regions", nil))
+				if recorder.Code != http.StatusOK {
+					t.Fatalf("GET status = %d: %s", recorder.Code, recorder.Body.String())
+				}
+				return recorder.Body.Bytes()
+			}
+			if recorder := put(saved); recorder.Code != http.StatusOK {
+				t.Fatalf("seed PUT status = %d: %s", recorder.Code, recorder.Body.String())
+			}
+			before := get()
+			body := fmt.Sprintf(`{"hashRegionDefinitions":[{"name":"#replacement"},{"name":"#invalid","geometry":%s}]}`, test.geometry)
+			if recorder := put(body); recorder.Code != http.StatusBadRequest {
+				t.Errorf("invalid PUT status = %d, want 400: %s", recorder.Code, recorder.Body.String())
+			}
+			if after := get(); !bytes.Equal(before, after) {
+				t.Errorf("rejected PUT changed saved definitions: before=%s after=%s", before, after)
+			}
+		})
+	}
+}
+
+func TestNormalizeHashRegionGeometryPreservesNumericOrdinates(t *testing.T) {
+	for _, kind := range []string{"Polygon", "MultiPolygon"} {
+		t.Run(kind, func(t *testing.T) {
+			coordinates := `[[[0,0,10,2e1],[1,0,10,20],[0,1,10,20],[0,0,10,2e1]]]`
+			if kind == "MultiPolygon" {
+				coordinates = "[" + coordinates + "]"
+			}
+			raw := fmt.Sprintf(`{"type":%q,"coordinates":%s}`, kind, coordinates)
+			got, err := normalizeHashRegionGeometry(json.RawMessage(raw))
+			if err != nil || got != raw {
+				t.Fatalf("normalizer returned %q, %v; want unchanged numeric geometry %s", got, err, raw)
+			}
+		})
+	}
+	if got, err := normalizeHashRegionGeometry(json.RawMessage("null")); err != nil || got != "" {
+		t.Fatalf("optional null geometry = %q, %v; want empty geometry", got, err)
+	}
+}
 
 func TestConfigHashRegionDefinitionsReturnsPublicMetadata(t *testing.T) {
 	srv := newTestAdminServer(t)
