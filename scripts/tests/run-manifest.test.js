@@ -66,6 +66,132 @@ test('E2E name selection rejects zero matches and runs matching callbacks', () =
   }
 });
 
+test('touch cancellation recovery follows moving rows through the actual E2E helpers and handlers', () => {
+  const root = path.join(__dirname, '../..');
+  const source = fs.readFileSync(path.join(root, 'test-touch-gestures-coverage-e2e.js'), 'utf8');
+  const helpers = source.slice(source.indexOf('async function synthSwipe('), source.indexOf('async function main()'));
+  const cases = source.slice(source.indexOf('    // ── (cov8)'), source.indexOf('    // ── (cov10)'));
+  // Run the real helpers AND cov8/9 call sites, not a reimplementation of
+  // their coordinate selection. Only DOM/layout and Playwright are faked.
+  const probe = `
+    const assert = require('assert');
+    const vm = require('vm');
+    const fs = require('fs');
+    const listeners = new Map();
+    const events = [];
+    const overlays = [];
+    let top = 110, cancellations = 0;
+    function element(kind) {
+      const classes = new Set();
+      return {
+        kind, style: {}, parentNode: null,
+        classList: { add: x => classes.add(x), remove: x => classes.delete(x), contains: x => classes.has(x) },
+        closest(sel) {
+          if (kind === 'row' || kind === 'cell') {
+            if (sel.includes('tr[')) return row;
+            if (sel === 'tbody') return tbody;
+          }
+          return null;
+        },
+        getBoundingClientRect() { return { left: 8, x: 8, top, y: top, right: 369, bottom: top + 29.5, width: 361, height: 29.5 }; },
+        getAttribute() { return 'PRIVATE_PACKET_SENTINEL'; },
+        setAttribute() {}, setPointerCapture() {}, releasePointerCapture() {},
+        dispatchEvent(e) {
+          e.target = this;
+          events.push({ type: e.type, row: !!this.closest('tr[data-hash]'), transformed: !!row.style.transform });
+          for (const handler of listeners.get(e.type) || []) handler(e);
+          if (e.type === 'pointercancel' || e.type === 'lostpointercapture') cancellations++;
+          return true;
+        },
+        remove() { if (this.parentNode) this.parentNode.removeChild(this); },
+      };
+    }
+    const body = element('body');
+    body.appendChild = o => { o.parentNode = body; overlays.push(o); };
+    body.removeChild = o => { overlays.splice(overlays.indexOf(o), 1); o.parentNode = null; };
+    const row = element('row'), cell = element('cell'), tbody = { id: 'pktBody' };
+    const button = element('cell');
+    button.closest = sel => sel.includes('tr[') ? row : sel.includes('button') ? button : null;
+    const traces = [];
+    const document = {
+      body,
+      addEventListener(type, fn) { listeners.set(type, [...listeners.get(type) || [], fn]); },
+      createElement() { return element('overlay'); },
+      querySelector(sel) {
+        if (sel === '#pktBody tr[data-hash]') return row;
+        if (sel.includes('.row-action-overlay')) return overlays.find(o => !sel.includes('-open') || o.classList.contains('row-action-overlay-open')) || null;
+        return null;
+      },
+      querySelectorAll(sel) { return sel.includes('.row-action-overlay') ? overlays.slice() : []; },
+      elementFromPoint(x, y) {
+        if (x < 8 || x > 369 || y < top || y > top + 29.5) return body;
+        return x > 280 && x < 300 ? button : cell;
+      },
+    };
+    const window = { innerWidth: 375, SlideOver: { isOpen: () => false } };
+    class PointerEvent {
+      constructor(type, opts) { this.type = type; Object.assign(this, opts); }
+      preventDefault() {}
+    }
+    const context = vm.createContext({ window, document, PointerEvent, innerWidth: 375,
+      getComputedStyle: el => ({ transform: el.style.transform || 'none' }) });
+    vm.runInContext(fs.readFileSync(${JSON.stringify(path.join(root, 'public/touch-gestures.js'))}, 'utf8'), context);
+    const pP = {
+      async evaluate(fn, args) {
+        // A deterministic relayout immediately before dispatch also catches
+        // fixes that merely take another snapshot in a separate browser task.
+        if (cancellations && args && args.steps) top += 60;
+        context.args = args;
+        const result = vm.runInContext('(' + fn.toString() + ')(args)', context);
+        if (args && args.steps) traces.push(result);
+        return result;
+      },
+      async waitForTimeout() { top += 60; },
+    };
+    const messages = [];
+    context.pP = pP;
+    context.pass = message => messages.push(message);
+    context.fail = message => { throw new Error(message); };
+    vm.runInContext(${JSON.stringify(helpers)} + '\\n(async () => {' + ${JSON.stringify(cases)} + '\\n})()', context)
+      .then(async () => {
+        assert.strictEqual(messages.length, 4);
+        const cancels = events.filter(e => /^(pointercancel|lostpointercapture)$/.test(e.type));
+        assert.strictEqual(cancels.length, 2);
+        assert.ok(cancels.every(e => e.transformed), 'cancel must follow actual row drag feedback');
+        const downs = events.filter(e => e.type === 'pointerdown');
+        assert.strictEqual(downs.length, 4);
+        assert.ok(downs.every(e => e.row), 'every gesture must actually start on a non-interactive row cell');
+        assert.ok(traces.every(t => t.startHitsRow && !t.startInteractive && t.dragged));
+        const evidence = await context.gestureGeometry(pP, traces[3]);
+        assert.ok(!JSON.stringify(evidence).includes('PRIVATE_PACKET_SENTINEL'), 'geometry evidence must not expose row identifiers');
+        for (const trace of traces) {
+          assert.ok(Object.values(trace).every(v => typeof v === 'number' || typeof v === 'boolean'),
+            'dispatch evidence contains coordinates/booleans only');
+        }
+        assert.ok(!messages.join('').includes('PRIVATE_PACKET_SENTINEL'));
+        console.log('Moving-row dispatch evidence: ' + JSON.stringify(traces));
+        // Coordinate mode remains available for negative desktop/non-row
+        // probes; the helper must not bypass production eligibility guards.
+        cancellations = 0; // Freeze layout only for the eligibility controls.
+        window.innerWidth = 1200;
+        await context.synthSwipe(pP, 330, top + 15, 130, top + 15);
+        assert.ok(events.filter(e => e.type === 'pointerdown').at(-1).row, 'desktop probe must hit a row');
+        assert.strictEqual(overlays.length, 0, 'desktop must not open an overlay');
+        window.innerWidth = 375;
+        await context.synthSwipe(pP, 330, 5, 130, 5);
+        assert.strictEqual(overlays.length, 0, 'non-row must not open an overlay');
+        const hitTest = document.elementFromPoint;
+        document.elementFromPoint = () => button;
+        await assert.rejects(context.synthSwipe(pP, null, null, null, null,
+          { rowSel: '#pktBody tr[data-hash]' }), /No hit-tested non-interactive row point/);
+        document.elementFromPoint = hitTest;
+      }).catch(error => { console.error(error.message); process.exitCode = 1; });
+  `;
+  const result = require('child_process').spawnSync(process.execPath, ['-e', probe], { encoding: 'utf8' });
+  assert.strictEqual(result.status, 0, result.stderr || result.stdout);
+  console.log(result.stdout.trim());
+});
+
 test('parses deterministic profile, suite, status, list, and dry-run options', () => {
   assert.deepStrictEqual(parseArguments([]), {
     profile: null,
