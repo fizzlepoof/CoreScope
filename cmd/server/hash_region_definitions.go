@@ -227,6 +227,12 @@ func normalizeHashRegionGeometry(raw json.RawMessage, remainingWork int64) (stri
 	if len(geometry.Coordinates) == 0 || bytes.Equal(bytes.TrimSpace(geometry.Coordinates), []byte("null")) {
 		return "", 0, errors.New("coordinates are required")
 	}
+	// Unmarshalling null into float64 silently produces zero. Reject it in the
+	// raw coordinates before typed decoding; numeric arrays cannot contain
+	// "null", and the typed decoder rejects strings and all other nonnumbers.
+	if bytes.Contains(geometry.Coordinates, []byte("null")) {
+		return "", 0, errors.New("coordinate ordinates must be numbers, not null")
+	}
 	var validationWork int64
 	switch geometry.Type {
 	case "Polygon":
