@@ -512,6 +512,11 @@ for (const trackedFunction of ['run_tracked', 'run_tracked_in_dir']) {
     fs.writeFileSync(worker, [
       '#!/bin/sh',
       `sh -c 'trap "exit 0" TERM; echo $$ > "$1"; while :; do sleep 1; done' sh "$1" </dev/null >/dev/null 2>&1 &`,
+      // Do not let the leader exit before the child has recorded readiness:
+      // correct process-group cleanup can otherwise kill it before child.pid.
+      'attempt=0',
+      'while [ ! -s "$1" ] && [ "$attempt" -lt 100 ]; do sleep 0.01; attempt=$((attempt + 1)); done',
+      '[ -s "$1" ] || exit 1',
       'exit 0',
     ].join('\n'), { mode: 0o755 });
     try {
