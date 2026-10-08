@@ -162,6 +162,13 @@ jobs:
           node test-issue-1770-mobile-row-clamp.js
           node test-a11y-axe-routes-coverage.js
 
+      - name: Region Scope helper and administrator contracts
+        run: |
+          set -e
+          node test-region-scope-helper.js
+          node test-region-scope-ui.js
+          node test-hash-region-admin.js
+
       - name: 🛡️ Preflight XSS gate — actual --diff check (PR only)
         # The fixture self-test above (test-preflight-xss-gate.js) only
         # asserts the script's behavior against fixtures. It does NOT scan
@@ -409,6 +416,7 @@ jobs:
           BASE_URL=http://localhost:13581 node test-channel-issue-1111-e2e.js 2>&1 | tee -a e2e-output.txt
           BASE_URL=http://localhost:13581 node test-map-modal-fluid-e2e.js 2>&1 | tee -a e2e-output.txt
           CHROMIUM_REQUIRE=1 BASE_URL=http://localhost:13581 node test-map-nodes-pagination-e2e.js 2>&1 | tee -a e2e-output.txt
+          node test-region-scope-e2e.js 2>&1 | tee -a e2e-output.txt
           BASE_URL=http://localhost:13581 node test-observer-iata-1188-e2e.js 2>&1 | tee -a e2e-output.txt
           BASE_URL=http://localhost:13581 node test-issue-1639-observers-sort-e2e.js 2>&1 | tee -a e2e-output.txt
           CHROMIUM_REQUIRE=1 BASE_URL=http://localhost:13581 node test-issue-1758-ng-filter-rerenders-e2e.js 2>&1 | tee -a e2e-output.txt
