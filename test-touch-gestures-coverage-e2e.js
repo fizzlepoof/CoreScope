@@ -44,8 +44,36 @@ const BASE = process.env.BASE_URL || 'http://localhost:13581';
 async function synthSwipe(page, fromX, fromY, toX, toY, opts) {
   opts = opts || {};
   const steps = opts.steps || 12;
-  await page.evaluate(({ fromX, fromY, toX, toY, steps }) => {
+  const evidence = await page.evaluate(({ fromX, fromY, toX, toY, steps, rowSel, cancelEvent }) => {
+    const interactive = 'a, button, input, select, textarea, [role="button"], [contenteditable="true"]';
+    let row = null;
+    if (rowSel) {
+      // Resolve layout and hit-test in the SAME browser task as pointerdown.
+      // No cached row center can survive a route/render/layout change here.
+      row = document.querySelector(rowSel);
+      const r = row?.getBoundingClientRect();
+      let point = null;
+      if (r && r.width > 0 && r.height > 0) {
+        for (const fx of [0.78, 0.9, 0.65]) {
+          for (const fy of [0.5, 0.25, 0.75]) {
+            const x = r.left + r.width * fx, y = r.top + r.height * fy;
+            const hit = document.elementFromPoint(x, y);
+            if (hit?.closest(rowSel) === row && !hit.closest(interactive)) {
+              point = { x, y };
+              break;
+            }
+          }
+          if (point) break;
+        }
+      }
+      if (!point) throw new Error('No hit-tested non-interactive row point for gesture');
+      fromX = point.x;
+      fromY = toY = point.y;
+      toX = fromX - Math.min(200, r.width * 0.55);
+    }
     const target = document.elementFromPoint(fromX, fromY) || document.body;
+    const startHitsRow = row ? target.closest(rowSel) === row : false;
+    const startInteractive = !!target.closest?.(interactive);
     function ev(type, x, y) {
       return new PointerEvent(type, {
         bubbles: true, cancelable: true, composed: true,
@@ -61,50 +89,35 @@ async function synthSwipe(page, fromX, fromY, toX, toY, opts) {
       const t = document.elementFromPoint(x, y) || target;
       t.dispatchEvent(ev('pointermove', x, y));
     }
+    const dragged = !!row && /translateX/i.test(row.style.transform || '');
     const tup = document.elementFromPoint(toX, toY) || target;
-    tup.dispatchEvent(ev('pointerup', toX, toY));
-  }, { fromX, fromY, toX, toY, steps });
+    const endHitsRow = row ? tup.closest?.(rowSel) === row : false;
+    const endInteractive = !!tup.closest?.(interactive);
+    tup.dispatchEvent(ev(cancelEvent || 'pointerup', toX, toY));
+    // Persist coordinates and hit-test booleans only, never DOM/packet data.
+    return { fromX, fromY, toX, toY, startHitsRow, endHitsRow, startInteractive, endInteractive, dragged };
+  }, { fromX, fromY, toX, toY, steps, rowSel: opts.rowSel, cancelEvent: opts.cancelEvent });
   await page.waitForTimeout(80);
+  return evidence;
 }
 
-// Fire pointerdown + a few pointermoves, then dispatch the named cancel
-// event ("pointercancel" or "lostpointercapture") — never a pointerup.
-async function synthSwipeCancel(page, fromX, fromY, toX, toY, cancelEvent) {
-  const steps = 6;
-  await page.evaluate(({ fromX, fromY, toX, toY, steps, cancelEvent }) => {
-    const target = document.elementFromPoint(fromX, fromY) || document.body;
-    function ev(type, x, y) {
-      return new PointerEvent(type, {
-        bubbles: true, cancelable: true, composed: true,
-        pointerId: 1, pointerType: 'touch', isPrimary: true,
-        clientX: x, clientY: y, button: 0, buttons: 1,
-      });
-    }
-    target.dispatchEvent(ev('pointerdown', fromX, fromY));
-    for (let i = 1; i <= steps; i++) {
-      const x = fromX + (toX - fromX) * (i / steps);
-      const y = fromY + (toY - fromY) * (i / steps);
-      const t = document.elementFromPoint(x, y) || target;
-      t.dispatchEvent(ev('pointermove', x, y));
-    }
-    const last = document.elementFromPoint(toX, toY) || target;
-    last.dispatchEvent(ev(cancelEvent, toX, toY));
-  }, { fromX, fromY, toX, toY, steps, cancelEvent });
-  await page.waitForTimeout(80);
+// Cancellation uses exactly the same resolver/dispatcher as recovery;
+// the terminal event is never pointerup on this path.
+async function synthSwipeCancel(page, fromX, fromY, toX, toY, cancelEvent, rowSel) {
+  return synthSwipe(page, fromX, fromY, toX, toY, { steps: 6, cancelEvent, rowSel });
 }
 
-async function gestureGeometry(page, cx, cy) {
-  return page.evaluate(({ cx, cy }) => {
+async function gestureGeometry(page, gesture) {
+  return page.evaluate((gesture) => {
     const row = document.querySelector('#pktBody tr[data-hash]');
     const r = row?.getBoundingClientRect();
     return { width: innerWidth,
       rect: r ? { x: r.x, y: r.y, w: r.width, h: r.height } : null,
-      startHitsPacket: !!document.elementFromPoint(cx + 100, cy)?.closest('#pktBody tr[data-hash]'),
-      endHitsPacket: !!document.elementFromPoint(cx - 100, cy)?.closest('#pktBody tr[data-hash]'),
-      transform: row ? getComputedStyle(row).transform : null,
+      ...gesture,
+      transformed: !!row && /translateX/i.test(row.style.transform || ''),
       slideOpen: !!window.SlideOver?.isOpen(),
       overlayCount: document.querySelectorAll('.row-action-overlay').length };
-  }, { cx, cy });
+  }, gesture);
 }
 
 async function rowRect(page, sel) {
@@ -425,24 +438,26 @@ async function main() {
     // ── (cov8) pointercancel mid-gesture clears state ──
     const rC = await rowRect(pP, '#pktBody tr[data-hash]');
     if (rC) {
-      const cx = rC.x + rC.w / 2, cy = rC.y + rC.h / 2;
-      await synthSwipeCancel(pP, cx + 100, cy, cx - 100, cy, 'pointercancel');
+      const cancelled = await synthSwipeCancel(pP, null, null, null, null, 'pointercancel', '#pktBody tr[data-hash]');
+      if (!cancelled.startHitsRow || cancelled.startInteractive || !cancelled.dragged) {
+        fail('(cov8) cancellation did not begin with a row drag: ' + JSON.stringify(cancelled));
+      }
       const transformAfter = await pP.evaluate(() => {
         const r = document.querySelector('#pktBody tr[data-hash]');
         return r ? (r.style.transform || '') : '<no-row>';
       });
-      if (!/translateX/i.test(transformAfter)) {
+      if (transformAfter !== '<no-row>' && !/translateX/i.test(transformAfter)) {
         pass(`(cov8) pointercancel cleared row transform (was "${transformAfter}")`);
       } else {
         fail(`(cov8) pointercancel left transform="${transformAfter}"`);
       }
       // Verify subsequent gesture still works (state was reset).
       await pP.evaluate(() => document.querySelectorAll('.row-action-overlay').forEach(o => o.remove()));
-      await synthSwipe(pP, cx + 100, cy, cx - 100, cy);
+      const recovered = await synthSwipe(pP, null, null, null, null, { rowSel: '#pktBody tr[data-hash]' });
       const overlay = await pP.evaluate(() =>
         !!document.querySelector('.row-action-overlay.row-action-overlay-open'));
-      if (overlay) pass('(cov8) gesture works after pointercancel (state reset cleanly)');
-      else fail('(cov8) subsequent gesture failed after pointercancel: ' + JSON.stringify(await gestureGeometry(pP, cx, cy)));
+      if (overlay && recovered.startHitsRow && !recovered.startInteractive && recovered.dragged) pass('(cov8) gesture works after pointercancel (state reset cleanly)');
+      else fail('(cov8) subsequent gesture failed after pointercancel: ' + JSON.stringify(await gestureGeometry(pP, recovered)));
       await clearOverlays(pP);
     } else {
       fail('(cov8) no row for pointercancel test');
@@ -451,24 +466,26 @@ async function main() {
     // ── (cov9) lostpointercapture mid-gesture clears state ──
     const rL = await rowRect(pP, '#pktBody tr[data-hash]');
     if (rL) {
-      const cx = rL.x + rL.w / 2, cy = rL.y + rL.h / 2;
-      await synthSwipeCancel(pP, cx + 100, cy, cx - 100, cy, 'lostpointercapture');
+      const cancelled = await synthSwipeCancel(pP, null, null, null, null, 'lostpointercapture', '#pktBody tr[data-hash]');
+      if (!cancelled.startHitsRow || cancelled.startInteractive || !cancelled.dragged) {
+        fail('(cov9) cancellation did not begin with a row drag: ' + JSON.stringify(cancelled));
+      }
       const transformAfter = await pP.evaluate(() => {
         const r = document.querySelector('#pktBody tr[data-hash]');
         return r ? (r.style.transform || '') : '<no-row>';
       });
-      if (!/translateX/i.test(transformAfter)) {
+      if (transformAfter !== '<no-row>' && !/translateX/i.test(transformAfter)) {
         pass(`(cov9) lostpointercapture cleared row transform (was "${transformAfter}")`);
       } else {
         fail(`(cov9) lostpointercapture left transform="${transformAfter}"`);
       }
       await pP.evaluate(() => document.querySelectorAll('.row-action-overlay').forEach(o => o.remove()));
       // Verify next gesture still works.
-      await synthSwipe(pP, cx + 100, cy, cx - 100, cy);
+      const recovered = await synthSwipe(pP, null, null, null, null, { rowSel: '#pktBody tr[data-hash]' });
       const overlay = await pP.evaluate(() =>
         !!document.querySelector('.row-action-overlay.row-action-overlay-open'));
-      if (overlay) pass('(cov9) gesture works after lostpointercapture');
-      else fail('(cov9) subsequent gesture failed after lostpointercapture: ' + JSON.stringify(await gestureGeometry(pP, cx, cy)));
+      if (overlay && recovered.startHitsRow && !recovered.startInteractive && recovered.dragged) pass('(cov9) gesture works after lostpointercapture');
+      else fail('(cov9) subsequent gesture failed after lostpointercapture: ' + JSON.stringify(await gestureGeometry(pP, recovered)));
       await clearOverlays(pP);
     } else {
       fail('(cov9) no row for lostpointercapture test');

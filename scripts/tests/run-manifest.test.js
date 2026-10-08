@@ -110,6 +110,9 @@ test('touch cancellation recovery follows moving rows through the actual E2E hel
     body.appendChild = o => { o.parentNode = body; overlays.push(o); };
     body.removeChild = o => { overlays.splice(overlays.indexOf(o), 1); o.parentNode = null; };
     const row = element('row'), cell = element('cell'), tbody = { id: 'pktBody' };
+    const button = element('cell');
+    button.closest = sel => sel.includes('tr[') ? row : sel.includes('button') ? button : null;
+    const traces = [];
     const document = {
       body,
       addEventListener(type, fn) { listeners.set(type, [...listeners.get(type) || [], fn]); },
@@ -120,7 +123,10 @@ test('touch cancellation recovery follows moving rows through the actual E2E hel
         return null;
       },
       querySelectorAll(sel) { return sel.includes('.row-action-overlay') ? overlays.slice() : []; },
-      elementFromPoint(x, y) { return x >= 8 && x <= 369 && y >= top && y <= top + 29.5 ? cell : body; },
+      elementFromPoint(x, y) {
+        if (x < 8 || x > 369 || y < top || y > top + 29.5) return body;
+        return x > 280 && x < 300 ? button : cell;
+      },
     };
     const window = { innerWidth: 375, SlideOver: { isOpen: () => false } };
     class PointerEvent {
@@ -136,7 +142,9 @@ test('touch cancellation recovery follows moving rows through the actual E2E hel
         // fixes that merely take another snapshot in a separate browser task.
         if (cancellations && args && args.steps) top += 60;
         context.args = args;
-        return vm.runInContext('(' + fn.toString() + ')(args)', context);
+        const result = vm.runInContext('(' + fn.toString() + ')(args)', context);
+        if (args && args.steps) traces.push(result);
+        return result;
       },
       async waitForTimeout() { top += 60; },
     };
@@ -145,7 +153,7 @@ test('touch cancellation recovery follows moving rows through the actual E2E hel
     context.pass = message => messages.push(message);
     context.fail = message => { throw new Error(message); };
     vm.runInContext(${JSON.stringify(helpers)} + '\\n(async () => {' + ${JSON.stringify(cases)} + '\\n})()', context)
-      .then(() => {
+      .then(async () => {
         assert.strictEqual(messages.length, 4);
         const cancels = events.filter(e => /^(pointercancel|lostpointercapture)$/.test(e.type));
         assert.strictEqual(cancels.length, 2);
@@ -153,11 +161,35 @@ test('touch cancellation recovery follows moving rows through the actual E2E hel
         const downs = events.filter(e => e.type === 'pointerdown');
         assert.strictEqual(downs.length, 4);
         assert.ok(downs.every(e => e.row), 'every gesture must actually start on a non-interactive row cell');
-        assert.ok(!messages.join('').includes('PRIVATE_PACKET_SENTINEL'), 'geometry evidence must not expose row identifiers');
+        assert.ok(traces.every(t => t.startHitsRow && !t.startInteractive && t.dragged));
+        const evidence = await context.gestureGeometry(pP, traces[3]);
+        assert.ok(!JSON.stringify(evidence).includes('PRIVATE_PACKET_SENTINEL'), 'geometry evidence must not expose row identifiers');
+        for (const trace of traces) {
+          assert.ok(Object.values(trace).every(v => typeof v === 'number' || typeof v === 'boolean'),
+            'dispatch evidence contains coordinates/booleans only');
+        }
+        assert.ok(!messages.join('').includes('PRIVATE_PACKET_SENTINEL'));
+        console.log('Moving-row dispatch evidence: ' + JSON.stringify(traces));
+        // Coordinate mode remains available for negative desktop/non-row
+        // probes; the helper must not bypass production eligibility guards.
+        cancellations = 0; // Freeze layout only for the eligibility controls.
+        window.innerWidth = 1200;
+        await context.synthSwipe(pP, 330, top + 15, 130, top + 15);
+        assert.ok(events.filter(e => e.type === 'pointerdown').at(-1).row, 'desktop probe must hit a row');
+        assert.strictEqual(overlays.length, 0, 'desktop must not open an overlay');
+        window.innerWidth = 375;
+        await context.synthSwipe(pP, 330, 5, 130, 5);
+        assert.strictEqual(overlays.length, 0, 'non-row must not open an overlay');
+        const hitTest = document.elementFromPoint;
+        document.elementFromPoint = () => button;
+        await assert.rejects(context.synthSwipe(pP, null, null, null, null,
+          { rowSel: '#pktBody tr[data-hash]' }), /No hit-tested non-interactive row point/);
+        document.elementFromPoint = hitTest;
       }).catch(error => { console.error(error.message); process.exitCode = 1; });
   `;
   const result = require('child_process').spawnSync(process.execPath, ['-e', probe], { encoding: 'utf8' });
   assert.strictEqual(result.status, 0, result.stderr || result.stdout);
+  console.log(result.stdout.trim());
 });
 
 test('parses deterministic profile, suite, status, list, and dry-run options', () => {
