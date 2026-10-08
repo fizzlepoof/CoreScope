@@ -2246,8 +2246,12 @@ async function run() {
   await test('#1468: live WS CHAN message with no payload.channel is dropped (no "unknown" bucket)', async () => {
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto(`${BASE}/#/channels`, { waitUntil: 'domcontentloaded' });
-    // Wait for the channels init() to mount and expose the test hook.
+    // The test hook is installed synchronously, while the initial /channels
+    // request is still in flight. Wait for that request to replace the loading
+    // state before taking the delta snapshot, otherwise its legitimate result
+    // can be attributed to the injected orphan packet.
     await page.waitForFunction(() => typeof window._channelsProcessWSBatchForTest === 'function', { timeout: 10000 });
+    await page.waitForFunction(() => !document.querySelector('#chList .ch-loading'), { timeout: 10000 });
 
     // Snapshot starting state so we can compare deltas.
     const before = await page.evaluate(() => {
@@ -2288,6 +2292,7 @@ async function run() {
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto(`${BASE}/#/channels`, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => typeof window._channelsProcessWSBatchForTest === 'function', { timeout: 10000 });
+    await page.waitForFunction(() => !document.querySelector('#chList .ch-loading'), { timeout: 10000 });
 
     const sentinel = '__test_chan_1468_' + Date.now();
     const before = await page.evaluate((name) => {
