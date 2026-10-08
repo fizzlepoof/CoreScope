@@ -20,6 +20,81 @@
   var definitionsPromiseVersion = '';
   var listResizeHandler = null;
   var themeColorHandler = null;
+  var pendingURLState = null;
+  var urlStateDirty = false;
+  var URL_STATE_LIMIT = 8192;
+  var URL_NAMES_LIMIT = 256;
+
+  // Helper-only keys: never consume the shared overlay's `regions` parameter.
+  // Read a bounded hash before parsing; only saved definitions may reach commands.
+  function readURLState() {
+    var hash = location.hash;
+    if (hash.length > URL_STATE_LIMIT || hash.split('?')[0] !== '#/tools/region-scope') return null;
+    var params = new URLSearchParams(hash.split('?')[1] || '');
+    for (var key of ['scopeRegion', 'scopeAdd']) {
+      if (params.getAll(key).length > URL_NAMES_LIMIT) return null;
+    }
+    return params;
+  }
+
+  function singleValue(params, key) {
+    var values = params.getAll(key);
+    return values.length === 1 ? values[0] : '';
+  }
+
+  function validPoint(lat, lon) {
+    return String(lat).trim() !== '' && String(lon).trim() !== '' &&
+      Number.isFinite(Number(lat)) && Number(lat) >= -90 && Number(lat) <= 90 &&
+      Number.isFinite(Number(lon)) && Number(lon) >= -180 && Number(lon) <= 180;
+  }
+
+  function persistURLState() {
+    if (!map || location.hash.split('?')[0] !== '#/tools/region-scope') return;
+    var params = new URLSearchParams();
+    if (lastRecommendationPoint) {
+      params.set('scopeLat', lastRecommendationPoint[1].toFixed(5));
+      params.set('scopeLon', lastRecommendationPoint[0].toFixed(5));
+    }
+    // Repeated names preserve commas, hashes and other saved punctuation.
+    (selected.length ? selected : ['']).forEach(function (name) { params.append('scopeRegion', name); });
+    (manualAdditions.size ? Array.from(manualAdditions) : ['']).forEach(function (name) { params.append('scopeAdd', name); });
+    params.set('scopeHome', element('region-scope-home').value);
+    params.set('scopeDefault', element('region-scope-default').value);
+    var hash = '#/tools/region-scope?' + params.toString();
+    if (hash.length > URL_STATE_LIMIT || selected.length > URL_NAMES_LIMIT || manualAdditions.size > URL_NAMES_LIMIT) {
+      element('region-scope-status').textContent = 'This selection is too large to bookmark. Reduce the selected regions.';
+      return;
+    }
+    // Allowlist only: never carry credentials or arbitrary query values forward.
+    // replaceState does not emit hashchange or reinitialize the SPA router.
+    if (hash !== location.hash) history.replaceState(history.state, '', hash);
+  }
+
+  function restoreURLState(params) {
+    var lat = singleValue(params, 'scopeLat');
+    var lon = singleValue(params, 'scopeLon');
+    if (validPoint(lat, lon)) {
+      chooseLocation({ lat: Number(lat), lng: Number(lon) }, false);
+      map.setView([Number(lat), Number(lon)], Math.max(map.getZoom(), 7));
+    }
+    var known = new Set(definitions.map(function (definition) { return definition.name; }));
+    function names(key) { return params.getAll(key).filter(function (name) { return known.has(name); }); }
+    if (params.has('scopeRegion')) {
+      var explicit = new Set(names('scopeRegion'));
+      var automatic = new Set(recommendationDetails.filter(function (item) { return item.reason !== 'nearby'; })
+        .map(function (item) { return item.definition.name; }));
+      manualAdditions = new Set(names('scopeAdd').filter(function (name) { return explicit.has(name); }));
+      explicit.forEach(function (name) { if (!automatic.has(name)) manualAdditions.add(name); });
+      manualRemovals = new Set(Array.from(automatic).filter(function (name) { return !explicit.has(name); }));
+      reconcileSelection();
+      updateRowsAndCommands();
+    }
+    ['home', 'default'].forEach(function (choice) {
+      var value = singleValue(params, choice === 'home' ? 'scopeHome' : 'scopeDefault');
+      element('region-scope-' + choice).value = selected.indexOf(value) >= 0 ? value : '';
+    });
+    renderCommands();
+  }
 
   function element(id) { return document.getElementById(id); }
 
@@ -86,6 +161,7 @@
       updateRowsAndCommands();
       element('region-scope-status').textContent =
         (checkbox.checked ? 'Added ' : 'Removed ') + definition.name + ' as a manual override.';
+      persistURLState();
     });
     label.appendChild(checkbox);
     label.appendChild(text);
@@ -218,8 +294,9 @@
     if (map) map.getContainer().dataset.boundaryColors = JSON.stringify(renderedColors);
   }
 
-  function chooseLocation(latlng) {
-    if (!map) return;
+  function chooseLocation(latlng, writeURL) {
+    if (!map || !validPoint(latlng.lat, latlng.lng)) return;
+    if (writeURL !== false) { pendingURLState = null; urlStateDirty = true; }
     var nextPoint = [Number(latlng.lng), Number(latlng.lat)];
     if (lastRecommendationPoint &&
         (lastRecommendationPoint[0] !== nextPoint[0] || lastRecommendationPoint[1] !== nextPoint[1])) {
@@ -244,12 +321,13 @@
         ' for ' + Number(latlng.lat).toFixed(5) + ', ' + Number(latlng.lng).toFixed(5) + '.'
       : 'No saved boundary contains ' + Number(latlng.lat).toFixed(5) + ', ' + Number(latlng.lng).toFixed(5) +
         '. Prior automatic geography was cleared; manual overrides remain.';
+    if (writeURL !== false) persistURLState();
   }
 
   function recommendFromInputs() {
     var lat = Number(element('region-scope-lat').value);
     var lon = Number(element('region-scope-lon').value);
-    if (!Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lon) || lon < -180 || lon > 180) {
+    if (!validPoint(element('region-scope-lat').value, element('region-scope-lon').value)) {
       element('region-scope-status').textContent = 'Enter a latitude from -90 to 90 and longitude from -180 to 180.';
       return;
     }
@@ -295,12 +373,19 @@
     }
     requestAnimationFrame(updateListAffordance);
     if (lastRecommendationPoint) {
-      chooseLocation({ lat: lastRecommendationPoint[1], lng: lastRecommendationPoint[0] });
+      chooseLocation({ lat: lastRecommendationPoint[1], lng: lastRecommendationPoint[0] }, false);
     } else {
       reconcileSelection();
       updateRowsAndCommands();
       showBoundaries();
       element('region-scope-status').textContent = 'Click the map or enter coordinates for recommendations.';
+    }
+    if (pendingURLState) {
+      var state = pendingURLState;
+      pendingURLState = null;
+      restoreURLState(state);
+    } else if (urlStateDirty) {
+      persistURLState();
     }
   }
 
@@ -365,6 +450,8 @@
       manualAdditions = new Set(); manualRemovals = new Set(); rowByName = new Map();
       colorByName = new Map();
       lastRecommendationPoint = null;
+      pendingURLState = readURLState();
+      urlStateDirty = false;
       container.innerHTML =
         '<section class="region-scope-page" aria-labelledby="region-scope-title">' +
           '<header class="region-scope-header"><h2 id="region-scope-title">Region Scope Helper</h2>' +
@@ -405,8 +492,9 @@
         event.preventDefault();
         recommendFromInputs();
       });
-      element('region-scope-home').addEventListener('change', renderCommands);
-      element('region-scope-default').addEventListener('change', renderCommands);
+      function changeChoice() { renderCommands(); persistURLState(); }
+      element('region-scope-home').addEventListener('change', changeChoice);
+      element('region-scope-default').addEventListener('change', changeChoice);
       element('region-scope-list').addEventListener('scroll', updateListAffordance);
       listResizeHandler = updateListAffordance;
       window.addEventListener('resize', listResizeHandler);
