@@ -13,6 +13,31 @@
 const { chromium } = require('playwright');
 
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
+let diagnosticPage;
+
+async function captureTableLayout() {
+  if (!diagnosticPage) return;
+  const metrics = await diagnosticPage.evaluate(() => {
+    const measure = el => {
+      const style = getComputedStyle(el), box = el.getBoundingClientRect();
+      return { tag: el.tagName, display: style.display, visibility: style.visibility,
+        width: box.width, height: box.height, x: box.x, y: box.y,
+        hidden: el.hidden, inPacketsPage: !!el.closest('#page-packets') };
+    };
+    const rows = [...document.querySelectorAll('table tbody tr:not([id^=vscroll])')];
+    return { viewport: { width: innerWidth, height: innerHeight }, rowCount: rows.length,
+      tables: [...document.querySelectorAll('table')].map(measure),
+      rows: rows.slice(0, 3).map(row => {
+        const ancestors = [];
+        for (let el = row.parentElement; el && ancestors.length < 8; el = el.parentElement)
+          ancestors.push(measure(el));
+        return { ...measure(row), cells: [...row.cells].map(measure), ancestors };
+      }) };
+  }).catch(() => ({ probeUnavailable: true }));
+  // Geometry and visibility only: never persist DOM text, raw attributes,
+  // packet identities, URLs, or client/network details.
+  console.log('IATA layout evidence:', JSON.stringify(metrics));
+}
 
 async function test(name, fn) {
   try {
@@ -20,6 +45,7 @@ async function test(name, fn) {
     console.log(`  \u2705 ${name}`);
   } catch (err) {
     console.log(`  \u274c ${name}: ${err.message}`);
+    await captureTableLayout();
     process.exit(1);
   }
 }
@@ -36,6 +62,7 @@ async function run() {
   });
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   const page = await ctx.newPage();
+  diagnosticPage = page;
   page.setDefaultTimeout(15000);
 
   console.log(`\nRunning observer-IATA E2E tests against ${BASE}\n`);
@@ -96,6 +123,7 @@ async function run() {
     //       Observer row + .badge-iata next to the observer name.
     const mobile = await browser.newContext({ viewport: { width: 375, height: 812 } });
     const mpage = await mobile.newPage();
+    diagnosticPage = mpage;
     mpage.setDefaultTimeout(15000);
     await mpage.goto(`${BASE}/#/packets`, { waitUntil: 'domcontentloaded' });
     await mpage.evaluate(() => localStorage.setItem('meshcore-time-window', '525600'));
