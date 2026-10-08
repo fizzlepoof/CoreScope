@@ -126,7 +126,10 @@ async function run() {
     diagnosticPage = mpage;
     mpage.setDefaultTimeout(15000);
     await mpage.goto(`${BASE}/#/packets`, { waitUntil: 'domcontentloaded' });
-    await mpage.evaluate(() => localStorage.setItem('meshcore-time-window', '525600'));
+    // Mobile intentionally rejects windows above 180 minutes and resets them
+    // to 15. A late canonical entry outlives that 15-minute fixture freshness;
+    // use the supported mobile window instead of weakening the production cap.
+    await mpage.evaluate(() => localStorage.setItem('meshcore-time-window', '180'));
     await mpage.reload({ waitUntil: 'load' });
     await mpage.waitForSelector('[data-loaded="true"]', { timeout: 20000 });
     await mpage.waitForSelector('table tbody tr:not([id^=vscroll])', { timeout: 15000 });
@@ -140,8 +143,10 @@ async function run() {
       'observer column should be hidden in rows at 375px (tier-3, desktop-only per #1415 spec)');
 
     // (b) tap first row → detail panel renders observer + IATA badge
-    const firstRow = await mpage.$('table tbody tr[data-hash]');
-    assert(firstRow, 'no packet row found to tap');
+    // A live/virtualized table can replace rows after load. A locator re-resolves
+    // the current row instead of clicking a detached ElementHandle snapshot.
+    const firstRow = mpage.locator('#pktBody tr[data-hash]').first();
+    assert(await firstRow.count(), 'no packet row found to tap');
     await firstRow.click();
     await mpage.waitForSelector('.detail-meta', { timeout: 10000 });
     const detailIata = await mpage.$('.detail-meta .badge-iata');
