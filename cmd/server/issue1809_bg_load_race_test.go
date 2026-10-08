@@ -175,12 +175,20 @@ func seedTestDBRows(t *testing.T, dbPath string, numTx, obsPerTx int, rowTimes f
 	// PREFLIGHT: async=true reason="unit-test fixture seeder"
 	execOrFail(`CREATE INDEX idx_tx_last_seen ON transmissions(last_seen)`)
 
-	txStmt, err := conn.Prepare("INSERT INTO transmissions (id, raw_hex, hash, first_seen, route_type, payload_type, payload_version, decoded_json, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	// Consumers open the fixture only after this helper returns. Batch all
+	// rows atomically rather than paying SQLite's commit/fsync cost per row.
+	seedTx, err := conn.Begin()
+	if err != nil {
+		t.Fatalf("begin fixture seed: %v", err)
+	}
+	defer seedTx.Rollback()
+
+	txStmt, err := seedTx.Prepare("INSERT INTO transmissions (id, raw_hex, hash, first_seen, route_type, payload_type, payload_version, decoded_json, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		t.Fatalf("prepare tx: %v", err)
 	}
 	defer txStmt.Close()
-	obsStmt, err := conn.Prepare("INSERT INTO observations (id, transmission_id, observer_id, observer_name, direction, snr, rssi, score, path_json, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	obsStmt, err := seedTx.Prepare("INSERT INTO observations (id, transmission_id, observer_id, observer_name, direction, snr, rssi, score, path_json, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		t.Fatalf("prepare obs: %v", err)
 	}
@@ -200,5 +208,8 @@ func seedTestDBRows(t *testing.T, dbPath string, numTx, obsPerTx int, rowTimes f
 			}
 			obsID++
 		}
+	}
+	if err := seedTx.Commit(); err != nil {
+		t.Fatalf("commit fixture seed: %v", err)
 	}
 }
