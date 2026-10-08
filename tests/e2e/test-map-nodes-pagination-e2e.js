@@ -78,6 +78,9 @@ function buildFixture() {
 
   const fixture = buildFixture();
   let nodesRequests = 0;
+  let releaseObservers;
+  const observersGate = new Promise((resolve) => { releaseObservers = resolve; });
+  let observersRequested = false;
 
   // Mock every /api/* call the map makes at load. /api/nodes?... is paginated
   // with the same 500-row clamp + offset semantics as the real server; all
@@ -101,7 +104,8 @@ function buildFixture() {
       });
     }
     if (path === '/api/observers') {
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ observers: [] }) });
+      observersRequested = true;
+      return observersGate.then(() => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ observers: [] }) }));
     }
     // Generic stub for config/regions/map/etc. — empty object is safe.
     return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
@@ -129,22 +133,52 @@ function buildFixture() {
     assert(found, 'page-2 node ' + PAGE2_NAME + ' missing from __mc_nodes');
   });
 
+  // Inspect actual Leaflet layers, including nested marker clusters.
+  const hasPage2Marker = (key) => {
+    let found = false;
+    const scan = (layer) => {
+      if (found || !layer || !layer.eachLayer) return;
+      layer.eachLayer((m) => {
+        if (found) return;
+        if (m._nodeKey === key) { found = true; return; }
+        if (m.eachLayer) scan(m); // cluster groups nest their markers
+      });
+    };
+    // markerLayer + clusterGroup are internal; reach them via the map's layers.
+    if (window.__mc_map && window.__mc_map.eachLayer) window.__mc_map.eachLayer(scan);
+    return found;
+  };
+
+  await step('populated nodes do not imply rendered markers while observers are pending', async () => {
+    assert(observersRequested, 'loadNodes has not requested observers');
+    assert(!(await page.evaluate(hasPage2Marker, PAGE2_KEY)),
+      'page-2 marker rendered before the controlled observer response');
+    console.log('    controlled observers pending: nodes=501, page-2 marker=false');
+  });
+
   await step('a marker for the page-2 node is rendered on the map', async () => {
-    const hasMarker = await page.evaluate((key) => {
-      let found = false;
-      const scan = (layer) => {
-        if (found || !layer || !layer.eachLayer) return;
-        layer.eachLayer((m) => {
-          if (found) return;
-          if (m._nodeKey === key) { found = true; return; }
-          if (m.eachLayer) scan(m); // cluster groups nest their markers
-        });
-      };
-      // markerLayer + clusterGroup are internal; reach them via the map's layers.
-      if (window.__mc_map && window.__mc_map.eachLayer) window.__mc_map.eachLayer(scan);
-      return found;
-    }, PAGE2_KEY);
+    // Start readiness while loadNodes is blocked on observers. A browser round
+    // trip fences the initial probe without a fixed sleep.
+    const markerReady = page.evaluate(hasPage2Marker, PAGE2_KEY);
+    let settled = false;
+    markerReady.then(() => { settled = true; }, () => { settled = true; });
+    let settledBeforeRelease;
+    try {
+      await page.evaluate(() => true);
+      settledBeforeRelease = settled;
+    } finally {
+      releaseObservers();
+    }
+    const hasMarker = await markerReady;
     assert(hasMarker, 'no marker with _nodeKey for the page-2 node was rendered');
+    assert(!settledBeforeRelease, 'marker readiness completed before the observer response was released');
+  });
+  releaseObservers();
+
+  await step('releasing observers allows the production map to render the page-2 marker', async () => {
+    const marker = await page.waitForFunction(hasPage2Marker, PAGE2_KEY, { timeout: 15000 });
+    assert(await marker.jsonValue(), 'page-2 marker absent after releasing observers');
+    await marker.dispose();
   });
 
   await browser.close();
