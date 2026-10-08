@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/meshcore-analyzer/admindb"
@@ -529,6 +530,21 @@ func TestChangePasswordTooShort(t *testing.T) {
 	cc := csrfCookie(t, loginResp)
 
 	w := doChangePassword(t, srv, sc, cc, "original-password", "short")
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestChangePasswordTooLong(t *testing.T) {
+	srv := newTestAdminServer(t)
+	if _, err := srv.admin.CreateAdmin("xena", "original-password", admindb.RoleAdmin, nil); err != nil {
+		t.Fatalf("CreateAdmin: %v", err)
+	}
+	loginResp := doLogin(t, srv, "xena", "original-password")
+	sc := sessionCookie(t, loginResp)
+	cc := csrfCookie(t, loginResp)
+
+	w := doChangePassword(t, srv, sc, cc, "original-password", strings.Repeat("x", 73))
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
 	}
