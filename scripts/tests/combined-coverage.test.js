@@ -94,6 +94,28 @@ test('instrumentation preserves destination ownership and real nyc coverage unde
   }
 });
 
+test('instrumentation rejects dangling destination symlinks without claiming their targets', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'corescope-instrument-link-'));
+  const target = path.join(temp, 'existing link');
+  const absent = path.join(temp, 'absent target');
+  fs.symlinkSync(absent, target);
+  fs.symlinkSync(path.join(repoRoot, 'node_modules'), path.join(temp, 'node_modules'));
+  try {
+    const result = spawnSync('sh', [path.join(repoRoot, 'scripts/instrument-frontend.sh')], {
+      cwd: temp,
+      env: { ...process.env, INSTRUMENTED_DIR: target },
+      encoding: 'utf8',
+      timeout: 30000,
+    });
+    assert.notStrictEqual(result.status, 0);
+    assert.match(result.stderr, /target already exists/);
+    assert.strictEqual(fs.readlinkSync(target), absent);
+    assert.strictEqual(fs.existsSync(absent), false);
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
 test('--help documents supported coverage modes', () => {
   const result = run(['--help']);
   assert.strictEqual(result.status, 0, result.stderr);
