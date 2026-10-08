@@ -104,6 +104,156 @@ function loadInCtx(ctx, file) {
   }
 }
 
+// ===== Infrastructure panel: execute the complete production module =====
+console.log('\n=== nodes.js: infrastructure status accessibility ===');
+{
+  function renderInfraFixture() {
+    const ctx = makeSandbox();
+    loadInCtx(ctx, 'public/roles.js');
+    loadInCtx(ctx, 'public/app.js');
+    ctx.registerPage = () => {};
+    const handlers = {};
+    const panel = { innerHTML: '', addEventListener: (name, fn) => { handlers[name] = fn; } };
+    ctx.document.getElementById = id => id === 'infraPanel' ? panel : null;
+    const selected = [];
+    ctx.window.__infraSelect = key => selected.push(key);
+    // Expose the real closure without copying its renderer or adding production hooks.
+    const source = fs.readFileSync('public/nodes.js', 'utf8');
+    assert(source.includes('  // Test hooks'));
+    vm.runInContext(source.replace('  // Test hooks',
+      '  window.__renderInfraPanel = renderInfraPanel; selectNode = window.__infraSelect;\n  // Test hooks'), ctx);
+    ctx.window._nodesSetAllNodes([
+      { public_key: 'active-key', name: 'Active fixture', role: 'repeater', infrastructure: true,
+        last_heard: new Date(Date.now() - 3600000).toISOString() },
+      { public_key: 'stale-key', name: 'Stale fixture', role: 'room', infrastructure: true,
+        last_seen: new Date(Date.now() - 100 * 3600000).toISOString() },
+      { public_key: 'ordinary-key', name: 'Ordinary fixture', infrastructure: false }
+    ]);
+    ctx.window.__renderInfraPanel();
+    return { ctx, panel, handlers, selected };
+  }
+
+  for (const status of ['active', 'stale']) {
+    test(`infraPanel renders an accessible ${status} SVG status with a separate card button name`, () => {
+      const { panel } = renderInfraFixture();
+      const indicator = panel.innerHTML.match(new RegExp('<span class="infra-card-status infra-status-' + status + '"[^>]*>[\\s\\S]*?</span>'));
+      assert(indicator, `${status} indicator rendered`);
+      assert(indicator[0].includes('role="img"'), `${status} status exposes image semantics`);
+      assert(indicator[0].includes(`aria-label="${status}"`), `${status} status retains accessible label`);
+      assert(indicator[0].includes(`title="${status}"`));
+      assert(indicator[0].includes('<svg class="ph-icon" aria-hidden="true">'));
+      assert(indicator[0].includes('<use href="/icons/phosphor-sprite.svg#ph-circle-fill"/>'));
+      assert(!indicator[0].includes('●'));
+      const name = status === 'active' ? 'Active fixture' : 'Stale fixture';
+      assert(panel.innerHTML.includes(`role="button" tabindex="0" data-key="${status}-key" aria-label="${name} infrastructure node, ${status}"`));
+    });
+  }
+
+  test('infraPanel preserves counts, stale-first order, delegated click/keyboard and collapse behavior', () => {
+    const { ctx, panel, handlers, selected } = renderInfraFixture();
+    assert(panel.innerHTML.includes('1/2 active'));
+    assert(panel.innerHTML.indexOf('stale-key') < panel.innerHTML.indexOf('active-key'));
+    assert(!panel.innerHTML.includes('ordinary-key'));
+    const target = { closest: selector => selector === '.infra-card' ? { dataset: { key: 'active-key' } } : null };
+    handlers.click({ target });
+    let prevented = 0;
+    for (const key of ['Enter', ' ', 'Escape']) {
+      handlers.keydown({ target, key, preventDefault: () => { prevented++; } });
+    }
+    assert.deepStrictEqual(selected, ['active-key', 'active-key', 'active-key']);
+    assert.strictEqual(prevented, 2);
+    const header = { closest: selector => selector === '.infra-panel-header' ? {} : null };
+    handlers.click({ target: header });
+    assert.strictEqual(ctx.localStorage.getItem('meshcore-infra-panel-collapsed'), 'true');
+    assert(panel.innerHTML.includes('aria-expanded="false"'));
+    assert(panel.innerHTML.includes('id="infraCards" hidden'));
+    const boundClick = handlers.click;
+    ctx.window.__renderInfraPanel();
+    assert.strictEqual(handlers.click, boundClick);
+  });
+}
+
+// ===== Remaining M6 icons: execute the complete registered page modules =====
+{
+  async function mountInfra(nodes) {
+    const ctx = makeSandbox();
+    loadInCtx(ctx, 'public/roles.js');
+    loadInCtx(ctx, 'public/app.js');
+    const elements = Object.fromEntries(['infraPageCards', 'infraPageSummary', 'infraPage'].map(id =>
+      [id, { innerHTML: '', setAttribute() {} }]));
+    ctx.document.getElementById = id => elements[id] || null;
+    let page;
+    ctx.registerPage = (route, handlers) => { assert.strictEqual(route, 'infrastructure'); page = handlers; };
+    const calls = [];
+    ctx.api = async url => { calls.push(url); return url === '/nodes/infrastructure' ? { nodes } : []; };
+    ctx.debouncedOnWS = () => null;
+    ctx.offWS = () => {};
+    loadInCtx(ctx, 'public/infrastructure.js');
+    page.init({ innerHTML: '' });
+    // init launches the real asynchronous load; drain both endpoint continuations.
+    await new Promise(resolve => setImmediate(resolve));
+    return { elements, calls, page };
+  }
+  const nodes = [
+    { public_key: 'fresh', name: 'Fresh', role: 'repeater', last_heard: new Date().toISOString() },
+    { public_key: 'silent', name: 'Silent', role: 'room', last_seen: new Date(Date.now() - 100 * 3600000).toISOString() }
+  ];
+  for (const status of ['active', 'stale']) {
+    test(`M6 infrastructure page ${status} card preserves accessible SVG status`, async () => {
+      const { elements, page } = await mountInfra(nodes);
+      const indicator = elements.infraPageCards.innerHTML.match(new RegExp('<span class="infra-card-status infra-status-' + status + '"[^>]*>[\\s\\S]*?</span>'));
+      assert(indicator, 'real card rendered');
+      assert(indicator[0].includes(`title="${status}"`));
+      assert(indicator[0].includes('role="img"'));
+      assert(indicator[0].includes(`aria-label="${status}"`));
+      assert(indicator[0].includes('<svg class="ph-icon" aria-hidden="true">'));
+      assert(indicator[0].includes('/icons/phosphor-sprite.svg#ph-circle-fill'));
+      assert(!indicator[0].includes('●'));
+      page.destroy();
+    });
+  }
+  for (const status of ['active', 'stale']) {
+    test(`M6 infrastructure ${status} summary retains count and visible text beside decorative SVG`, async () => {
+      const { elements, calls, page } = await mountInfra(nodes);
+      const chip = elements.infraPageSummary.innerHTML.match(new RegExp('<span class="infrap-chip infra-status-' + status + '">[\\s\\S]*?</span>'));
+      assert(chip, 'real summary chip rendered');
+      assert(chip[0].includes('<strong>1</strong> ' + status));
+      assert(chip[0].includes('<svg class="ph-icon" aria-hidden="true">'));
+      assert(chip[0].includes('/icons/phosphor-sprite.svg#ph-circle-fill'));
+      assert(!chip[0].includes('●'));
+      assert(!/^<span[^>]*aria-hidden/.test(chip[0]), 'count and status remain exposed');
+      assert(elements.infraPageSummary.innerHTML.includes('<strong>2</strong> nodes'));
+      assert(elements.infraPageCards.innerHTML.indexOf('data-key="silent"') < elements.infraPageCards.innerHTML.indexOf('data-key="fresh"'));
+      assert.deepStrictEqual(calls, ['/nodes/infrastructure', '/nodes/bulk-health?limit=2&nodes=fresh%2Csilent']);
+      page.destroy();
+    });
+  }
+  test('M6 RX registered route renders visible heading with decorative map SVG', async () => {
+    const ctx = makeSandbox();
+    let page;
+    ctx.registerPage = (route, handlers) => { assert.strictEqual(route, 'rx-coverage'); page = handlers; };
+    ctx.window.MC_CLIENT_RX_COVERAGE = true;
+    ctx.debounce = fn => fn;
+    const map = { setView() { return this; }, on() {}, remove() {} };
+    ctx.L = { map: () => map, tileLayer: () => ({ addTo() {} }), layerGroup: () => ({ addTo() { return this; } }) };
+    const requests = [];
+    ctx.fetch = async url => { requests.push(url); return { json: async () => ({ observers: [] }) }; };
+    loadInCtx(ctx, 'public/rx-coverage.js');
+    const container = { innerHTML: '' };
+    page.init(container);
+    await new Promise(resolve => setImmediate(resolve));
+    const heading = container.innerHTML.match(/<h2[^>]*>[\s\S]*?<\/h2>/);
+    assert(heading, 'real registered route mounted');
+    assert(heading[0].includes('Mobile RX coverage'));
+    assert(heading[0].includes('<svg class="ph-icon" aria-hidden="true">'));
+    assert(heading[0].includes('/icons/phosphor-sprite.svg#ph-map-trifold'));
+    assert(!heading[0].includes('🗺'));
+    assert(!/^<h2[^>]*aria-hidden/.test(heading[0]));
+    assert.deepStrictEqual(requests, ['/api/rx-leaderboard?days=7&limit=25']);
+    page.destroy();
+  });
+}
+
 // ===== APP.JS TESTS =====
 console.log('\n=== app.js: timeAgo ===');
 {
