@@ -103,6 +103,75 @@ function loadInCtx(ctx, file) {
   }
 }
 
+// ===== Infrastructure panel: execute the complete production module =====
+console.log('\n=== nodes.js: infrastructure status accessibility ===');
+{
+  function renderInfraFixture() {
+    const ctx = makeSandbox();
+    loadInCtx(ctx, 'public/roles.js');
+    loadInCtx(ctx, 'public/app.js');
+    ctx.registerPage = () => {};
+    const handlers = {};
+    const panel = { innerHTML: '', addEventListener: (name, fn) => { handlers[name] = fn; } };
+    ctx.document.getElementById = id => id === 'infraPanel' ? panel : null;
+    const selected = [];
+    ctx.window.__infraSelect = key => selected.push(key);
+    // Expose the real closure without copying its renderer or adding production hooks.
+    const source = fs.readFileSync('public/nodes.js', 'utf8');
+    assert(source.includes('  // Test hooks'));
+    vm.runInContext(source.replace('  // Test hooks',
+      '  window.__renderInfraPanel = renderInfraPanel; selectNode = window.__infraSelect;\n  // Test hooks'), ctx);
+    ctx.window._nodesSetAllNodes([
+      { public_key: 'active-key', name: 'Active fixture', role: 'repeater', infrastructure: true,
+        last_heard: new Date(Date.now() - 3600000).toISOString() },
+      { public_key: 'stale-key', name: 'Stale fixture', role: 'room', infrastructure: true,
+        last_seen: new Date(Date.now() - 100 * 3600000).toISOString() },
+      { public_key: 'ordinary-key', name: 'Ordinary fixture', infrastructure: false }
+    ]);
+    ctx.window.__renderInfraPanel();
+    return { ctx, panel, handlers, selected };
+  }
+
+  for (const status of ['active', 'stale']) {
+    test(`infraPanel renders an accessible ${status} SVG status with a separate card button name`, () => {
+      const { panel } = renderInfraFixture();
+      const indicator = panel.innerHTML.match(new RegExp('<span class="infra-card-status infra-status-' + status + '"[^>]*>[\\s\\S]*?</span>'));
+      assert(indicator, `${status} indicator rendered`);
+      assert(indicator[0].includes('role="img"'), `${status} status exposes image semantics`);
+      assert(indicator[0].includes(`aria-label="${status}"`), `${status} status retains accessible label`);
+      assert(indicator[0].includes(`title="${status}"`));
+      assert(indicator[0].includes('<svg class="ph-icon" aria-hidden="true">'));
+      assert(indicator[0].includes('<use href="/icons/phosphor-sprite.svg#ph-circle-fill"/>'));
+      assert(!indicator[0].includes('●'));
+      const name = status === 'active' ? 'Active fixture' : 'Stale fixture';
+      assert(panel.innerHTML.includes(`role="button" tabindex="0" data-key="${status}-key" aria-label="${name} infrastructure node, ${status}"`));
+    });
+  }
+
+  test('infraPanel preserves counts, stale-first order, delegated click/keyboard and collapse behavior', () => {
+    const { ctx, panel, handlers, selected } = renderInfraFixture();
+    assert(panel.innerHTML.includes('1/2 active'));
+    assert(panel.innerHTML.indexOf('stale-key') < panel.innerHTML.indexOf('active-key'));
+    assert(!panel.innerHTML.includes('ordinary-key'));
+    const target = { closest: selector => selector === '.infra-card' ? { dataset: { key: 'active-key' } } : null };
+    handlers.click({ target });
+    let prevented = 0;
+    for (const key of ['Enter', ' ', 'Escape']) {
+      handlers.keydown({ target, key, preventDefault: () => { prevented++; } });
+    }
+    assert.deepStrictEqual(selected, ['active-key', 'active-key', 'active-key']);
+    assert.strictEqual(prevented, 2);
+    const header = { closest: selector => selector === '.infra-panel-header' ? {} : null };
+    handlers.click({ target: header });
+    assert.strictEqual(ctx.localStorage.getItem('meshcore-infra-panel-collapsed'), 'true');
+    assert(panel.innerHTML.includes('aria-expanded="false"'));
+    assert(panel.innerHTML.includes('id="infraCards" hidden'));
+    const boundClick = handlers.click;
+    ctx.window.__renderInfraPanel();
+    assert.strictEqual(handlers.click, boundClick);
+  });
+}
+
 // ===== APP.JS TESTS =====
 console.log('\n=== app.js: timeAgo ===');
 {
