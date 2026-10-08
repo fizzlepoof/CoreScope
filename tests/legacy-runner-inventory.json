@@ -500,7 +500,11 @@
     "test-traces.js": "tests/unit/test-traces.js",
     "test-url-state.js": "tests/unit/test-url-state.js",
     "test-warmup-banner.js": "tests/unit/test-warmup-banner.js",
-    "test-xss-escape-sinks.js": "tests/unit/test-xss-escape-sinks.js"
+    "test-xss-escape-sinks.js": "tests/unit/test-xss-escape-sinks.js",
+    "test-region-scope-helper.js": "tests/unit/test-region-scope-helper.js",
+    "test-region-scope-ui.js": "tests/unit/test-region-scope-ui.js",
+    "test-hash-region-admin.js": "tests/unit/test-hash-region-admin.js",
+    "test-region-scope-e2e.js": "tests/e2e/test-region-scope-e2e.js"
   },
   "orchestrationRootTests": [
     "test-all.sh"

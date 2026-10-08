@@ -6969,6 +6969,10 @@
         {
           "source": "package.json",
           "detail": "explicitly listed in a Region Scope test command"
+        },
+        {
+          "source": ".github/workflows/deploy.yml",
+          "detail": "explicit focused Region Scope helper/admin/UI or self-contained browser step"
         }
       ],
       "classificationEvidence": [
@@ -7000,6 +7004,10 @@
         {
           "source": "package.json",
           "detail": "explicitly listed as the Region Scope browser test command"
+        },
+        {
+          "source": ".github/workflows/deploy.yml",
+          "detail": "explicit focused Region Scope helper/admin/UI or self-contained browser step"
         }
       ],
       "classificationEvidence": [
@@ -7025,6 +7033,10 @@
         {
           "source": "package.json",
           "detail": "explicitly listed in a Region Scope test command"
+        },
+        {
+          "source": ".github/workflows/deploy.yml",
+          "detail": "explicit focused Region Scope helper/admin/UI or self-contained browser step"
         }
       ],
       "classificationEvidence": [
@@ -7050,6 +7062,10 @@
         {
           "source": "package.json",
           "detail": "explicitly listed in a Region Scope test command"
+        },
+        {
+          "source": ".github/workflows/deploy.yml",
+          "detail": "explicit focused Region Scope helper/admin/UI or self-contained browser step"
         }
       ],
       "classificationEvidence": [
