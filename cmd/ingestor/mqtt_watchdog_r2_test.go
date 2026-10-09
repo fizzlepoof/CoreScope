@@ -85,6 +85,7 @@ func TestMQTTStallWatchdog_NoFalseRecoveryOnDisconnect(t *testing.T) {
 		close(exited)
 	}()
 
+	registerWatchdogTestCleanup(t, done, exited)
 	// Tick 1: source connected + 10m silent → WARN edge.
 	tick <- now
 	waitFor(t, &mu, &emits, 1, 2*time.Second)
