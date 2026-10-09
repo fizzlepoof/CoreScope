@@ -105,3 +105,49 @@ func TestNeighborEdgesCoalesceBoundedWrites(t *testing.T) {
 		t.Fatalf("bounded SQLite mutations: got %d, want 2 (one per canonical pair)", got)
 	}
 }
+
+func TestNeighborEdgesCoalesceExistingCanonicalContributions(t *testing.T) {
+	s := neighborCoalesceStore(t)
+	const start int64 = 1735689600
+	prior := time.Unix(start-1, 0).UTC().Format(time.RFC3339)
+	neighborCoalesceExec(t, s.db, `INSERT INTO neighbor_edges (node_a, node_b, count, last_seen)
+		VALUES ('aaaaaaaaaa', 'bbbbbbbbbb', 7, ?), ('bbbbbbbbbb', 'obs-1', 5, ?)`, prior, prior)
+	neighborCoalesceExec(t, s.db, `DELETE FROM neighbor_mutations`)
+
+	// A real duplicate UPDATE is a positive control for the audit trigger.
+	neighborCoalesceExec(t, s.db, `UPDATE neighbor_edges SET count = count + 3 WHERE node_a = 'aaaaaaaaaa'`)
+	var kind string
+	var contribution int
+	if err := s.db.QueryRow(`SELECT kind, contribution FROM neighbor_mutations`).Scan(&kind, &contribution); err != nil {
+		t.Fatal(err)
+	}
+	if kind != "update" || contribution != 3 || neighborCoalesceAuditCount(t, s) != 1 {
+		t.Fatalf("UPDATE audit positive control: kind=%q contribution=%d", kind, contribution)
+	}
+	neighborCoalesceExec(t, s.db, `UPDATE neighbor_edges SET count = count - 3 WHERE node_a = 'aaaaaaaaaa'`)
+	neighborCoalesceExec(t, s.db, `DELETE FROM neighbor_mutations`)
+
+	// Both directions collide canonically, and each observation contributes
+	// the same pair twice (originator/first hop and observer/last hop).
+	// Insert timestamps out of order to require the actual per-pair maximum.
+	neighborCoalesceObservation(t, s, start+9, "aaaaaaaaaa", `["bb"]`, "aaaaaaaaaa")
+	neighborCoalesceObservation(t, s, start+2, "bbbbbbbbbb", `["aa"]`, "bbbbbbbbbb")
+	n, err := s.buildAndPersistNeighborEdges()
+	if err != nil || n != 4 {
+		t.Fatalf("canonical candidate count: got %d, %v; want 4, nil", n, err)
+	}
+	tail := time.Unix(start+9, 0).UTC().Format(time.RFC3339)
+	want := []neighborCoalesceRow{{"aaaaaaaaaa", "bbbbbbbbbb", 11, tail}, {"bbbbbbbbbb", "obs-1", 5, prior}}
+	if got := neighborCoalesceRows(t, s); !reflect.DeepEqual(got, want) {
+		t.Fatalf("additive counts/MAX timestamps: got %+v, want %+v", got, want)
+	}
+	if got := neighborCoalesceAuditCount(t, s); got != 1 {
+		t.Fatalf("existing pair mutations: got %d, want 1", got)
+	}
+	if err := s.db.QueryRow(`SELECT kind, contribution FROM neighbor_mutations`).Scan(&kind, &contribution); err != nil {
+		t.Fatal(err)
+	}
+	if kind != "update" || contribution != 4 {
+		t.Fatalf("aggregated UPDATE: kind=%q contribution=%d, want update/4", kind, contribution)
+	}
+}
