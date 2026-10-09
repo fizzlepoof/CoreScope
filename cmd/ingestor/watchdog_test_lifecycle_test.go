@@ -16,12 +16,14 @@ func TestWatchdogTestLoopCleanupJoinsInFlightTick(t *testing.T) {
 	entered := make(chan struct{})
 	release := make(chan struct{})
 	cleanupStarted := make(chan struct{})
+	releaseExited := make(chan struct{})
 	var releaseOnce sync.Once
 	unblock := func() { releaseOnce.Do(func() { close(release) }) }
 	var done chan struct{}
 	var exited chan struct{}
 	t.Cleanup(func() {
 		unblock()
+		<-releaseExited
 		if done != nil {
 			select {
 			case <-done:
@@ -38,7 +40,12 @@ func TestWatchdogTestLoopCleanupJoinsInFlightTick(t *testing.T) {
 		}
 	})
 	go func() {
-		<-cleanupStarted
+		defer close(releaseExited)
+		select {
+		case <-cleanupStarted:
+		case <-release:
+			return
+		}
 		// Keep the production callback in flight across cleanup entry.
 		time.Sleep(100 * time.Millisecond)
 		unblock()
