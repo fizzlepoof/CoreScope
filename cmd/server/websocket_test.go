@@ -686,65 +686,39 @@ func TestPollerBroadcastsNewData(t *testing.T) {
 	defer db.Close()
 	seedTestData(t, db)
 	hub := NewHub()
-
-	// Create a client to receive broadcasts
-	client := &Client{
-		send: make(chan []byte, 256),
-	}
+	client := &Client{send: make(chan []byte, 256)}
 	hub.mu.Lock()
 	hub.clients[client] = true
 	hub.mu.Unlock()
-
+	defer func() {
+		hub.mu.Lock()
+		delete(hub.clients, client)
+		hub.mu.Unlock()
+	}()
 	poller := NewPoller(db, hub, 50*time.Millisecond)
-	go poller.Start()
+	done := make(chan struct{})
+	go func() { defer close(done); poller.Start() }()
+	defer func() { poller.Stop(); <-done }()
 
-	// Insert new data to trigger broadcast
-	db.conn.Exec(`INSERT INTO transmissions (raw_hex, hash, first_seen, route_type, payload_type)
-		VALUES ('EEFF', 'newhash123456789', '2026-01-16T10:00:00Z', 1, 4)`)
-
-	time.Sleep(200 * time.Millisecond)
-	poller.Stop()
-
-	// Check if client received broadcast with packet field (fixes #162)
-	select {
-	case msg := <-client.send:
-		if len(msg) == 0 {
-			t.Error("expected non-empty broadcast message")
+	// Start has no ready signal. Retry distinct real inserts until the first
+	// broadcast, so a startup cursor snapshot cannot silently pass this test.
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+	deadline := time.NewTimer(2 * time.Second)
+	defer deadline.Stop()
+	insertFallbackTransmission(t, db, 0)
+	for sequence := 1; ; {
+		select {
+		case msg := <-client.send:
+			assertFallbackPacketMessage(t, db, msg)
+			return
+		case <-ticker.C:
+			insertFallbackTransmission(t, db, sequence)
+			sequence++
+		case <-deadline.C:
+			t.Fatal("no nil-store broadcast message within 2 seconds")
 		}
-		var parsed map[string]interface{}
-		if err := json.Unmarshal(msg, &parsed); err != nil {
-			t.Fatalf("failed to parse broadcast: %v", err)
-		}
-		if parsed["type"] != "packet" {
-			t.Errorf("expected type=packet, got %v", parsed["type"])
-		}
-		data, ok := parsed["data"].(map[string]interface{})
-		if !ok {
-			t.Fatal("expected data to be an object")
-		}
-		// packets.js filters on m.data.packet — must exist
-		pkt, ok := data["packet"]
-		if !ok || pkt == nil {
-			t.Error("expected data.packet to exist (required by packets.js WS handler)")
-		}
-		pktMap, ok := pkt.(map[string]interface{})
-		if !ok {
-			t.Fatal("expected data.packet to be an object")
-		}
-		// Verify key fields exist in nested packet (timestamp required by packets.js)
-		for _, field := range []string{"id", "hash", "payload_type", "timestamp"} {
-			if _, exists := pktMap[field]; !exists {
-				t.Errorf("expected data.packet.%s to exist", field)
-			}
-		}
-	default:
-		// Might not have received due to timing
 	}
-
-	// Clean up
-	hub.mu.Lock()
-	delete(hub.clients, client)
-	hub.mu.Unlock()
 }
 
 func TestPollerBroadcastsMultipleObservations(t *testing.T) {
