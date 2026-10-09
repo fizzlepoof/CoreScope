@@ -152,8 +152,7 @@ async function openRowOverlay(page, rowSel) {
     await page.waitForTimeout(120);
     const r = await rowRect(page, rowSel);
     if (!r) { await page.waitForTimeout(200); continue; }
-    const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
-    await synthSwipe(page, cx + 100, cy, cx - 100, cy);
+    await synthSwipe(page, null, null, null, null, { rowSel });
     // Poll for overlay up to ~800ms.
     for (let i = 0; i < 8; i++) {
       const ok = await page.evaluate(() =>
@@ -248,9 +247,14 @@ async function main() {
       const state = await page.evaluate(() => ({
         hash: location.hash,
         overlay: !!document.querySelector('.row-action-overlay.row-action-overlay-open'),
+        timeWindow: localStorage.getItem('meshcore-time-window'),
       }));
       const expected = `#/packets/${encodeURIComponent(r.hash)}`;
-      if (state.hash === expected && !state.overlay) {
+      // selectPacket writes the detail path; updatePacketsUrl may additionally
+      // serialize the retained window. Both must identify the exact packet.
+      const [route, query = ''] = state.hash.split('?');
+      const windowParam = new URLSearchParams(query).get('timeWindow');
+      if (route === expected && (windowParam === null || windowParam === '180') && state.timeWindow === '180' && !state.overlay) {
         pass(`(cov1) trace button navigated to ${state.hash} and dismissed overlay`);
       } else {
         fail(`(cov1) trace button: hash=${state.hash} expected=${expected}, overlay=${state.overlay}`);
@@ -286,6 +290,8 @@ async function main() {
         fail(`(cov2) filter: hash=${state.hash} expected=${expected}, overlay=${state.overlay}`);
       }
     }
+  } else {
+    fail('(cov2) precondition — no actionable packet row overlay');
   }
 
   // ── (cov3) row-action: Copy button writes to clipboard ──
@@ -314,6 +320,8 @@ async function main() {
         fail(`(cov3) copy: writes=${JSON.stringify(writes)} expected="${r3.hash}", overlay=${overlay}`);
       }
     }
+  } else {
+    fail('(cov3) precondition — no actionable packet row overlay');
   }
 
   // ── (cov4) outside-click dismisses overlay ──
@@ -338,6 +346,8 @@ async function main() {
       if (!after) pass('(cov4) outside click dismissed overlay');
       else fail('(cov4) outside click did not dismiss overlay');
     }
+  } else {
+    fail('(cov4) precondition — no actionable packet row overlay');
   }
 
   // ── (cov5) bottom-nav swipe LTR on #/live → back to #/packets ──
