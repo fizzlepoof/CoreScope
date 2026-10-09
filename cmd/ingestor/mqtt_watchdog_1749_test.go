@@ -58,15 +58,7 @@ func TestMQTTStallWatchdog_EscalateOnPersistentDisconnect_1749(t *testing.T) {
 		t.Fatalf("setup: %v", err)
 	}
 
-	tick := make(chan time.Time)
-	done := make(chan struct{})
-	defer close(done)
-
-	exited := make(chan struct{})
-	go func() {
-		runLivenessWatchdogLoop(tick, done, threshold, func(args ...any) {})
-		close(exited)
-	}()
+	tick, _, _ := setupWatchdogTestLoop(t, threshold, func(args ...any) {})
 
 	// Feed ticks spanning > (multiplier × threshold) of wall clock so
 	// the escalation path fires. We control the `now` parameter by
@@ -114,10 +106,7 @@ func TestMQTTStallWatchdog_DisconnectedEscalationThrottled_1749(t *testing.T) {
 		t.Fatalf("setup: %v", err)
 	}
 
-	tick := make(chan time.Time)
-	done := make(chan struct{})
-	defer close(done)
-	go runLivenessWatchdogLoop(tick, done, threshold, func(args ...any) {})
+	tick, _, _ := setupWatchdogTestLoop(t, threshold, func(args ...any) {})
 
 	base := time.Now()
 	// Pre-stamp DisconnectedSinceUnix so that the first tick is
@@ -171,9 +160,6 @@ func TestMQTTStallWatchdog_LoopRecoversFromPanicInEmit_1749(t *testing.T) {
 		panic("synthetic emit panic — simulates blocked log pipe (#1749 hypothesis 2)")
 	}
 
-	tick := make(chan time.Time)
-	done := make(chan struct{})
-
 	// Wrap the loop spawn with our own recover so that an unrecovered
 	// panic in the loop (the bug on master) does NOT crash the test
 	// process. The bug-under-test is whether the LOOP recovers; if it
@@ -181,14 +167,7 @@ func TestMQTTStallWatchdog_LoopRecoversFromPanicInEmit_1749(t *testing.T) {
 	// exits, `exited` is closed, and the loop is dead — at which point
 	// the second tick will block and we assert failure with a clear
 	// message rather than tearing down the whole test binary.
-	exited := make(chan struct{})
-	go func() {
-		defer func() {
-			_ = recover() // RED-mode safety net; production loop is what we are asserting on
-			close(exited)
-		}()
-		runLivenessWatchdogLoop(tick, done, threshold, emit)
-	}()
+	tick, done, exited := setupWatchdogTestLoop(t, threshold, emit)
 
 	base := time.Now()
 	// Tick 1: should hit the WARN edge, panic in emit, be recovered.
@@ -259,10 +238,7 @@ func TestMQTTStallWatchdog_LastTickUnixExposed_1749(t *testing.T) {
 		watchdogLastTickUnix.Store(before)
 	})
 
-	tick := make(chan time.Time)
-	done := make(chan struct{})
-	defer close(done)
-	go runLivenessWatchdogLoop(tick, done, time.Minute, func(args ...any) {})
+	tick, _, _ := setupWatchdogTestLoop(t, time.Minute, func(args ...any) {})
 
 	stamp := time.Now().Add(48 * time.Hour) // guaranteed > before
 	select {
@@ -330,17 +306,7 @@ func TestMQTTStallWatchdog_LoopRecoversFromPanicInEmit_EscalationPath_1749(t *te
 		}
 	}
 
-	tick := make(chan time.Time)
-	done := make(chan struct{})
-
-	exited := make(chan struct{})
-	go func() {
-		defer func() {
-			_ = recover()
-			close(exited)
-		}()
-		runLivenessWatchdogLoop(tick, done, threshold, emit)
-	}()
+	tick, done, exited := setupWatchdogTestLoop(t, threshold, emit)
 
 	base := time.Now()
 
