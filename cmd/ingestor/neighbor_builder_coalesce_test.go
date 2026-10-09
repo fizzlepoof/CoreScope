@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -103,6 +104,68 @@ func TestNeighborEdgesCoalesceBoundedWrites(t *testing.T) {
 	}
 	if got := neighborCoalesceAuditCount(t, s); got != 2 {
 		t.Fatalf("bounded SQLite mutations: got %d, want 2 (one per canonical pair)", got)
+	}
+}
+
+func TestNeighborEdgesCoalesceRollbackRetry(t *testing.T) {
+	for _, existing := range []bool{false, true} {
+		t.Run(fmt.Sprintf("existing=%t", existing), func(t *testing.T) {
+			s := neighborCoalesceStore(t)
+			const start int64 = 1735689600
+			prior := time.Unix(start-1, 0).UTC().Format(time.RFC3339)
+			firstCount, secondCount := 0, 0
+			if existing {
+				firstCount, secondCount = 7, 5
+				neighborCoalesceExec(t, s.db, `INSERT INTO neighbor_edges (node_a, node_b, count, last_seen)
+					VALUES ('aaaaaaaaaa', 'bbbbbbbbbb', 7, ?), ('bbbbbbbbbb', 'obs-1', 5, ?)`, prior, prior)
+			}
+			before := neighborCoalesceRows(t, s)
+			neighborCoalesceExec(t, s.db, `DELETE FROM neighbor_mutations`)
+			for i := int64(0); i < 4; i++ {
+				neighborCoalesceObservation(t, s, start+i, "aaaaaaaaaa", `["bb"]`, "obs-1")
+			}
+			// Fail the second first-seen pair only after the first aggregate
+			// really mutated SQLite. Distinguish missing/reordered first writes
+			// from the intended injected failure; all trigger audit work shares
+			// the builder's transaction and must roll back with it.
+			neighborCoalesceExec(t, s.db, `CREATE TRIGGER neighbor_fail_second BEFORE INSERT ON neighbor_edges
+				WHEN NEW.node_a = 'bbbbbbbbbb' AND NEW.node_b = 'obs-1' BEGIN
+				SELECT CASE WHEN (SELECT COUNT(*) FROM neighbor_mutations) = 1
+					AND EXISTS (SELECT 1 FROM neighbor_mutations WHERE a = 'aaaaaaaaaa'
+						AND b = 'bbbbbbbbbb' AND contribution = 4)
+					THEN RAISE(ABORT, 'second first-seen pair')
+					ELSE RAISE(ABORT, 'first-seen order or contribution violated') END; END`)
+			n, err := s.buildAndPersistNeighborEdges()
+			if n != 0 || err == nil || !strings.Contains(err.Error(), "second first-seen pair") {
+				t.Fatalf("injected second-pair failure: got %d, %v; want zero and intended error", n, err)
+			}
+			if got := neighborCoalesceRows(t, s); !reflect.DeepEqual(got, before) {
+				t.Fatalf("rollback changed prior rows/MAX watermark: got %+v, want %+v", got, before)
+			}
+			if got := neighborCoalesceAuditCount(t, s); got != 0 {
+				t.Fatalf("partial audit survived rollback: %d mutations", got)
+			}
+			neighborCoalesceExec(t, s.db, `DROP TRIGGER neighbor_fail_second`)
+			n, err = s.buildAndPersistNeighborEdges()
+			if n != 8 || err != nil {
+				t.Fatalf("retry must reprocess failed batch: got %d, %v; want 8, nil", n, err)
+			}
+			tail := time.Unix(start+3, 0).UTC().Format(time.RFC3339)
+			want := []neighborCoalesceRow{{"aaaaaaaaaa", "bbbbbbbbbb", firstCount + 4, tail}, {"bbbbbbbbbb", "obs-1", secondCount + 4, tail}}
+			if got := neighborCoalesceRows(t, s); !reflect.DeepEqual(got, want) {
+				t.Fatalf("retry contributions/MAX: got %+v, want %+v", got, want)
+			}
+			if got := neighborCoalesceAuditCount(t, s); got != 2 {
+				t.Fatalf("retry mutations: got %d, want 2", got)
+			}
+			var a, b string
+			if err := s.db.QueryRow(`SELECT a, b FROM neighbor_mutations ORDER BY rowid LIMIT 1`).Scan(&a, &b); err != nil {
+				t.Fatal(err)
+			}
+			if a != "aaaaaaaaaa" || b != "bbbbbbbbbb" {
+				t.Fatalf("retry first-seen order: first pair is %s/%s", a, b)
+			}
+		})
 	}
 }
 
