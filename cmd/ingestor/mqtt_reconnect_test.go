@@ -129,19 +129,20 @@ func TestMQTTStallWatchdog_QuietWhenDisconnected(t *testing.T) {
 }
 
 // snapshotAndResetRegistry isolates the package-level livenessRegistry for a
-// single test. Returns a restore func to defer. Without this, parallel or
-// previously-registered sources leak into the watchdog goroutine under test.
+// single test. Restoration is a cleanup so later loop-owner cleanups join
+// first. The no-op return preserves existing deferred call sites.
 func snapshotAndResetRegistry(t *testing.T) func() {
 	t.Helper()
 	livenessRegistryMu.Lock()
 	saved := livenessRegistry
 	livenessRegistry = map[string]*SourceLivenessState{}
 	livenessRegistryMu.Unlock()
-	return func() {
+	t.Cleanup(func() {
 		livenessRegistryMu.Lock()
 		livenessRegistry = saved
 		livenessRegistryMu.Unlock()
-	}
+	})
+	return func() {}
 }
 
 // RED-then-GREEN: the watchdog GOROUTINE (not just checkSourceLiveness) must
@@ -181,6 +182,7 @@ func TestMQTTStallWatchdog_LoopEmitsAndStopsCleanly(t *testing.T) {
 		runLivenessWatchdogLoop(tick, done, 5*time.Minute, emit)
 		close(exited)
 	}()
+	registerWatchdogTestCleanup(t, done, exited)
 
 	tick <- time.Now()
 	// Drain: wait briefly for the emits to land. Polling instead of sleeping

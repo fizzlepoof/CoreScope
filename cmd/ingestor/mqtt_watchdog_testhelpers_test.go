@@ -29,7 +29,26 @@ func setupWatchdogTestLoop(t *testing.T, threshold time.Duration, emit func(...a
 		}()
 		runLivenessWatchdogLoop(tick, done, threshold, emit)
 	}()
+	registerWatchdogTestCleanup(t, done, exited)
 	return tick, done, exited
+}
+
+func registerWatchdogTestCleanup(t *testing.T, done chan struct{}, exited <-chan struct{}) {
+	t.Helper()
+	// Cleanup must join before the registry owner's cleanup restores shared
+	// state. A closed stop channel alone does not prove an in-flight tick ended.
+	t.Cleanup(func() {
+		select {
+		case <-done:
+		default:
+			close(done)
+		}
+		select {
+		case <-exited:
+		case <-time.After(time.Second):
+			t.Error("test watchdog did not exit after its stop signal")
+		}
+	})
 }
 
 // sendTickOrFail pushes one fabricated timestamp into the loop's tick

@@ -154,6 +154,7 @@ func TestMQTTStallWatchdog_EdgeTriggeredEmitsOnlyOnce(t *testing.T) {
 		close(exited)
 	}()
 
+	registerWatchdogTestCleanup(t, done, exited)
 	// Three back-to-back ticks within the heartbeat window. Only the first
 	// should emit a WARN; the other two must be suppressed (edge-triggered).
 	tick <- now
@@ -224,6 +225,7 @@ func TestMQTTStallWatchdog_RecoveryEmitOnce(t *testing.T) {
 		close(exited)
 	}()
 
+	registerWatchdogTestCleanup(t, done, exited)
 	tick <- now // → WARN
 	// Wait for the goroutine to drain that tick and record the WARN edge
 	// before we mutate state — otherwise we race the loop and the first
