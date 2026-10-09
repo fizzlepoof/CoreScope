@@ -73,6 +73,19 @@ function buildFixture() {
   const page = await ctx.newPage();
   page.setDefaultTimeout(15000);
   page.on('pageerror', (e) => console.error('[pageerror]', e.message));
+  // This probe isolates loadNodes' observer continuation. A theme refresh is
+  // an independent valid marker renderer and must not race that dependency.
+  await page.addInitScript(() => {
+    window.__mapPaginationBlockedThemeRefreshes = 0;
+    const pauseThemeRefresh = event => {
+      window.__mapPaginationBlockedThemeRefreshes++;
+      event.stopImmediatePropagation();
+    };
+    window.addEventListener('theme-refresh', pauseThemeRefresh, true);
+    window.__mapPaginationResumeTheme = () => {
+      window.removeEventListener('theme-refresh', pauseThemeRefresh, true);
+    };
+  });
 
   console.log(`\n=== Map /api/nodes pagination E2E against ${BASE} ===`);
 
@@ -152,6 +165,9 @@ function buildFixture() {
 
   await step('populated nodes do not imply rendered markers while observers are pending', async () => {
     assert(observersRequested, 'loadNodes has not requested observers');
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('theme-refresh')));
+    assert(await page.evaluate(() => window.__mapPaginationBlockedThemeRefreshes >= 1),
+      'controlled theme refresh was not isolated from the observer probe');
     assert(!(await page.evaluate(hasPage2Marker, PAGE2_KEY)),
       'page-2 marker rendered before the controlled observer response');
     console.log('    controlled observers pending: nodes=501, page-2 marker=false');
@@ -173,7 +189,11 @@ function buildFixture() {
       await page.evaluate(() => true);
       settledBeforeRelease = settled;
     } finally {
-      releaseObservers();
+      try {
+        await page.evaluate(() => window.__mapPaginationResumeTheme());
+      } finally {
+        releaseObservers();
+      }
     }
     const hasMarker = await markerReady;
     assert(hasMarker, 'no marker with _nodeKey for the page-2 node was rendered');
@@ -185,6 +205,29 @@ function buildFixture() {
     const marker = await page.waitForFunction(hasPage2Marker, PAGE2_KEY, { timeout: 15000 });
     assert(await marker.jsonValue(), 'page-2 marker absent after releasing observers');
     await marker.dispose();
+  });
+
+  await step('theme-refresh marker rendering is restored after the controlled probe', async () => {
+    const restored = await page.evaluate(key => {
+      const find = () => {
+        let found;
+        const scan = layer => {
+          if (!layer || !layer.eachLayer) return;
+          layer.eachLayer(marker => {
+            if (marker._nodeKey === key) found = marker;
+            else if (marker.eachLayer) scan(marker);
+          });
+        };
+        window.__mc_map.eachLayer(scan);
+        return found;
+      };
+      const before = find();
+      const blocked = window.__mapPaginationBlockedThemeRefreshes;
+      window.dispatchEvent(new CustomEvent('theme-refresh'));
+      const after = find();
+      return !!before && !!after && before !== after && window.__mapPaginationBlockedThemeRefreshes === blocked;
+    }, PAGE2_KEY);
+    assert(restored, 'real theme-refresh handler did not rebuild the page-2 marker after isolation ended');
   });
 
   await browser.close();
