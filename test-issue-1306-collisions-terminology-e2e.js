@@ -31,13 +31,37 @@ async function step(name, fn) {
 function assert(c, m) { if (!c) throw new Error(m || 'assertion failed'); }
 
 async function openPrefixTool(page) {
-  await page.goto(BASE + '/#/analytics?tab=prefix-tool', { waitUntil: 'domcontentloaded' });
+  // Do not navigate the same hash again while the previous mount is visible.
+  if (await page.evaluate(() => location.hash) !== '#/analytics?tab=prefix-tool') {
+    await page.goto(BASE + '/#/analytics?tab=prefix-tool', { waitUntil: 'domcontentloaded' });
+  }
   await page.waitForSelector('#ptOverview', { timeout: 15000 });
-  // expand the overview body (collapsed by default)
-  await page.evaluate(() => {
-    const body = document.getElementById('ptOverviewBody');
-    if (body) body.style.display = '';
-  });
+}
+
+async function expandCollisionTier(page) {
+  const deadline = Date.now() + 15000;
+  while (Date.now() < deadline) {
+    await page.locator('#ptOverview').waitFor({ state: 'visible' });
+    const mount = await page.locator('#ptOverview').elementHandle();
+    try {
+      if (await page.locator('#ptOverviewBody').isHidden()) {
+        await page.locator('#ptOverviewToggle').click({ timeout: 1000 });
+      }
+      // Select the intended tier, not an unrelated hidden first panel.
+      const toggle = page.locator('[data-pt-collide-toggle="theo-1"]:visible');
+      await toggle.click({ timeout: 1000 });
+      const panel = page.locator('#ptCollTheo1');
+      await panel.waitFor({ state: 'visible', timeout: 1000 });
+      assert(await toggle.getAttribute('aria-expanded') === 'true', 'Collision toggle must expose expanded state');
+      return panel;
+    } catch (error) {
+      // Retry only a proven mount replacement, never a stable unclickable UI.
+      if (await mount.evaluate(el => el.isConnected)) throw error;
+    } finally {
+      await mount.dispose();
+    }
+  }
+  throw new Error('Prefix Tool kept replacing its mount during expansion');
 }
 
 async function openCollisions(page) {
@@ -84,16 +108,28 @@ async function openCollisions(page) {
 
   await step('Tier with colliding slices renders expandable list of WHICH nodes collide', async () => {
     await openPrefixTool(page);
-    // Find the toggle for any tier (1-byte fixture has 20 theoretical collisions)
-    const toggle = page.locator('[data-pt-collide-toggle]').first();
-    const count = await toggle.count();
-    assert(count >= 1, 'No expandable "which collides" toggle found in Network Overview');
-    await toggle.click();
-    // After click, a panel with node links should appear
-    const panel = page.locator('[data-pt-collide-panel]').first();
-    await panel.waitFor({ state: 'visible', timeout: 4000 });
+    // Force the real asynchronous refresh boundary that invalidated the old
+    // helper's display mutation. Keep this regression on the canonical runner.
+    await page.evaluate(() => {
+      window.__collisionOverviewBeforeRefresh = document.getElementById('ptOverview');
+      window.dispatchEvent(new CustomEvent('theme-refresh'));
+    });
+    await page.waitForFunction(() => {
+      const current = document.getElementById('ptOverview');
+      return current && current !== window.__collisionOverviewBeforeRefresh;
+    });
+    assert(await page.locator('#ptOverviewBody').isHidden(), 'Refreshed overview starts collapsed');
+    const panel = await expandCollisionTier(page);
     const nodeLinks = await panel.locator('a[href^="#/nodes/"]').count();
     assert(nodeLinks >= 2, 'Expanded collision panel should list >=2 node links, got ' + nodeLinks);
+    const advertised = Number((await page.locator('[data-pt-collide-toggle="theo-1"]').textContent()).match(/Show (\d+)/)[1]);
+    assert(await panel.locator('tbody tr').count() === advertised, 'Every advertised collision slice must be listed');
+    const identitiesMatch = await panel.locator('tbody tr').evaluateAll(rows => rows.every(row => {
+      const prefix = row.cells[0].textContent.trim().toLowerCase();
+      const links = [...row.querySelectorAll('a[href^="#/nodes/"]')];
+      return links.length >= 2 && links.every(link => decodeURIComponent(link.getAttribute('href').slice('#/nodes/'.length)).toLowerCase().startsWith(prefix));
+    }));
+    assert(identitiesMatch, 'Listed node identities must belong to their colliding prefix');
   });
 
   await step('Collisions tab includes reverse cross-reference to Prefix Tool', async () => {
