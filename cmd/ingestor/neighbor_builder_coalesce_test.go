@@ -106,6 +106,29 @@ func TestNeighborEdgesCoalesceBoundedWrites(t *testing.T) {
 	}
 }
 
+func TestNeighborEdgesCoalesceEmptyDelta(t *testing.T) {
+	s := neighborCoalesceStore(t)
+	n, err := s.buildAndPersistNeighborEdges()
+	if err != nil || n != 0 || neighborCoalesceAuditCount(t, s) != 0 {
+		t.Fatalf("empty database: got %d, %v, want no contributions or mutations", n, err)
+	}
+	neighborCoalesceObservation(t, s, 1735689600, "aaaaaaaaaa", `["bb"]`, "obs-1")
+	if n, err := s.buildAndPersistNeighborEdges(); err != nil || n != 2 {
+		t.Fatalf("warm-up: got %d, %v, want 2, nil", n, err)
+	}
+	prior := neighborCoalesceRows(t, s)
+	neighborCoalesceExec(t, s.db, `DELETE FROM neighbor_mutations`)
+	for i := 0; i < 2; i++ {
+		n, err := s.buildAndPersistNeighborEdges()
+		if err != nil || n != 0 || neighborCoalesceAuditCount(t, s) != 0 {
+			t.Fatalf("empty delta %d: got %d, %v, want no contributions or mutations", i, n, err)
+		}
+		if got := neighborCoalesceRows(t, s); !reflect.DeepEqual(got, prior) {
+			t.Fatalf("empty delta changed counts/watermark: got %+v, want %+v", got, prior)
+		}
+	}
+}
+
 func TestNeighborEdgesCoalesceExistingCanonicalContributions(t *testing.T) {
 	s := neighborCoalesceStore(t)
 	const start int64 = 1735689600
