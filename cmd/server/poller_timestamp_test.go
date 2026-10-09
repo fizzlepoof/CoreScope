@@ -126,7 +126,14 @@ func TestPollerNilStoreTimestampWebSocket(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer conn.Close()
-	waitForClientCount(t, hub, 1)
+	// PR25 predates the admission-test readiness helper. Wait on the real
+	// Hub state locally so this regression has no middleware-test dependency.
+	for deadline := time.Now().Add(2 * time.Second); hub.ClientCount() != 1; {
+		if time.Now().After(deadline) {
+			t.Fatal("WebSocket client was not registered within 2 seconds")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
 	poller := NewPoller(db, hub, 50*time.Millisecond)
 	done := make(chan struct{})
 	go func() { defer close(done); poller.Start() }()
