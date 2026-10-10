@@ -617,8 +617,10 @@ func main() {
 	}
 	// #1009: stamp X-CoreScope-Load-Status on every response so probes
 	// and dashboards can see when the chunked Load is still in flight.
-	// Outermost wrap so the header is set regardless of gzip/etc.
 	handler = loadStatusMiddleware(store, handler)
+	// Browser hardening is outermost so API errors, static/SPA responses, and
+	// WebSocket upgrade handshakes all receive the same security headers.
+	handler = securityHeadersMiddleware(handler)
 	if cfg.WSCompressionEnabled() {
 		log.Printf("[server] WebSocket permessage-deflate compression enabled")
 	}
