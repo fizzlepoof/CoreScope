@@ -6,12 +6,14 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -20,6 +22,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/meshcore-analyzer/admindb"
 	"github.com/meshcore-analyzer/dbschema"
+	"github.com/meshcore-analyzer/pprofconfig"
 )
 
 // Set via -ldflags at build time
@@ -56,6 +59,10 @@ func resolveBuildTime() string {
 		return BuildTime
 	}
 	return "unknown"
+}
+
+func httpListenAddress(host string, port int) string {
+	return net.JoinHostPort(host, strconv.Itoa(port))
 }
 
 // waitForObservationsTable blocks (bounded) until dbPath's observations
@@ -131,32 +138,33 @@ func migrateConfigJSONRegions(cfg *Config, adminStore *admindb.Store) {
 
 func main() {
 	// pprof profiling — off by default, enable with ENABLE_PPROF=true
-	if os.Getenv("ENABLE_PPROF") == "true" {
-		pprofPort := os.Getenv("PPROF_PORT")
-		if pprofPort == "" {
-			pprofPort = "6060"
-		}
+	if pprofconfig.Enabled(os.Getenv) {
+		pprofAddr := pprofconfig.ServerAddress(os.Getenv)
 		go func() {
-			log.Printf("[pprof] profiling UI at http://localhost:%s/debug/pprof/", pprofPort)
-			if err := http.ListenAndServe(":"+pprofPort, nil); err != nil {
+			log.Printf("[pprof] profiling UI at http://%s/debug/pprof/", pprofAddr)
+			if err := http.ListenAndServe(pprofAddr, nil); err != nil {
 				log.Printf("[pprof] failed to start: %v (non-fatal)", err)
 			}
 		}()
 	}
 
 	var (
-		configDir string
-		port      int
-		dbPath    string
-		publicDir string
-		pollMs    int
+		configDir       string
+		host            string
+		port            int
+		dbPath          string
+		publicDir       string
+		pollMs          int
+		staticTraceFile string
 	)
 
 	flag.StringVar(&configDir, "config-dir", ".", "Directory containing config.json")
+	flag.StringVar(&host, "host", "", "HTTP bind host (empty binds all interfaces)")
 	flag.IntVar(&port, "port", 0, "HTTP port (overrides config)")
 	flag.StringVar(&dbPath, "db", "", "SQLite database path (overrides config/env)")
 	flag.StringVar(&publicDir, "public", "public", "Directory to serve static files from")
 	flag.IntVar(&pollMs, "poll-ms", 1000, "SQLite poll interval for WebSocket broadcast (ms)")
+	flag.StringVar(&staticTraceFile, "static-trace-file", "", "Optional local JSONL file for completed static request timing diagnostics")
 	flag.Parse()
 
 	// Load config
@@ -456,7 +464,8 @@ func main() {
 	}()
 
 	// WebSocket hub
-	hub := NewHub()
+	hub := newHubWithLimits(cfg.WebSocketMaxClients(), cfg.WebSocketMaxClientsPerIP())
+	hub.SetTrustedProxyCIDRs(cfg.WebSocketTrustedProxyCIDRs())
 	hub.SetAllowedOrigins(cfg.CORSAllowedOrigins)
 	hub.upgrader.EnableCompression = cfg.WSCompressionEnabled()
 
@@ -493,7 +502,17 @@ func main() {
 	}).Methods("GET")
 	if _, err := os.Stat(absPublic); err == nil {
 		fs := http.FileServer(http.Dir(absPublic))
-		router.PathPrefix("/").Handler(wsOrStatic(hub, spaHandler(absPublic, fs)))
+		staticHandler := spaHandler(absPublic, fs)
+		if staticTraceFile != "" {
+			tracedHandler, closeTrace, err := staticTraceHandler(staticTraceFile, staticHandler)
+			if err != nil {
+				log.Fatalf("[static] trace setup failed: %v", err)
+			}
+			defer closeTrace()
+			staticHandler = tracedHandler
+			log.Printf("[static] trace enabled at %s", staticTraceFile)
+		}
+		router.PathPrefix("/").Handler(wsOrStatic(hub, staticHandler))
 		log.Printf("[static] serving %s", absPublic)
 	} else {
 		log.Printf("[static] directory %s not found — API-only mode", absPublic)
@@ -618,13 +637,15 @@ func main() {
 	}
 	// #1009: stamp X-CoreScope-Load-Status on every response so probes
 	// and dashboards can see when the chunked Load is still in flight.
-	// Outermost wrap so the header is set regardless of gzip/etc.
 	handler = loadStatusMiddleware(store, handler)
+	// Browser hardening is outermost so API errors, static/SPA responses, and
+	// WebSocket upgrade handshakes all receive the same security headers.
+	handler = securityHeadersMiddleware(handler)
 	if cfg.WSCompressionEnabled() {
 		log.Printf("[server] WebSocket permessage-deflate compression enabled")
 	}
 	httpServer := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.Port),
+		Addr:         httpListenAddress(host, cfg.Port),
 		Handler:      handler,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 60 * time.Second,
