@@ -1,6 +1,7 @@
 package admindb
 
 import (
+	"database/sql"
 	"errors"
 	"path/filepath"
 	"strings"
@@ -443,6 +444,133 @@ func TestDeleteOtherSessionsDoesNotAffectOtherAdmins(t *testing.T) {
 	}
 	if _, err := s.ValidateSession(a2Token); err != nil {
 		t.Fatalf("a2's session should be untouched: %v", err)
+	}
+}
+
+func TestOpenUpgradesLegacyHashRegionSchema(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "admin.db")
+	legacy, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open legacy DB: %v", err)
+	}
+	if _, err := legacy.Exec(`CREATE TABLE hash_regions (name TEXT PRIMARY KEY, created_at TEXT NOT NULL)`); err != nil {
+		t.Fatalf("create legacy hash_regions: %v", err)
+	}
+	if _, err := legacy.Exec(`INSERT INTO hash_regions (name, created_at) VALUES ('#us-tn', '2026-01-01T00:00:00Z')`); err != nil {
+		t.Fatalf("seed legacy hash_regions: %v", err)
+	}
+	if err := legacy.Close(); err != nil {
+		t.Fatalf("close legacy DB: %v", err)
+	}
+
+	s, err := Open(path)
+	if err != nil {
+		t.Fatalf("Open legacy DB: %v", err)
+	}
+	t.Cleanup(func() { s.Close() })
+	definitions, err := s.ListHashRegionDefinitions()
+	if err != nil {
+		t.Fatalf("ListHashRegionDefinitions: %v", err)
+	}
+	want := HashRegionDefinition{Name: "#us-tn"}
+	if len(definitions) != 1 || definitions[0] != want {
+		t.Fatalf("definitions = %#v, want %#v", definitions, []HashRegionDefinition{want})
+	}
+}
+
+func TestHashRegionDefinitionsReplaceAndList(t *testing.T) {
+	s := openTestStore(t)
+
+	definitions := []HashRegionDefinition{
+		{
+			Name:         "#us-tn",
+			Description:  "Tennessee regional scope",
+			GeometryJSON: `{"type":"Polygon","coordinates":[[[-90,35],[-81,35],[-81,37],[-90,35]]]}`,
+		},
+		{
+			Name:         "#us-tn-bna",
+			ParentName:   "#us-tn",
+			Description:  "Middle Tennessee and Nashville",
+			GeometryJSON: `{"type":"MultiPolygon","coordinates":[[[[-88,35],[-85,35],[-85,37],[-88,35]]]]}`,
+		},
+	}
+	if err := s.ReplaceHashRegionDefinitions(definitions); err != nil {
+		t.Fatalf("ReplaceHashRegionDefinitions: %v", err)
+	}
+
+	got, err := s.ListHashRegionDefinitions()
+	if err != nil {
+		t.Fatalf("ListHashRegionDefinitions: %v", err)
+	}
+	if len(got) != len(definitions) {
+		t.Fatalf("ListHashRegionDefinitions returned %d rows, want %d: %#v", len(got), len(definitions), got)
+	}
+	for i := range definitions {
+		if got[i] != definitions[i] {
+			t.Fatalf("ListHashRegionDefinitions[%d] = %#v, want %#v", i, got[i], definitions[i])
+		}
+	}
+
+	// The ingestor's legacy name-only view must remain compatible.
+	names, err := s.ListHashRegions()
+	if err != nil {
+		t.Fatalf("ListHashRegions: %v", err)
+	}
+	if want := []string{"#us-tn", "#us-tn-bna"}; !stringSlicesEqual(names, want) {
+		t.Fatalf("ListHashRegions = %v, want %v", names, want)
+	}
+}
+
+func TestReplaceHashRegionsClearsRemovedParentReference(t *testing.T) {
+	s := openTestStore(t)
+	definitions := []HashRegionDefinition{
+		{Name: "#us-tn", Description: "Tennessee"},
+		{Name: "#us-tn-bna", ParentName: "#us-tn", Description: "Middle Tennessee"},
+	}
+	if err := s.ReplaceHashRegionDefinitions(definitions); err != nil {
+		t.Fatalf("ReplaceHashRegionDefinitions: %v", err)
+	}
+	if err := s.ReplaceHashRegions([]string{"#us-tn-bna"}); err != nil {
+		t.Fatalf("ReplaceHashRegions: %v", err)
+	}
+	got, err := s.ListHashRegionDefinitions()
+	if err != nil {
+		t.Fatalf("ListHashRegionDefinitions: %v", err)
+	}
+	want := HashRegionDefinition{Name: "#us-tn-bna", Description: "Middle Tennessee"}
+	if len(got) != 1 || got[0] != want {
+		t.Fatalf("definitions = %#v, want %#v", got, []HashRegionDefinition{want})
+	}
+}
+
+func TestReplaceHashRegionsPreservesMetadataForRetainedNames(t *testing.T) {
+	s := openTestStore(t)
+	original := HashRegionDefinition{
+		Name:         "#us-tn",
+		Description:  "Tennessee regional scope",
+		GeometryJSON: `{"type":"Polygon","coordinates":[[[-90,35],[-81,35],[-81,37],[-90,35]]]}`,
+	}
+	if err := s.ReplaceHashRegionDefinitions([]HashRegionDefinition{original}); err != nil {
+		t.Fatalf("ReplaceHashRegionDefinitions: %v", err)
+	}
+
+	// The existing name-only admin UI uses ReplaceHashRegions. Retained names
+	// must keep metadata while newly added names receive empty metadata.
+	if err := s.ReplaceHashRegions([]string{"#us-tn", "#us-ky"}); err != nil {
+		t.Fatalf("ReplaceHashRegions: %v", err)
+	}
+	got, err := s.ListHashRegionDefinitions()
+	if err != nil {
+		t.Fatalf("ListHashRegionDefinitions: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("definitions = %#v, want 2 entries", got)
+	}
+	if got[1] != original {
+		t.Fatalf("retained definition = %#v, want %#v", got[1], original)
+	}
+	if got[0].Name != "#us-ky" || got[0].ParentName != "" || got[0].Description != "" || got[0].GeometryJSON != "" {
+		t.Fatalf("new definition = %#v, want empty metadata", got[0])
 	}
 }
 
